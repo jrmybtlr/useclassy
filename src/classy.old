@@ -1,0 +1,58 @@
+interface ModifySelectors {
+  (selector: ({ className }: { className: string }) => string): void;
+}
+
+interface AddVariant {
+  (name: string, callback: (options: { modifySelectors: ModifySelectors, separator: string }) => void): void;
+}
+
+interface E {   
+  (selector: string): string;
+}
+
+export default function classyPlugin({ addVariant, e }: { addVariant: AddVariant, e: E }) {
+  addVariant('class', ({ modifySelectors, separator }: { modifySelectors: ModifySelectors, separator: string }) => {
+    modifySelectors(({ className }) => {
+      return `[class~="${e(`class${separator}${className}`)}"]`;
+    });
+  });
+
+  // Additional variants for breakpoints and themes
+  const breakpoints = ['sm', 'md', 'lg', 'xl', '2xl'];
+  const themes = ['dark'];
+  const states = [
+    'hover', 'focus', 'active', 'disabled', 'loading', 'checked', 'indeterminate',
+    'invalid', 'valid', 'required', 'readonly', 'placeholder-shown', 'autofill',
+    'focus-visible', 'focus-within', 'focus-within-focus-visible',
+    'focus-within-focus-within', 'focus-within-focus-within-focus-visible',
+    'focus-within-focus-within-focus-within-focus-visible'
+  ];
+  
+
+  // Breakpoints
+  breakpoints.forEach((bp) => {
+    addVariant(`class-${bp}`, ({ modifySelectors, separator }: { modifySelectors: ModifySelectors, separator: string }) => {
+      modifySelectors(({ className }) => {
+        return `@media (min-width: ${bp}) { .${e(`class-${bp}${separator}${className}`)} }`;
+      });
+    });
+  });
+
+  // Themes
+  themes.forEach((theme) => {
+    addVariant(`class-${theme}`, ({ modifySelectors, separator }: { modifySelectors: ModifySelectors, separator: string }) => {
+      modifySelectors(({ className }) => {
+        return `.${theme} .${e(`class-${theme}${separator}${className}`)}`;
+      });
+    });
+  });
+    
+  // States
+  states.forEach((state) => {
+    addVariant(`class-${state}`, ({ modifySelectors, separator }: { modifySelectors: ModifySelectors, separator: string }) => {
+      modifySelectors(({ className }) => {
+        return `.${state} .${e(`class-${state}${separator}${className}`)}`;
+      });
+    });
+  });
+}
