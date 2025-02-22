@@ -1,23 +1,26 @@
 <template>
-  <div class="flex flex-col gap-8 h-screen w-screen items-center justify-center">
-
-   
+  <div
+    class="flex flex-col gap-8 h-screen w-screen items-center justify-center"
+    class:dark="bg-gray-950"
+  >
 
     <!-- Title -->
     <div 
-      class="text-red-500 text-xs tracking-tight group font-serif flex flex-col items-center"
-      class:hover="text-blue-600 font-bold"
-      class:sm="text-sm"
-      class:md="text-2xl"
-      class:lg="font-bold text-black text-9xl"
+      class=" group flex flex-col items-center"
       >
        <div
-          class="text-9xl rotate-0 transition-transform duration-300"
+          class="text-8xl rotate-0 transition-transform duration-300 group-hover:rotate-12"
           class:group-hover="rotate-12 -translate-y-8"
         >
           🎩
         </div>
-        <div>useClassy</div>
+      <div 
+        class="font-serif text-red-500 tracking-tight"
+        class:hover="text-blue-600 font-bold"  
+        class:sm="text-sm"
+        class:md="text-5xl"
+        class:lg="font-bold text-black text-9xl"
+      >useClassy</div>
     </div>
 
     <!-- Input -->
