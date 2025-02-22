@@ -1,5 +1,3 @@
-import { hashFunction } from '../utils';
-
 /**
  * Use Classy
  * @param {string[]} files - The files to process
@@ -13,56 +11,67 @@ export default function useClassy(files = [])
     return {
         name: 'useClassy',
         enforce: 'pre',
-        transform(code, id)
+        async transform(code, id)
         {
-            // Only process supported files
-            if (!files.some(file => id.endsWith(file))) return;
+            try {
+                // Only process supported files
+                if (!files.some(file => id.endsWith(file))) return null;
 
-            // Add the file to HMR dependencies
-            this.addWatchFile(id);
+                // Add the file to HMR dependencies
+                this.addWatchFile(id);
 
-            // Generate cache key using code content and file id
-            const cacheKey = hashFunction(id + code);
+                // Generate cache key using code content and file id
+                const cacheKey = hashFunction(id + code);
 
-            // Check if we have a cached result
-            if (transformCache.has(cacheKey)) {
-                return transformCache.get(cacheKey)
+                // Check if we have a cached result
+                if (transformCache.has(cacheKey)) {
+                    return transformCache.get(cacheKey);
+                }
+
+                // Transform the code
+                let result = code;
+
+                // Wrap transformations in try-catch to prevent EPIPE errors
+                try {
+                    // Transform class:modifier attributes
+                    result = result.replace(
+                        /(?:class|className):([\w\-:]+)="([^"]*)"/g,
+                        (match, modifiers, classes) =>
+                        {
+                            const modifierChain = modifiers.split(':');
+                            const modifiedClasses = classes.split(' ')
+                                .map(cls => modifierChain.reduceRight((acc, mod) => `${mod}:${acc}`, cls))
+                                .join(' ');
+                            const attributeName = match.startsWith('class:') ? 'class' : 'className';
+                            return `${attributeName}="${modifiedClasses}"`;
+                        }
+                    );
+
+                    // Merge all class/className attributes
+                    result = result.replace(
+                        /(?:class|className)="[^"]*"(\s*(?:class|className)="[^"]*")*/g,
+                        (match) =>
+                        {
+                            const classes = match.match(/(?:class|className)="([^"]*)"/g)
+                                .map(cls => cls.match(/(?:class|className)="([^"]*)"/)[1])
+                                .join(' ');
+                            // Preserve the last attribute name used (class or className)
+                            const lastAttributeName = match.match(/(?:class|className)=/g).pop();
+                            return `${lastAttributeName}"${classes}"`;
+                        }
+                    );
+
+                    // Cache the result before returning
+                    transformCache.set(cacheKey, { code: result });
+                    return { code: result };
+                } catch (err) {
+                    console.warn(`[useClassy] Transform error for ${id}:`, err);
+                    return { code };
+                }
+            } catch (err) {
+                console.error(`[useClassy] Plugin error:`, err);
+                return null;
             }
-
-            // Transform the code
-            let result = code;
-
-            // Transform class:modifier attributes
-            result = result.replace(
-                /(?:class|className):([\w:]+)="([^"]*)"/g,
-                (match, modifiers, classes) =>
-                {
-                    const modifierChain = modifiers.split(':');
-                    const modifiedClasses = classes.split(' ')
-                        .map(cls => modifierChain.reduceRight((acc, mod) => `${mod}:${acc}`, cls))
-                        .join(' ');
-                    const attributeName = match.startsWith('class:') ? 'class' : 'className';
-                    return `${attributeName}="${modifiedClasses}"`;
-                }
-            );
-
-            // Merge all class/className attributes
-            result = result.replace(
-                /(?:class|className)="[^"]*"(\s*(?:class|className)="[^"]*")*/g,
-                (match) =>
-                {
-                    const classes = match.match(/(?:class|className)="([^"]*)"/g)
-                        .map(cls => cls.match(/(?:class|className)="([^"]*)"/)[1])
-                        .join(' ');
-                    // Preserve the last attribute name used (class or className)
-                    const lastAttributeName = match.match(/(?:class|className)=/g).pop();
-                    return `${lastAttributeName}"${classes}"`;
-                }
-            );
-
-            // Cache the result before returning
-            transformCache.set(cacheKey, result)
-            return result;
         }
     }
 }

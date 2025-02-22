@@ -3,18 +3,7 @@
 import { describe, it, expect } from 'vitest';
 import useClassy from './useClassy'; // Assuming you have a useClassy.ts in the same directory
 
-const states: string[] = [
-    'hover',
-    'group-hover',
-    'focus',
-    'active',
-    'visited',
-    'focus-visible',
-    'focus-within',
-    'group-focus-within',
-    'group-focus',
-];
-
+const states: string[] = ['hover', 'group-hover', 'focus', 'active', 'visited', 'focus-visible', 'focus-within', 'group-focus-within', 'group-focus'];
 const modifiers: string[] = ['sm', 'md', 'lg', 'xl', '2xl'];
 
 // Test all frameworks
