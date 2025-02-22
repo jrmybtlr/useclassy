@@ -86,5 +86,4 @@ export default function useClassy(files = [])
             return result;
         }
     }
-
 } 
