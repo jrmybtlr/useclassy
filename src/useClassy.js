@@ -10,9 +10,6 @@ export default function useClassy(files = [])
     // Cache for transformed content
     const transformCache = new Map()
 
-    // class|className:modifier pattern
-    const classPattern = /(?:class|className):([\w:]+)="([^"]*)"|(?:class|className):([\w:]+)='([^']*)'/g;
-
     return {
         name: 'useClassy',
         enforce: 'pre',
@@ -68,4 +65,15 @@ export default function useClassy(files = [])
             return result;
         }
     }
-} 
+}
+
+/**
+ * Hash function
+ */
+function hashFunction(string)
+{
+    return string.split('').reduce((acc, char) =>
+    {
+        return acc + char.charCodeAt(0);
+    }, 0);
+}
