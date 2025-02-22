@@ -1,5 +1,5 @@
 import tailwindcss from "@tailwindcss/vite";
-import useClassy from "./useClassy.js";
+import useClassy from "./src/useClassy.js";
 
 export default defineNuxtConfig({
   compatibilityDate: '2024-11-01',
