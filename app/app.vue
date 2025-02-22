@@ -9,13 +9,13 @@
       class=" group flex flex-col items-center"
       >
        <div
-          class="text-8xl rotate-0 transition-transform duration-300 group-hover:rotate-12"
-          class:group-hover="rotate-12 -translate-y-8"
+          class="text-8xl rotate-0 transition-transform duration-300"
+          class:group-hover="rotate-12 -translate-y-8 hidden"
         >
           🎩
         </div>
       <div 
-        class="font-serif text-red-500 tracking-tight"
+        class="font-serif text-red-500 tracking-tight font-bold text-2xl"
         class:hover="text-blue-600 font-bold"  
         class:sm="text-sm"
         class:md="text-5xl"

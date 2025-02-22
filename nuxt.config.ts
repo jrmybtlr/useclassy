@@ -1,9 +1,15 @@
-import tailwindcss from "@tailwindcss/vite";
 import useClassy from "./src/useClassy.ts";
+import tailwindcss from "@tailwindcss/vite";
 
 export default defineNuxtConfig({
   compatibilityDate: '2024-11-01',
-  devtools: { enabled: true },
+  // ssr: false,
+  devtools: {
+    enabled: true,
+    timeline: {
+      enabled: true,
+    },
+  },
   future: {
     compatibilityVersion: 4,
   },
@@ -13,7 +19,7 @@ export default defineNuxtConfig({
   vite: {
     plugins: [
       useClassy(['.vue']),
-      tailwindcss()
+      tailwindcss(),
     ],
   },
 })

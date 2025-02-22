@@ -19,7 +19,7 @@ export default function useClassy(files: string[] = []): Plugin {
             this.addWatchFile(id);
 
             // Generate cache key using code content and file id
-            const cacheKey = hashFunction(id + code);
+            const cacheKey = hashFunction(id + code + files.join(',') + 'useClassy');
 
             // Check if we have a cached result
             if (transformCache.has(cacheKey.toString())) {
@@ -29,35 +29,15 @@ export default function useClassy(files: string[] = []): Plugin {
             // Transform the code
             let result = code;
 
-            // Extract all class:modifier patterns and generate virtual content
-            const virtualClasses: string[] = [];
-            const classPattern = /(?:class|className):([\w-:]+)="([^"]*)"/g;
-            const matches = result.matchAll(classPattern);
-
-            for (const match of matches) {
-                const [_, modifiers, classes] = match;
-                const modifierChain = modifiers?.split(':') ?? [];
-                const modifiedClasses = classes
-                    ?.split(' ')
-                    .map((cls: string) => modifierChain.reduceRight((acc: string, mod: string) => `${mod}:${acc}`, cls))
-                    .join(' ');
-                virtualClasses.push(modifiedClasses ?? '');
-            }
-
-            // Add virtual content for Tailwind scanning
-            if (virtualClasses.length > 0) {
-                result = `<!-- ${virtualClasses.join(' ')} -->\n${result}`;
-            }
-
             // Transform class:modifier attributes
             result = result.replace(
                 /(?:class|className):([\w-:]+)="([^"]*)"/g,
                 (match, modifiers, classes) => {
-                    const modifierChain = modifiers?.split(':') ?? [];
-                    const modifiedClasses = classes
-                        .split(' ')
-                        .map((cls: string) => modifierChain.reduceRight((acc: string, mod: string) => `${mod}:${acc}`, cls))
-                        .join(' ');
+                    // Split classes and handle each individually
+                    const modifiedClasses = classes.split(' ').map((value: string) => {
+                        return `${modifiers}:${value}`;
+                    }).join(' ');
+
                     const attributeName = match.startsWith('class:') ? 'class' : 'className';
                     return `${attributeName}="${modifiedClasses}"`;
                 }
