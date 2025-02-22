@@ -1,4 +1,4 @@
-import { hashFunction } from './utils';
+import { hashFunction } from '../utils';
 
 /**
  * Use Classy
@@ -34,24 +34,6 @@ export default function useClassy(files = [])
 
             // Transform the code
             let result = code;
-
-            // Extract all class:modifier patterns and generate virtual content
-            const virtualClasses = [];
-            const classPattern = /(?:class|className):([\w:]+)="([^"]*)"/g;
-            const matches = result.matchAll(classPattern);
-
-            for (const [full, modifiers, classes] of matches) {
-                const modifierChain = modifiers.split(':');
-                const modifiedClasses = classes.split(' ')
-                    .map(cls => modifierChain.reduceRight((acc, mod) => `${mod}:${acc}`, cls))
-                    .join(' ');
-                virtualClasses.push(modifiedClasses);
-            }
-
-            // Add virtual content for Tailwind scanning
-            if (virtualClasses.length > 0) {
-                result = `<!-- ${virtualClasses.join(' ')} -->\n${result}`;
-            }
 
             // Transform class:modifier attributes
             result = result.replace(

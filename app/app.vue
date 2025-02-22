@@ -6,7 +6,7 @@
       class:hover="text-blue-600 font-bold"
       class:sm="text-sm"
       class:md="text-2xl"
-      class:lg="font-bold text-emerald-600 text-9xl"
+      class:lg="font-bold text-9xl"
       >
       useClassy
     </div>
