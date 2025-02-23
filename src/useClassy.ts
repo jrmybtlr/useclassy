@@ -6,48 +6,84 @@ import path from 'path';
  * @param files - The files to process
  * @returns The Vite plugin
  */
-export default function useClassy(files: string[] = []): Plugin {
+export default function useClassy(): Plugin {
 
     // Cache for transformed content
     const transformCache: Map<string, string> = new Map();
+    const supportedFiles = ['.vue', '.ts', '.tsx', '.js', '.jsx'];
 
     return {
         name: 'useClassy',
         enforce: 'pre',
 
+        // Watch for file changes and additions
+        configureServer(server) {
+            // Watch for both file changes and additions
+            server.watcher.on('change', async (filePath) => {
+                if (!supportedFiles.some((ext) => filePath.endsWith(ext))) return;
+                if (filePath.includes('node_modules')) return;
+
+                // Clear the cache for this file
+                const code = fs.readFileSync(filePath, 'utf-8');
+                const cacheKey = hashFunction(filePath + code + supportedFiles.join(',') + 'useClassy');
+                transformCache.delete(cacheKey.toString());
+
+                await server.transformRequest(filePath);
+            });
+
+            // Keep existing 'add' watcher
+            server.watcher.on('add', async (filePath) => {
+                if (!supportedFiles.some((ext) => filePath.endsWith(ext))) return;
+                if (filePath.includes('node_modules')) return;
+
+                const code = fs.readFileSync(filePath, 'utf-8');
+                await server.transformRequest(filePath);
+            });
+        },
+
+        // Transform the code
         transform(code: string, id: string) {
             // Only process supported files
-            if (!files.some((file) => id?.split('?')[0]?.endsWith(file))) return;
+            if (!supportedFiles.some((file) => id?.split('?')[0]?.endsWith(file))) return;
+
+            // Skip files in node_modules
+            if (id.includes('node_modules')) return;
 
             // Add the file to HMR dependencies
             this.addWatchFile(id);
 
             // Generate cache key
-            const cacheKey = hashFunction(id + code + files.join(',') + 'useClassy');
+            const cacheKey = hashFunction(id.split('?')[0] + code + supportedFiles.join(',') + 'useClassy');
 
             // Check if we have a cached result
             if (transformCache.has(cacheKey.toString())) {
                 return transformCache.get(cacheKey.toString());
             }
 
-            // Transform the code
             let result = code;
 
-            // Transform class:modifier attributes
+            // Create a set to hold classes generated via the class:modifier transform
+            const generatedClassesSet: Set<string> = new Set();
+
+            // Transform class:modifier attributes and capture generated classes
             result = result.replace(
                 /(?:class|className):([\w-:]+)="([^"]*)"/g,
                 (match, modifiers, classes) => {
-                    // Split classes and handle each individually
-                    const modifiedClasses = classes.split(' ').map((value: string) => {
+                    // Split classes and handle each individually and store them
+                    const modifiedClassesArr = classes.split(' ').map((value: string) => {
                         return `${modifiers}:${value}`;
-                    }).join(' ');
+                    });
+                    modifiedClassesArr.forEach((cls: string) => generatedClassesSet.add(cls));
 
+                    const modifiedClasses = modifiedClassesArr.join(' ');
                     const attributeName = match.startsWith('class:') ? 'class' : 'className';
                     return `${attributeName}="${modifiedClasses}"`;
                 }
             );
 
+            // 
             // Merge all class/className attributes
+            // 
             result = result.replace(
                 /(?:class|className)="[^"]*"(\s*(?:class|className)="[^"]*")*/g,
                 (match) => {
@@ -70,31 +106,50 @@ export default function useClassy(files: string[] = []): Plugin {
             );
 
             // 
-            // Create an output file in a folder called '.classy'
-            // with a single div and all the generated classes
-            // This is a workaround to Tailwind 4.0.8 which introduces
-            // raw file scanning which interupts the useClassy plugin
+            // Create an output file that exports the generated classes as a module.
+            // This file will be imported into tailwind.config.js to safelist dynamic classes.
             // 
             const outDir = path.join(process.cwd(), '.classy');
             if (!fs.existsSync(outDir)) {
                 fs.mkdirSync(outDir, { recursive: true });
+
+                // Create or update .gitignore to exclude .classy directory
+                const gitignorePath = path.join(process.cwd(), '.gitignore');
+                const gitignoreEntry = '\n# Generated Classy files\n.classy/\n';
+
+                try {
+                    if (fs.existsSync(gitignorePath)) {
+                        const currentContent = fs.readFileSync(gitignorePath, 'utf-8');
+                        if (!currentContent.includes('.classy/')) {
+                            fs.appendFileSync(gitignorePath, gitignoreEntry);
+                        }
+                    } else {
+                        fs.writeFileSync(gitignorePath, gitignoreEntry.trim());
+                    }
+                } catch (error) {
+                    console.warn('Failed to update .gitignore file:', error);
+                }
             }
-            // const outputFileName = path.basename(id).replace(/\.\w+$/, '.classy.html');
-            const outputFileName = 'classy.html';
+
+            // Get relative path from project root to maintain directory structure
+            const relativeFilePath = path.relative(process.cwd(), id.split('?')[0] || id);
+            const outputFileName = relativeFilePath.replace(/\.\w+$/, '.classy.js');
             const outputFilePath = path.join(outDir, outputFileName);
 
-            // Extract all classes from the result using regex
-            const classMatches = [...result.matchAll(/(?:class|className)="([^"]*)"/g)];
-            let classesArray = classMatches.flatMap(match => match[1].split(/\s+/)).filter(Boolean);
+            // Ensure the directory exists before writing the file
+            fs.mkdirSync(path.dirname(outputFilePath), { recursive: true });
 
-            // Remove duplicate classes
-            classesArray = [...new Set(classesArray)];
+            const classesArray = Array.from(generatedClassesSet);
 
-            // Write a single div element containing all classes
-            fs.writeFileSync(outputFilePath, `<div class="${classesArray.join(' ')}"></div>`);
+            fs.writeFileSync(
+                outputFilePath,
+                `module.exports = ${JSON.stringify(classesArray)};`
+            );
 
             // Cache the result before returning
             transformCache.set(cacheKey.toString(), result);
+
+            // Return the transformed result
             return result;
         },
     };

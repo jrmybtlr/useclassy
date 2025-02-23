@@ -18,7 +18,7 @@ export default defineNuxtConfig({
   ],
   vite: {
     plugins: [
-      useClassy(['.vue']),
+      useClassy(),
       tailwindcss(),
     ],
   },

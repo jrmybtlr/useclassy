@@ -5,7 +5,7 @@
   >
     <!-- Title -->
     <div 
-      class=" group flex flex-col items-center cursor-alias"
+      class="group flex flex-col items-center cursor-alias"
       >
        <div
           class="text-8xl rotate-0 transition-transform duration-300"
