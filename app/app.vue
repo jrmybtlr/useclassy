@@ -1,7 +1,7 @@
 <template>
   <div
     class="flex flex-col gap-8 h-screen w-screen items-center justify-center"
-    class:dark="bg-gray-950 text-white"
+    class:dark="bg-gray-950 text-gray-100"
   >
     <!-- Title -->
     <div 
@@ -9,7 +9,7 @@
       >
        <div
           class="text-8xl rotate-0 transition-transform duration-300"
-          class:group-hover="rotate-12 -translate-y-8 hover:-rotate-12"
+          class:group-hover="rotate-10 -translate-y-8 hover:-rotate-12"
         >
           🎩
         </div>

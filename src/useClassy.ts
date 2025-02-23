@@ -79,7 +79,8 @@ export default function useClassy(files: string[] = []): Plugin {
             if (!fs.existsSync(outDir)) {
                 fs.mkdirSync(outDir, { recursive: true });
             }
-            const outputFileName = path.basename(id).replace(/\.\w+$/, '.classy.html');
+            // const outputFileName = path.basename(id).replace(/\.\w+$/, '.classy.html');
+            const outputFileName = 'classy.html';
             const outputFilePath = path.join(outDir, outputFileName);
 
             // Extract all classes from the result using regex
