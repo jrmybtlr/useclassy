@@ -1,9 +1,13 @@
 import type { Plugin } from 'vite';
-
+import fs from 'fs';
+import path from 'path';
 /**
- * Use Classy plugin
+ * Use Classy plugin for Vite
+ * @param files - The files to process
+ * @returns The Vite plugin
  */
 export default function useClassy(files: string[] = []): Plugin {
+
     // Cache for transformed content
     const transformCache: Map<string, string> = new Map();
 
@@ -18,7 +22,7 @@ export default function useClassy(files: string[] = []): Plugin {
             // Add the file to HMR dependencies
             this.addWatchFile(id);
 
-            // Generate cache key using code content and file id
+            // Generate cache key
             const cacheKey = hashFunction(id + code + files.join(',') + 'useClassy');
 
             // Check if we have a cached result
@@ -64,6 +68,29 @@ export default function useClassy(files: string[] = []): Plugin {
                     return `${lastAttributeName}="${allClasses}"`;
                 }
             );
+
+            // 
+            // Create an output file in a folder called '.classy'
+            // with a single div and all the generated classes
+            // This is a workaround to Tailwind 4.0.8 which introduces
+            // raw file scanning which interupts the useClassy plugin
+            // 
+            const outDir = path.join(process.cwd(), '.classy');
+            if (!fs.existsSync(outDir)) {
+                fs.mkdirSync(outDir, { recursive: true });
+            }
+            const outputFileName = path.basename(id).replace(/\.\w+$/, '.classy.html');
+            const outputFilePath = path.join(outDir, outputFileName);
+
+            // Extract all classes from the result using regex
+            const classMatches = [...result.matchAll(/(?:class|className)="([^"]*)"/g)];
+            let classesArray = classMatches.flatMap(match => match[1].split(/\s+/)).filter(Boolean);
+
+            // Remove duplicate classes
+            classesArray = [...new Set(classesArray)];
+
+            // Write a single div element containing all classes
+            fs.writeFileSync(outputFilePath, `<div class="${classesArray.join(' ')}"></div>`);
 
             // Cache the result before returning
             transformCache.set(cacheKey.toString(), result);
