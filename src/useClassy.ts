@@ -143,7 +143,7 @@ export default function useClassy(): Plugin {
 
             fs.writeFileSync(
                 outputFilePath,
-                `module.exports = ${JSON.stringify(classesArray)};`
+                `export default ${JSON.stringify(classesArray)};`
             );
 
             // Cache the result before returning
