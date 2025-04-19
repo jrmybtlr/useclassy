@@ -2,6 +2,25 @@
 
 Look at the [Nuxt documentation](https://nuxt.com/docs/getting-started/introduction) to learn more.
 
+## Tailwind CSS Configuration
+
+This project uses a custom class variant syntax with Tailwind CSS. To enable proper validation and IntelliSense in VS Code, add the following configuration to your `.vscode/settings.json`:
+
+```json
+{
+  "tailwindCSS.classAttributes": [
+    ...other settings,
+    "class:[\\w:-]*"
+  ]
+}
+```
+
+This configuration enables validation for all class variants including:
+- Conditional classes (hover, dark mode)
+- Responsive classes (sm, md, lg)
+- Group variants
+- Compound variants
+
 ## Setup
 
 Make sure to install dependencies:

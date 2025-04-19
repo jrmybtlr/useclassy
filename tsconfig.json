@@ -3,5 +3,6 @@
   "extends": "./.nuxt/tsconfig.json",
   "compilerOptions": {
     "allowImportingTsExtensions": true
-  }
+  },
+  "include": ["src/**/*.ts", "src/**/*.tsx", "src/**/*.vue"]
 }

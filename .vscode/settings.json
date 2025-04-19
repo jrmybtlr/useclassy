@@ -1,0 +1,11 @@
+{
+  "tailwindCSS.validate": true,
+  "editor.formatOnSave": true,
+  "tailwindCSS.classAttributes": [
+    "class",
+    "className",
+    "ngClass",
+    "class:list",
+    "class:[\\w:-]*"
+  ]
+}
