@@ -1,1 +1,0 @@
-export default ["dark:bg-gray-950","dark:text-gray-200"];

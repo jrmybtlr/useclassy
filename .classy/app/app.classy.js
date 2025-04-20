@@ -1,1 +1,0 @@
-export default ["dark:bg-zinc-950","dark:text-white","group-hover:-rotate-6","group-hover:-translate-y-8","hover:rotate-12","hover:-translate-y-4","max-md:text-4xl","md:text-7xl","lg:text-8xl"];
