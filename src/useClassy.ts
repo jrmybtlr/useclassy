@@ -123,23 +123,29 @@ export default function useClassy(): Plugin {
             const outDir = path.join(process.cwd(), '.classy');
             if (!fs.existsSync(outDir)) {
                 fs.mkdirSync(outDir, { recursive: true });
+            }
 
-                // Create or update .gitignore to exclude .classy directory
-                const gitignorePath = path.join(process.cwd(), '.gitignore');
-                const gitignoreEntry = '\n# Generated Classy files\n.classy/\n';
+            // Create .gitignore file inside .classy directory if it doesn't exist
+            const classyGitignorePath = path.join(outDir, '.gitignore');
+            if (!fs.existsSync(classyGitignorePath)) {
+                fs.writeFileSync(classyGitignorePath, '# Ignore all files in this directory\n*');
+            }
 
-                try {
-                    if (fs.existsSync(gitignorePath)) {
-                        const currentContent = fs.readFileSync(gitignorePath, 'utf-8');
-                        if (!currentContent.includes('.classy/')) {
-                            fs.appendFileSync(gitignorePath, gitignoreEntry);
-                        }
-                    } else {
-                        fs.writeFileSync(gitignorePath, gitignoreEntry.trim());
+            // Create or update .gitignore to exclude .classy directory
+            const gitignorePath = path.join(process.cwd(), '.gitignore');
+            const gitignoreEntry = '\n# Generated Classy files\n.classy/\n';
+
+            try {
+                if (fs.existsSync(gitignorePath)) {
+                    const currentContent = fs.readFileSync(gitignorePath, 'utf-8');
+                    if (!currentContent.includes('.classy/')) {
+                        fs.appendFileSync(gitignorePath, gitignoreEntry);
                     }
-                } catch (error) {
-                    console.warn('Failed to update .gitignore file:', error);
+                } else {
+                    fs.writeFileSync(gitignorePath, gitignoreEntry.trim());
                 }
+            } catch (error) {
+                console.warn('Failed to update .gitignore file:', error);
             }
 
             // Get relative path from project root to maintain directory structure

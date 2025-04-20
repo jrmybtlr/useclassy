@@ -4,7 +4,6 @@
 .nuxt
 .nitro
 .cache
-.classy
 dist
 
 # Node dependencies
@@ -23,3 +22,5 @@ logs
 .env
 .env.*
 !.env.example
+# Generated Classy files
+.classy/
