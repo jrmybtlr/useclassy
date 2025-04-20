@@ -92,3 +92,54 @@ bun run preview
 ```
 
 Check out the [deployment documentation](https://nuxt.com/docs/getting-started/deployment) for more information.
+
+## Vite Configuration
+
+This project uses Vite with custom plugins for enhanced functionality:
+
+```ts
+vite: {
+  plugins: [
+    useClassy(),
+    tailwindcss(),
+  ],
+}
+```
+
+The configuration includes:
+- `useClassy()`: Enables the custom class variant syntax
+- `tailwindcss()`: Provides Tailwind CSS integration
+
+## Syntax Highlighting with Shiki
+
+This project uses [nuxt-shiki](https://github.com/nuxt-modules/shiki) for syntax highlighting. The configuration is set up in `nuxt.config.ts`:
+
+```ts
+shiki: {
+  preload: true,
+  tailwindcss: true,
+  langs: ["vue-html"],
+  theme: "github-dark",
+}
+```
+
+To use syntax highlighting in your components:
+
+```vue
+<template>
+  <Shiki lang="vue-html" :code="highlighted" />
+</template>
+
+<script setup lang="ts">
+const codeExample = ref(`
+  <input
+    class="w-full max-w-sm px-6 h-12"
+    class:hover="border-blue-600"
+  />
+`)
+
+const highlighted = await useShikiHighlighted(codeExample.value)
+</script>
+```
+
+The `useShikiHighlighted` composable and `Shiki` component are auto-imported by Nuxt, so no manual imports are needed.

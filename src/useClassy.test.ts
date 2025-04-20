@@ -73,9 +73,6 @@ function testEachFramework(extension: string): void {
             })
             .join(' ');
 
-        // 
-        // The first line is the virtual comment containing all classes
-        // 
         expect(result).toContain(`<!-- ${expectedVirtualClasses} -->`);
 
         // Separate the actual transformed template from the virtual comment

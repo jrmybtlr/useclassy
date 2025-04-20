@@ -60,7 +60,12 @@ export default function useClassy(): Plugin {
                 return transformCache.get(cacheKey.toString());
             }
 
-            let result = code;
+            // Store pre tag content and replace with placeholders
+            const preTagPlaceholders: string[] = [];
+            let result = code.replace(/<pre[^>]*>[\s\S]*?<\/pre>|<pre[^>]*v-html[^>]*\/?>/g, (match) => {
+                preTagPlaceholders.push(match);
+                return `__PRE_TAG_${preTagPlaceholders.length - 1}__`;
+            });
 
             // Create a set to hold classes generated via the class:modifier transform
             const generatedClassesSet: Set<string> = new Set();
@@ -104,6 +109,12 @@ export default function useClassy(): Plugin {
                     return `${lastAttributeName}="${allClasses}"`;
                 }
             );
+
+            // Restore pre tag content
+            result = result.replace(/__PRE_TAG_(\d+)__/g, (_, index) => {
+                const placeholder = preTagPlaceholders[parseInt(index)];
+                return placeholder || '';
+            });
 
             // 
             // Create an output file that exports the generated classes as a module.

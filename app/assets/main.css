@@ -1,1 +1,24 @@
 @import "tailwindcss";
+@plugin "tailwindcss-motion";
+
+body {
+  @apply bg-zinc-950 text-white;
+}
+
+.font-serif {
+  font-family: "Playfair Display", serif;
+}
+
+.font-sans {
+  font-family: "Inter", sans-serif;
+}
+
+.font-mono {
+  font-family: "Fira Code", monospace;
+}
+
+
+
+code {
+  @apply block text-sm/[1.9em] font-mono px-4 py-3;
+}
