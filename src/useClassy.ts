@@ -78,11 +78,13 @@ export default function useClassy(): Plugin {
             let classMatch;
             while ((classMatch = classRegex.exec(code)) !== null) {
                 const classes = classMatch[1];
-                classes.split(' ').forEach(cls => {
-                    if (cls.trim()) {
-                        generatedClassesSet.add(cls.trim());
-                    }
-                });
+                if (classes) {
+                    classes.split(' ').forEach(cls => {
+                        if (cls.trim()) {
+                            generatedClassesSet.add(cls.trim());
+                        }
+                    });
+                }
             }
 
             // Transform class:modifier attributes and capture generated classes
