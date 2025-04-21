@@ -7,7 +7,7 @@ export default defineNuxtConfig({
   modules: ["@nuxt/fonts", "@nuxt/ui"],
 
   devtools: {
-    enabled: true,
+    enabled: false,
   },
 
   future: {

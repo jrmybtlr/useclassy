@@ -1,13 +1,22 @@
 import { describe, it, expect } from 'vitest';
-import useClassy from './useClassy.ts';
+import useClassy, { hashFunction } from './useClassy.ts';
+import type { Plugin } from 'vite';
 
 const states: string[] = ['hover', 'group-hover', 'focus', 'active', 'visited', 'focus-visible', 'focus-within', 'group-focus-within', 'group-focus'];
 const modifiers: string[] = ['sm', 'md', 'lg', 'xl', '2xl'];
 
-// Test all frameworks
 describe('useClassy', () => {
     const frameworks = ['.html', '.vue', '.svelte', '.jsx'];
     frameworks.forEach(testEachFramework);
+
+    it('should correctly hash strings', () => {
+        const testString = 'test-string';
+        const hash = hashFunction(testString);
+
+        expect(typeof hash).toBe('number');
+        expect(hashFunction(testString)).toBe(hash);
+        expect(hashFunction('different-string')).not.toBe(hash);
+    });
 });
 
 /*
@@ -28,7 +37,7 @@ function generateClassCombinations(states: string[], modifiers: string[]): strin
  */
 function testEachFramework(extension: string): void {
     it(`should handle ${extension.replace('.', '')}`, async () => {
-        const plugin = useClassy([extension]);
+        const plugin = useClassy() as Plugin;
         const combinations = generateClassCombinations(states, modifiers);
 
         // Ensure the combination count matches the product of the two arrays
@@ -55,38 +64,45 @@ function testEachFramework(extension: string): void {
         };
 
         // Transform and test
-        const result = await plugin.transform!.call(
-            mockContext,
-            input,
-            `test${extension}`
-        );
+        if (plugin.transform) {
+            // Access the handler property of the transform hook
+            const transformHandler = (plugin.transform as any).handler;
+            const result = await transformHandler.call(
+                mockContext,
+                input,
+                `test${extension}`,
+                { ssr: false }
+            );
 
-        // Basic assertions
-        expect(result).toBeDefined();
-        expect(typeof result).toBe('string');
+            // Basic assertions
+            expect(result).toBeDefined();
+            expect(typeof result).toBe('string');
 
-        // Check virtual content for Tailwind scanning
-        const expectedVirtualClasses = combinations
-            .map((combination) => {
+            // Check virtual content for Tailwind scanning
+            const expectedVirtualClasses = combinations
+                .map((combination) => {
+                    const [modifier, state] = combination.split(':');
+                    return `${modifier}:${state}:text-sm ${modifier}:${state}:font-light`;
+                })
+                .join(' ');
+
+            expect(result).toContain(`<!-- ${expectedVirtualClasses} -->`);
+
+            // Separate the actual transformed template from the virtual comment
+            const transformedDiv = (result as string).split('\n').slice(1).join('\n');
+
+            // Check that the base class is still present
+            expect(transformedDiv).toContain('class="base-class');
+
+            // Verify transformation of class:modifier attributes
+            combinations.forEach((combination) => {
                 const [modifier, state] = combination.split(':');
-                return `${modifier}:${state}:text-sm ${modifier}:${state}:font-light`;
-            })
-            .join(' ');
-
-        expect(result).toContain(`<!-- ${expectedVirtualClasses} -->`);
-
-        // Separate the actual transformed template from the virtual comment
-        const transformedDiv = (result as string).split('\n').slice(1).join('\n');
-
-        // Check that the base class is still present
-        expect(transformedDiv).toContain('class="base-class');
-
-        // Verify transformation of class:modifier attributes
-        combinations.forEach((combination) => {
-            const [modifier, state] = combination.split(':');
-            expect(transformedDiv).toContain(`${modifier}:${state}:text-sm`);
-            expect(transformedDiv).toContain(`${modifier}:${state}:font-light`);
-            expect(transformedDiv).not.toContain(`class:${combination}=`);
-        });
+                expect(transformedDiv).toContain(`${modifier}:${state}:text-sm`);
+                expect(transformedDiv).toContain(`${modifier}:${state}:font-light`);
+                expect(transformedDiv).not.toContain(`class:${combination}=`);
+            });
+        } else {
+            throw new Error('Plugin transform method is not defined');
+        }
     });
 }
