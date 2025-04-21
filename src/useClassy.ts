@@ -48,6 +48,9 @@ export default function useClassy(): Plugin {
 
             // Skip files in node_modules
             if (id.includes('node_modules')) return;
+            
+            // Skip files with null bytes in the path
+            if (id.includes('\0')) return;
 
             // Add the file to HMR dependencies
             this.addWatchFile(id);
@@ -69,6 +72,18 @@ export default function useClassy(): Plugin {
 
             // Create a set to hold classes generated via the class:modifier transform
             const generatedClassesSet: Set<string> = new Set();
+
+            // Extract all class attributes from the code
+            const classRegex = /(?:class|className)="([^"]*)"/g;
+            let classMatch;
+            while ((classMatch = classRegex.exec(code)) !== null) {
+                const classes = classMatch[1];
+                classes.split(' ').forEach(cls => {
+                    if (cls.trim()) {
+                        generatedClassesSet.add(cls.trim());
+                    }
+                });
+            }
 
             // Transform class:modifier attributes and capture generated classes
             result = result.replace(
@@ -150,11 +165,20 @@ export default function useClassy(): Plugin {
 
             // Get relative path from project root to maintain directory structure
             const relativeFilePath = path.relative(process.cwd(), id.split('?')[0] || id);
+            
+            // Skip if the path contains null bytes
+            if (relativeFilePath.includes('\0')) return result;
+            
             const outputFileName = relativeFilePath.replace(/\.\w+$/, '.classy.js');
             const outputFilePath = path.join(outDir, outputFileName);
 
             // Ensure the directory exists before writing the file
-            fs.mkdirSync(path.dirname(outputFilePath), { recursive: true });
+            try {
+                fs.mkdirSync(path.dirname(outputFilePath), { recursive: true });
+            } catch (error) {
+                console.warn(`Failed to create directory for ${outputFilePath}:`, error);
+                return result;
+            }
 
             const classesArray = Array.from(generatedClassesSet);
 
