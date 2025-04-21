@@ -17,8 +17,6 @@ body {
   font-family: "Fira Code", monospace;
 }
 
-
-
 code {
   @apply block text-sm/[1.9em] font-mono px-4 py-3;
 }

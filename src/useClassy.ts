@@ -74,7 +74,7 @@ export default function useClassy(): Plugin {
             const generatedClassesSet: Set<string> = new Set();
 
             // Extract all class attributes from the code
-            const classRegex = /(?:class|className)="([^"]*)"/g;
+            const classRegex = /(?:class|className)="([^"]*)"(?![^>]*:class)/g;
             let classMatch;
             while ((classMatch = classRegex.exec(code)) !== null) {
                 const classes = classMatch[1];
@@ -182,7 +182,11 @@ export default function useClassy(): Plugin {
                 return result;
             }
 
-            const classesArray = Array.from(generatedClassesSet);
+            const classesArray = Array.from(generatedClassesSet)
+                .filter(cls => {
+                    // Only keep classes that contain a colon, indicating a variant
+                    return cls.includes(':');
+                });
 
             fs.writeFileSync(
                 outputFilePath,
