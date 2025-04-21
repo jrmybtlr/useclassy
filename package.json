@@ -18,7 +18,6 @@
     "@nuxt/ui": "^3.0.2",
     "@nuxtjs/tailwindcss": "^6.13.2",
     "@tailwindcss/vite": "4.0.7",
-    "nuxt": "^3.15.4",
     "nuxt-shiki": "0.3.0",
     "tailwindcss": "4.0.7",
     "vue": "latest",
@@ -27,6 +26,7 @@
   "devDependencies": {
     "@vitest/ui": "^3.0.6",
     "jsdom": "^26.0.0",
+    "nuxt": "^3.16.2",
     "tailwindcss-motion": "^1.1.0",
     "vite": "^6.1.1",
     "vitest": "^3.0.6"
