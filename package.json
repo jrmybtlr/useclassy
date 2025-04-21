@@ -15,9 +15,7 @@
   },
   "dependencies": {
     "@nuxt/fonts": "^0.11.1",
-    "@nuxt/ui": "^3.0.2",
     "@nuxtjs/tailwindcss": "^6.13.2",
-    "nuxt-shiki": "0.3.0",
     "vue": "latest",
     "vue-router": "latest"
   },
