@@ -1,6 +1,7 @@
 import type { Plugin } from 'vite';
 import fs from 'fs';
 import path from 'path';
+
 /**
  * Use Classy plugin for Vite
  * @param files - The files to process
@@ -11,6 +12,9 @@ export default function useClassy(): Plugin {
     // Cache for transformed content
     const transformCache: Map<string, string> = new Map();
     const supportedFiles = ['.vue', '.ts', '.tsx', '.js', '.jsx'];
+    
+    // Load ignored directories from .gitignore
+    const ignoredDirectories = loadIgnoredDirectories();
 
     return {
         name: 'useClassy',
@@ -22,6 +26,7 @@ export default function useClassy(): Plugin {
             server.watcher.on('change', async (filePath) => {
                 if (!supportedFiles.some((ext) => filePath.endsWith(ext))) return;
                 if (filePath.includes('node_modules')) return;
+                if (isInIgnoredDirectory(filePath, ignoredDirectories)) return;
 
                 // Clear the cache for this file
                 const code = fs.readFileSync(filePath, 'utf-8');
@@ -35,6 +40,7 @@ export default function useClassy(): Plugin {
             server.watcher.on('add', async (filePath) => {
                 if (!supportedFiles.some((ext) => filePath.endsWith(ext))) return;
                 if (filePath.includes('node_modules')) return;
+                if (isInIgnoredDirectory(filePath, ignoredDirectories)) return;
 
                 const code = fs.readFileSync(filePath, 'utf-8');
                 await server.transformRequest(filePath);
@@ -51,6 +57,12 @@ export default function useClassy(): Plugin {
             
             // Skip files with null bytes in the path
             if (id.includes('\0')) return;
+            
+            // Skip virtual files and runtime files
+            if (id.includes('virtual:') || id.includes('runtime')) return;
+            
+            // Skip files in ignored directories
+            if (isInIgnoredDirectory(id, ignoredDirectories)) return;
 
             // Add the file to HMR dependencies
             this.addWatchFile(id);
@@ -200,6 +212,50 @@ export default function useClassy(): Plugin {
             return result;
         },
     };
+}
+
+/**
+ * Load ignored directories from .gitignore file
+ */
+function loadIgnoredDirectories(): string[] {
+    const gitignorePath = path.join(process.cwd(), '.gitignore');
+    if (!fs.existsSync(gitignorePath)) {
+        return [];
+    }
+
+    try {
+        const content = fs.readFileSync(gitignorePath, 'utf-8');
+        return content
+            .split('\n')
+            .map(line => line.trim())
+            .filter(line => line && !line.startsWith('#'))
+            .filter(line => {
+                // Only include directory patterns (those ending with / or without file extensions)
+                return line.endsWith('/') || !line.includes('.');
+            })
+            .map(dir => {
+                // Remove leading slash if present
+                return dir.startsWith('/') ? dir.substring(1) : dir;
+            });
+    } catch (error) {
+        console.warn('Failed to read .gitignore file:', error);
+        return [];
+    }
+}
+
+/**
+ * Check if a file is in an ignored directory
+ */
+function isInIgnoredDirectory(filePath: string, ignoredDirectories: string[]): boolean {
+    if (!ignoredDirectories.length) return false;
+    
+    // Convert absolute path to relative path from project root
+    const relativePath = path.relative(process.cwd(), filePath);
+    
+    // Check if the file is in any of the ignored directories
+    return ignoredDirectories.some(dir => {
+        return relativePath.startsWith(dir + '/') || relativePath === dir;
+    });
 }
 
 /**
