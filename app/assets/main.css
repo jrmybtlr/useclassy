@@ -1,5 +1,5 @@
 @import "tailwindcss";
-/* @source "./.classy"; */
+@source "./../../.classy/output.classy.jsx";
 @plugin "tailwindcss-motion";
 
 body {
