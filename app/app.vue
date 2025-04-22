@@ -33,41 +33,94 @@
         >
           Write neater Tailwind while writing less Tailwind.
         </p>
+
+        <p class="text-center text-zinc-400">
+          UseClassy automatically appends class attributes to your components
+          and lets you separate media queries, hover states, and other styles.
+          It's fast, simple, and much more readable.
+        </p>
         <ClassExample :examples="classExamples" class="mt-10" />
       </section>
 
-      <!-- Install -->
-      <section class="mt-10 w-full">
-        <h3 class="text-2xl font-semibold text-centerd">Install</h3>
-        <Code class="mt-6 w-full" showCopy>
-          <code> npm install use-classy </code>
-        </Code>
-      </section>
+      <div class="relative w-full">
+        <div
+          class="h-full w-[1px] absolute left-3 top-16 bg-gradient-to-b from-zinc-800 to-transparent"
+        />
+        <!-- Install -->
+        <Step :number="1" title="Install">
+          <Code class="mt-6 w-full" showCopy>
+            <code> npm install use-classy </code>
+          </Code>
+        </Step>
 
-      <!-- Intellisense -->
-      <section class="mt-10 w-full">
-        <h3 class="text-2xl font-semibold text-centerd">Intellisense</h3>
-        <p class="mt-2 text-zinc-400">
-          Add the following to your VSCode settings.
-        </p>
-
-        <Code class="mt-6 w-full" showCopy>
-          <code>
-            <div class="text-zinc-400">{</div>
-            <div>
-              <div class="text-zinc-400 ml-4">
-                "tailwindCSS.classAttributes": [
+        <!-- Vite -->
+        <Step
+          :number="2"
+          title="Vite"
+          description="Add the following to your Vite configuration, making sure UseClassy is listed as the first plugin."
+        >
+          <Code class="mt-6 w-full text-zinc-500" showCopy>
+            <code>
+              <div>{</div>
+              <div>
+                <div class="ml-4">
+                  <div class="ml-4">vite: {</div>
+                  <div class="ml-8">plugins: [</div>
+                  <div class="ml-12 text-white">useClassy(),</div>
+                  <div class="ml-12">tailwindcss(),</div>
+                  <div class="ml-8">],</div>
+                </div>
               </div>
-              <div class="text-zinc-600 ml-8">...other settings,</div>
-              <div class="ml-8">"class:[\\w:-]*",</div>
-              <div class="text-zinc-400 ml-4">]</div>
-            </div>
-            <div class="text-zinc-400">}</div>
-          </code>
-        </Code>
-      </section>
+              <div>}</div>
+            </code>
+          </Code>
+        </Step>
 
-      <footer class="mt-10 w-full text-sm flex justify-center">
+        <!-- Tailwind CSS -->
+        <Step
+          :number="3"
+          title="Tailwind"
+          description="UseClassy creates a .classy folder in your project root. Import the output.classy.jsx file into your Tailwind CSS configuration."
+        >
+          <Code class="mt-6 w-full text-zinc-500" showCopy>
+            <code>
+              <div>{</div>
+              <div>
+                <div class="ml-4">
+                  <div class="ml-4">@import "tailwindcss";</div>
+                  <div class="ml-4 text-white">
+                    @source "./../../.classy/output.classy.jsx";
+                  </div>
+                  <div class="ml-4">...other config</div>
+                </div>
+              </div>
+              <div>}</div>
+            </code>
+          </Code>
+        </Step>
+
+        <!-- Intellisense -->
+        <Step
+          :number="4"
+          title="Intellisense"
+          description="Add the following to your VSCode settings to enable IntelliSense for UseClassy."
+        >
+          <Code class="mt-6 w-full text-zinc-500" showCopy>
+            <code>
+              <div>{</div>
+              <div>
+                <div class="ml-4">"tailwindCSS.classAttributes": [</div>
+                <div class="ml-8">...other settings,</div>
+                <div class="ml-8 text-white">"class:[\\w:-]*",</div>
+                <div class="ml-4">]</div>
+              </div>
+              <div>}</div>
+            </code>
+          </Code>
+        </Step>
+      </div>
+
+      <footer class="mt-24 w-full text-sm flex justify-center">
         <a
           href="https://github.com/jrmybtlr/use-classy"
           class="mx-auto text-zinc-400 hover:text-zinc-100 transition-colors"
@@ -91,6 +144,9 @@
 </template>
 
 <script setup lang="ts">
+import StepNumber from "./components/StepNumber.vue";
+import Step from "./components/Step.vue";
+
 const classExamples = {
   // Base styles
   base: "p-6 bg-white rounded-xl shadow-lg border",
