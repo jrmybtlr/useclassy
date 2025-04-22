@@ -1,13 +1,12 @@
 import useClassy from "./src/useClassy.ts";
+import useClassyRust from "./src/useClassyRust.ts";
 import tailwindcss from "@tailwindcss/vite";
 
 export default defineNuxtConfig({
   compatibilityDate: '2024-11-01',
 
   modules: [
-    "nuxt-shiki",
     "@nuxt/fonts",
-    "@nuxt/ui",
   ],
 
   devtools: {
