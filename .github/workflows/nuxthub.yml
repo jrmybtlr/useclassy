@@ -11,6 +11,9 @@ jobs:
     permissions:
       contents: read
       id-token: write
+    defaults:
+      run:
+        working-directory: demos/vue/
 
     steps:
       - uses: actions/checkout@v4
@@ -18,7 +21,7 @@ jobs:
       - name: Install pnpm
         uses: pnpm/action-setup@v4
         with:
-          version: 8.15.4
+          version: 9
 
       - name: Install Node.js
         uses: actions/setup-node@v4
@@ -39,4 +42,5 @@ jobs:
         uses: nuxt-hub/action@v1
         id: deploy
         with:
-          project-key: useclassy-g6zk
+          project-key: useclassy-ific
+          directory: demos/vue//dist
