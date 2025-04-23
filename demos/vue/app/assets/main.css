@@ -1,0 +1,47 @@
+@import "tailwindcss";
+@source "./../../.classy/output.classy.jsx";
+@plugin "tailwindcss-motion";
+
+body {
+  @apply bg-zinc-950 text-white;
+}
+
+.font-serif {
+  font-family: "Playfair Display", serif;
+}
+
+.font-sans {
+  font-family: "Inter", sans-serif;
+}
+
+.font-mono {
+  font-family: "Fira Code", monospace;
+}
+
+code {
+  @apply block text-sm/[1.9em] font-mono px-4 py-3;
+}
+
+/* A better container */
+.container {
+  width: 100%;
+  max-width: 720px;
+  margin-left: auto;
+  margin-right: auto;
+  padding-left: calc(env(safe-area-inset-left, 0rem) + 1.1rem);
+  padding-right: calc(env(safe-area-inset-right, 0rem) + 1.1rem);
+}
+
+@media screen and (min-width: 768px) {
+  .container {
+    padding-left: calc(env(safe-area-inset-left, 0rem) + 2rem);
+    padding-right: calc(env(safe-area-inset-right, 0rem) + 2rem);
+  }
+}
+
+@media screen and (min-width: 1280px) {
+  .container {
+    padding-left: calc(env(safe-area-inset-left, 0rem) + 3rem);
+    padding-right: calc(env(safe-area-inset-right, 0rem) + 3rem);
+  }
+}

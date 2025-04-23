@@ -1,5 +1,4 @@
-import useClassy from "./src/useClassy.ts";
-import useClassyRust from "./src/useClassyRust.ts";
+import useClassy from "../../src/useClassy.ts";
 import tailwindcss from "@tailwindcss/vite";
 
 export default defineNuxtConfig({

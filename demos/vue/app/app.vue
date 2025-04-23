@@ -1,8 +1,5 @@
 <template>
-  <div
-    class="min-h-screen gap-8 w-screen py-12"
-    class:dark="bg-zinc-950 text-white"
-  >
+  <div class="min-h-screen gap-8 py-12" class:dark="bg-zinc-950 text-white">
     <div class="container mx-auto flex flex-col items-center max-w-2xl">
       <!-- Title -->
       <section>
@@ -27,17 +24,12 @@
       </section>
 
       <!-- Example -->
-      <section class="mt-6">
+      <section class="mt-2">
         <p
-          class="text-center font-semibold text-2xl motion-preset-blur-up motion-delay-600"
+          class="text-center font-semibold text-2xl motion-preset-blur-up motion-delay-600 text-balance"
         >
-          Write neater Tailwind while writing less Tailwind.
-        </p>
-
-        <p class="text-center text-zinc-400">
-          UseClassy automatically appends class attributes to your components
-          and lets you separate media queries, hover states, and other styles.
-          It's fast, simple, and much more readable.
+          Automatically append attributes to separate media queries, hover
+          states, and other styles. It's fast, simple, and much more readable.
         </p>
         <ClassExample :examples="classExamples" class="mt-10" />
       </section>

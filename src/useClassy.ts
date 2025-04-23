@@ -3,9 +3,9 @@ import fs from 'fs';
 import path from 'path';
 
 const SUPPORTED_FILES = ['.vue', '.ts', '.tsx', '.html', '.js', '.jsx'];
-const CLASS_REGEX = /(?:class|className)="([^"]*)"(?![^>]*:class)/g;
-const CLASS_MODIFIER_REGEX = /(?:class|className):([\w-:]+)="([^"]*)"/g;
-const MULTIPLE_CLASS_REGEX = /(?:class|className)="[^"]*"(\s*(?:class|className)="[^"]*")*/g;
+const CLASS_REGEX = /class="([^"]*)"(?![^>]*:class)/g;
+const CLASS_MODIFIER_REGEX = /class:([\w-:]+)="([^"]*)"/g;
+const MULTIPLE_CLASS_REGEX = /class="[^"]*"(\s*class="[^"]*")*/g;
 const PRE_TAG_REGEX = /<pre[^>]*>[\s\S]*?<\/pre>|<pre[^>]*v-html[^>]*\/?>/g;
 const PRE_TAG_PLACEHOLDER_REGEX = /__PRE_TAG_(\d+)__/g;
 
@@ -74,24 +74,36 @@ export default function useClassy(options: ClassyOptions = {}): Plugin {
 
   function setupFileWatchers(server: any) {
     server.watcher.on('change', async (filePath: string) => {
+      // Ignore changes to the useClassy.ts file itself and the output file to prevent infinite loops
+      if (filePath.endsWith('useClassy.ts') || filePath.includes('/.classy/output.classy.jsx')) return;
+      
       if (!shouldProcessFile(filePath)) return;
 
       const code = fs.readFileSync(filePath, 'utf-8');
       transformCache.delete(generateCacheKey(filePath, code));
       await server.transformRequest(filePath);
       needsOutputUpdate = true;
+      
+      // Force immediate output update when a file changes
+      writeOutputFile(allClassesSet, outputDir, outputFileName);
     });
 
     server.watcher.on('add', async (filePath: string) => {
+      // Ignore the output file to prevent infinite loops
+      if (filePath.includes('/.classy/output.classy.jsx')) return;
+      
       if (!shouldProcessFile(filePath)) return;
 
       await server.transformRequest(filePath);
       needsOutputUpdate = true;
+      
+      // Force immediate output update when a new file is added
+      writeOutputFile(allClassesSet, outputDir, outputFileName);
     });
   }
 
   function setupOutputEndpoint(server: any) {
-    server.middlewares.use('/__useClassy__/generate-output', (req: any, res: any) => {
+    server.middlewares.use('/__useClassy__/generate-output', (res: any) => {
       if (needsOutputUpdate) {
         writeOutputFile(allClassesSet, outputDir, outputFileName);
         needsOutputUpdate = false;
@@ -108,11 +120,18 @@ export default function useClassy(options: ClassyOptions = {}): Plugin {
     if (!SUPPORTED_FILES.some((ext) => filePath?.split('?')[0]?.endsWith(ext))) return false;
     if (filePath.includes('node_modules') || filePath.includes('\0')) return false;
     if (filePath.includes('virtual:') || filePath.includes('runtime')) return false;
-    return !isInIgnoredDirectory(filePath, ignoredDirectories);
+    
+    // Log when a file is skipped for debugging
+    if (isInIgnoredDirectory(filePath, ignoredDirectories)) {
+      console.log(`[useClassy] Skipping ignored file: ${filePath}`);
+      return false;
+    }
+    
+    return true;
   }
 
-  function generateCacheKey(filePath: string, code: string): string {
-    return hashString(code);
+  function generateCacheKey(id: string, code: string): string {
+    return hashString(id + code);
   }
 
   function processCode(code: string, allClassesSet: Set<string>): string {
@@ -141,6 +160,7 @@ export default function useClassy(options: ClassyOptions = {}): Plugin {
   }
 
   function extractClasses(code: string, generatedClassesSet: Set<string>): void {
+    // Extract regular classes
     let classMatch;
     while ((classMatch = CLASS_REGEX.exec(code)) !== null) {
       const classes = classMatch[1];
@@ -152,40 +172,86 @@ export default function useClassy(options: ClassyOptions = {}): Plugin {
         });
       }
     }
+
+    // Extract class modifiers
+    let modifierMatch;
+    while ((modifierMatch = CLASS_MODIFIER_REGEX.exec(code)) !== null) {
+      const modifiers = modifierMatch[1];
+      const classes = modifierMatch[2];
+      
+      if (modifiers && classes) {
+        const modifierParts = modifiers.split(':');
+        const baseModifier = modifierParts[0];
+        
+        classes.split(' ').forEach(cls => {
+          if (cls.trim()) {
+            // Add the full modifier:class combination
+            generatedClassesSet.add(`${modifiers}:${cls.trim()}`);
+            
+            // Also add individual parts for better coverage
+            if (modifierParts.length > 1) {
+              modifierParts.forEach(part => {
+                if (part) {
+                  generatedClassesSet.add(`${part}:${cls.trim()}`);
+                }
+              });
+            }
+          }
+        });
+      }
+    }
   }
 
   function transformClassModifiers(code: string, generatedClassesSet: Set<string>): string {
     return code.replace(CLASS_MODIFIER_REGEX, (match, modifiers, classes) => {
       if (!modifiers || modifiers.trim() === '') return match;
       
+      // Split modifiers by colon to handle nested modifiers like "group-hover:dark"
+      const modifierParts = modifiers.split(':');
+      
+      // Process each modifier part
       const modifiedClassesArr = classes.split(' ')
         .map((value: string) => value.trim())
         .filter((value: string) => value && value !== '')
-        .map((value: string) => `${modifiers}:${value}`);
+        .flatMap((value: string) => {
+          // Create an array with the full modifier:class combination
+          const result = [`${modifiers}:${value}`];
+          
+          // Also add individual modifier parts for better coverage
+          if (modifierParts.length > 1) {
+            modifierParts.forEach((part: string) => {
+              if (part) {
+                result.push(`${part}:${value}`);
+              }
+            });
+          }
+          
+          return result;
+        });
       
+      // Add all modified classes to the set
       modifiedClassesArr.forEach((cls: string) => {
         if (cls && !cls.endsWith(':') && !cls.startsWith("'") && !cls.endsWith("'")) {
           generatedClassesSet.add(cls);
         }
       });
 
-      const attributeName = match.startsWith('class:') ? 'class' : 'className';
-      return `${attributeName}="${modifiedClassesArr.join(' ')}"`;
+      return `class="${modifiedClassesArr.join(' ')}"`;
     });
   }
 
   function mergeClassAttributes(code: string): string {
     return code.replace(MULTIPLE_CLASS_REGEX, (match) => {
       const allClasses = match
-        .match(/(?:class|className)="([^"]*)"/g)
+        .match(/class="([^"]*)"/g)
         ?.map(cls => {
-          const subMatch = cls.match(/(?:class|className)="([^"]*)"/);
+          const subMatch = cls.match(/class="([^"]*)"/);
           return subMatch ? subMatch[1] : '';
         })
+        .filter(Boolean)
         .join(' ') || '';
 
-      const lastAttributeName = match.match(/(?:class|className)=/g)?.pop()?.replace('=', '') ?? 'class';
-      return `${lastAttributeName}="${allClasses}"`;
+      return `class="${allClasses}"`;
     });
   }
 
@@ -251,6 +317,8 @@ function writeOutputFile(allClassesSet: Set<string>, outputDir: string, outputFi
     // Create a single file with all classes
     const outputFilePath = path.join(outputDir, outputFileName);
     const jsxContent = `// Generated by useClassy
+import React from 'react';
+
 export default function ClassyOutput() {
   return (
     <div>
@@ -259,7 +327,25 @@ export default function ClassyOutput() {
   );
 }`;
     
-    fs.writeFileSync(outputFilePath, jsxContent, { encoding: 'utf-8' });
+ 
+    // Check if the file exists and has the same content to avoid unnecessary writes
+    let shouldWrite = true;
+    if (fs.existsSync(outputFilePath)) {
+      const currentContent = fs.readFileSync(outputFilePath, 'utf-8');
+      if (currentContent === jsxContent) {
+        console.log(`[useClassy] Output file content unchanged, skipping write`);
+        shouldWrite = false;
+      }
+    }
+    
+    if (shouldWrite) {
+      // Use a temporary file to avoid triggering the file watcher
+      const tempFilePath = path.join(outputDir, `.${outputFileName}.tmp`);
+      fs.writeFileSync(tempFilePath, jsxContent, { encoding: 'utf-8' });
+      
+      // Rename the temporary file to the actual file
+      fs.renameSync(tempFilePath, outputFilePath);
+    }
   } catch (error) {
     console.error('Failed to write classy output file:', error);
   }

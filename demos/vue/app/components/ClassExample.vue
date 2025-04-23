@@ -1,5 +1,5 @@
 <template>
-  <div class="w-full max-w-2xl space-y-4">
+  <div class="w-full space-y-4">
     <!-- Expanded View -->
     <Code class="motion-preset-blur-up motion-delay-500">
       <!-- Format Toggle -->
@@ -20,18 +20,18 @@
       </div>
       <code>
         <div
-          v-for="(value, key) in examples"
+          v-for="(value, key, index) in examples"
           :key="key"
-          class="flex transition-opacity duration-200 cursor-pointer"
+          class="transition-opacity duration-200 cursor-pointer"
           :class="{ 'opacity-30': hoveredSection && hoveredSection !== key }"
           @mouseenter="hoveredSection = key"
           @mouseleave="hoveredSection = null"
         >
-          <div class="text-blue-400">
-            {{ format === "vue" ? "class" : "className"
+          <span class="text-blue-400">
+            {{ format === "react" && index === 0 ? "className" : "class"
             }}{{ key === "base" ? "" : ":" + key }}
-          </div>
-          <div class="text-zinc-300">="{{ value }}"</div>
+          </span>
+          <span class="text-zinc-300">="{{ value }}"</span>
         </div>
       </code>
     </Code>
