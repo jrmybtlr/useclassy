@@ -22,6 +22,14 @@ export default {
 }
 ```
 
+## Tailwind JIT
+This plugin will generate a .classy folder in your project to cache the generated classes and ensure Tailwind JIT works. It will also cache results to ensure fast rebuilds. Simply include the output as a source file.
+
+```css
+@import "tailwindcss";
+@source "./../.classy/output.classy.jsx"
+```
+
 ## Tailwind Intellisense
 
 This project uses a custom class variant syntax with Tailwind CSS. To enable proper validation and IntelliSense in VS Code, add the following configuration to your `.vscode/settings.json`:

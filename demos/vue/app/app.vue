@@ -114,7 +114,7 @@
 
       <footer class="mt-24 w-full text-sm flex justify-center">
         <a
-          href="https://github.com/jrmybtlr/use-classy"
+          href="https://github.com/jrmybtlr/useclassy"
           class="mx-auto text-zinc-400 hover:text-zinc-100 transition-colors"
         >
           <svg

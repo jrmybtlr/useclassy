@@ -4,7 +4,7 @@ import classyPlugin from '../../src/useClassy.ts'
 import tailwindcss from '@tailwindcss/vite'
 
 export default defineConfig({
-  plugins: [react(), classyPlugin(), tailwindcss()],
+  plugins: [react(), classyPlugin({ language: 'react' }), tailwindcss()],
   server: {
     port: 3001
   },
