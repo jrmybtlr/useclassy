@@ -27,16 +27,11 @@
       </section>
 
       <!-- Example -->
-      <section class="mt-6">
+      <section class="mt-2">
         <p
-          class="text-center font-semibold text-2xl motion-preset-blur-up motion-delay-600"
+          class="text-center font-semibold text-2xl motion-preset-blur-up motion-delay-600 text-balance"
         >
-          Write neater Tailwind while writing less Tailwind.
-        </p>
-
-        <p class="text-center text-zinc-400">
-          UseClassy automatically appends class attributes to your components
-          and lets you separate media queries, hover states, and other styles.
+          Automatically append attributes to separate media queries, hover states, and other styles.
           It's fast, simple, and much more readable.
         </p>
         <ClassExample :examples="classExamples" class="mt-10" />

@@ -1,6 +1,8 @@
 # Nuxt dev/build outputs
 .output
 .data
+.nuxt
+.nitro
 .cache
 dist
 
@@ -20,4 +22,5 @@ logs
 .env
 .env.*
 !.env.example
-node_modules/.pnpm/@babel+compat-data@7.26.8/node_modules/@babel/compat-data/plugin-bugfixes.js
+# Generated Classy files
+.classy/
