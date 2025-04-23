@@ -259,7 +259,7 @@ export default function useClassy(options: ClassyOptions = {}): Plugin {
    * @param server - The Vite server
    */
   function setupOutputEndpoint(server: ViteServer) {
-    server.middlewares.use('/__useClassy__/generate-output', (res: any) => {
+    server.middlewares.use('/__useClassy__/generate-output', (req: any, res: any) => {
       if (needsOutputUpdate) {
         writeOutputFile(allClassesSet, outputDir, outputFileName);
         needsOutputUpdate = false;
