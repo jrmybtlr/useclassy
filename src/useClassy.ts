@@ -3,9 +3,9 @@ import fs from 'fs';
 import path from 'path';
 
 const SUPPORTED_FILES = ['.vue', '.ts', '.tsx', '.html', '.js', '.jsx'];
-const CLASS_REGEX = /(?:class|className)="([^"]*)"(?![^>]*:class)/g;
+const CLASS_REGEX = /class="([^"]*)"(?![^>]*:class)/g;
 const CLASS_MODIFIER_REGEX = /class:([\w-:]+)="([^"]*)"/g;
-const MULTIPLE_CLASS_REGEX = /(?:class|className)="[^"]*"(\s*(?:class|className)="[^"]*")*/g;
+const MULTIPLE_CLASS_REGEX = /class="[^"]*"(\s*class="[^"]*")*/g;
 const PRE_TAG_REGEX = /<pre[^>]*>[\s\S]*?<\/pre>|<pre[^>]*v-html[^>]*\/?>/g;
 const PRE_TAG_PLACEHOLDER_REGEX = /__PRE_TAG_(\d+)__/g;
 
@@ -74,6 +74,8 @@ export default function useClassy(options: ClassyOptions = {}): Plugin {
 
   function setupFileWatchers(server: any) {
     server.watcher.on('change', async (filePath: string) => {
+      if (filePath.endsWith('useClassy.ts')) return;
+      
       if (!shouldProcessFile(filePath)) return;
 
       const code = fs.readFileSync(filePath, 'utf-8');
@@ -169,24 +171,22 @@ export default function useClassy(options: ClassyOptions = {}): Plugin {
         }
       });
 
-      const attributeName = match.startsWith('class:') ? 'class' : 'className';
-      return `${attributeName}="${modifiedClassesArr.join(' ')}"`;
+      return `class="${modifiedClassesArr.join(' ')}"`;
     });
   }
 
   function mergeClassAttributes(code: string): string {
     return code.replace(MULTIPLE_CLASS_REGEX, (match) => {
       const allClasses = match
-        .match(/(?:class|className)="([^"]*)"/g)
+        .match(/class="([^"]*)"/g)
         ?.map(cls => {
-          const subMatch = cls.match(/(?:class|className)="([^"]*)"/);
+          const subMatch = cls.match(/class="([^"]*)"/);
           return subMatch ? subMatch[1] : '';
         })
         .filter(Boolean)
         .join(' ') || '';
 
-      // For React components, always use className
-      return `className="${allClasses}"`;
+      return `class="${allClasses}"`;
     });
   }
 
@@ -257,7 +257,7 @@ import React from 'react';
 export default function ClassyOutput() {
   return (
     <div>
-      ${Array.from(allClassesSet).map(cls => `<div className="${cls}" />`).join('\n      ')}
+      ${Array.from(allClassesSet).map(cls => `<div class="${cls}" />`).join('\n      ')}
     </div>
   );
 }`;
