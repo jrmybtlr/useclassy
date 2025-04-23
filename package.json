@@ -2,7 +2,6 @@
   "name": "useclassy",
   "version": "1.0.0",
   "description": "UseClassy automatically appends class attributes to your components and lets you separate media queries, hover states, and other styles.",
-  "packageManager": "pnpm@8.15.4",
   "scripts": {
     "dev": "pnpm -r dev",
     "test": "vitest run src/*",
