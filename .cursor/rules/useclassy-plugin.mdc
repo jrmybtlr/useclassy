@@ -1,0 +1,57 @@
+---
+description: 
+globs: 
+alwaysApply: false
+---
+# UseClassy Vite Plugin Guide
+
+The UseClassy Vite plugin transforms class modifier attributes into Tailwind JIT-compatible class names. The main implementation is in [src/useClassy.ts](mdc:src/useClassy.ts).
+
+## Core Functionality
+
+The plugin watches for attributes like:
+```html
+<div class:hover="text-blue-500" class:sm:hover="text-blue-500">
+```
+
+And transforms them into:
+```html
+<div class="hover:text-blue-500 sm:hover:text-blue-500">
+```
+
+This works with both Vue (`class`) and React (`className`) syntax.
+
+## Key Components
+
+1. **File Processing**
+   - Processes `.vue`, `.ts`, `.tsx`, `.js`, `.jsx`, and `.html` files
+   - Skips `node_modules`, virtual files, and runtime files
+   - Respects `.gitignore` patterns
+
+2. **Class Transformations**
+   - Handles state modifiers (hover, focus, active, etc.)
+   - Supports responsive modifiers (sm, md, lg, xl, 2xl)
+   - Combines multiple class attributes
+   - Works with nested modifiers (e.g., `sm:hover`, `lg:focus`)
+
+3. **Framework Support**
+   - Vue: Uses `class` attribute
+   - React: Uses `className` attribute
+   - Automatically detects framework based on file extension
+
+## Usage Example
+
+```html
+<!-- Input -->
+<div 
+  class="base-styles"
+  class:hover="text-blue-500"
+  class:sm="text-lg"
+  class:sm:hover="font-bold"
+>
+
+<!-- Output -->
+<div class="base-styles hover:text-blue-500 sm:text-lg sm:hover:font-bold">
+```
+
+The plugin integrates with Tailwind's JIT compiler, allowing for dynamic class generation based on your modifiers.
