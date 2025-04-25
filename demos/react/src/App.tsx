@@ -3,7 +3,7 @@ import { twMerge } from "tailwind-merge";
 function App() {
   return (
     <div className="flex flex-col h-screen items-center justify-center">
-      <h1 className="font-bold text-4xl" class:md="text-7xl text-blue-100">
+      <h1 className="font-bold text-4xl" class:md="text-7xl text-blue-200">
         React Demo
       </h1>
       <div className="text-red-500" class:hover="text-blue-500">
