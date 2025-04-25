@@ -52,6 +52,9 @@
     "@vitest/ui": "^3.0.6",
     "vite-plugin-inspect": "^11.0.1"
   },
+  "peerDependencies": {
+    "vite": "^5.0.0 || ^6.0.0"
+  },
   "resolutions": {
     "debug": "4.3.4",
     "supports-color": "8.1.1"

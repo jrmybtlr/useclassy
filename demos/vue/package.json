@@ -7,11 +7,7 @@
     "dev": "nuxt dev",
     "generate": "nuxt generate",
     "preview": "nuxt preview",
-    "postinstall": "nuxt prepare",
-    "test": "vitest",
-    "test:ui": "vitest --ui",
-    "test:run": "vitest run",
-    "coverage": "vitest run --coverage"
+    "postinstall": "nuxt prepare"
   },
   "dependencies": {
     "@nuxt/fonts": "^0.11.1",
@@ -22,7 +18,6 @@
   },
   "devDependencies": {
     "@tailwindcss/vite": "4.1.4",
-    "autoprefixer": "^10.4.18",
     "nuxt": "^3.16.2",
     "tailwindcss": "4.1.4",
     "tailwindcss-motion": "^1.1.0"

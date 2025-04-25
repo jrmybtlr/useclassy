@@ -1,15 +1,24 @@
+import { twMerge } from "tailwind-merge";
+
 function App() {
   return (
     <div className="flex flex-col h-screen items-center justify-center">
-      <h1 className="text-4xl font-bold">React Demo</h1>
+      <h1 className="font-bold" class:lg="text-4xl">
+        React Demo
+      </h1>
+      <div className="text-red-500" class:hover="text-blue-500">
+        Hello
+      </div>
       <div
         className="bg-zinc-500 rounded-full px-4 cursor-cell py-2 mt-4"
         class:hover="bg-blue-500"
-        class:active="bg-green-500"
-        class:dark="bg-gray-700 text-white"
       >
         Hover me
       </div>
+
+      {/* <div className={twMerge("text-red-500")} class:hover="text-blue-500">
+        Tailwind Merge
+      </div> */}
     </div>
   );
 }
