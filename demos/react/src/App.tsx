@@ -16,9 +16,9 @@ function App() {
         Hover me
       </div>
 
-      {/* <div className={twMerge("text-red-500")} class:hover="text-blue-500">
+      <div className={twMerge("text-red-500")} class:hover="text-blue-500">
         Tailwind Merge
-      </div> */}
+      </div>
     </div>
   );
 }
