@@ -8,7 +8,6 @@
             class="text-[180px] rotate-0 transition-transform duration-300 motion-preset-blur-up motion-delay-500 z-10"
             class:group-hover="-rotate-6 -translate-y-8"
             class:hover="rotate-12 -translate-y-4"
-            class:lg="rotate-8 -translate-y-4 hidden"
           >
             🎩
           </div>

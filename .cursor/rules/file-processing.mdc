@@ -1,0 +1,42 @@
+---
+description: 
+globs: 
+alwaysApply: true
+---
+# File Processing Logic
+
+The UseClassy plugin carefully manages which files it processes through the `shouldProcessFile` function in [src/useClassy.ts](mdc:src/useClassy.ts).
+
+## File Filtering Rules
+
+1. **Supported Extensions**
+   - Only processes: `.vue`, `.ts`, `.tsx`, `.js`, `.jsx`, `.html`
+   - Defined in `SUPPORTED_FILES` constant
+
+2. **Ignored Paths**
+   - Skips files in directories listed in `.gitignore`
+   - Skips `node_modules` directory
+   - Ignores virtual files (containing `virtual:`)
+   - Ignores runtime files (containing `runtime`)
+   - Skips files containing null bytes (`\0`)
+
+## Processing Flow
+
+1. First checks if file is in ignored directories
+2. Then validates file extension against supported list
+3. Finally applies special case exclusions (node_modules, virtual files, etc.)
+
+## Example
+
+```typescript
+// Will process:
+src/components/Button.vue
+src/pages/Home.tsx
+
+// Will skip:
+node_modules/react/index.js
+.vite/deps/virtual:react.js
+src/styles.css
+```
+
+The plugin maintains a cache of processed files to improve performance during development.

@@ -1,0 +1,66 @@
+---
+description: 
+globs: 
+alwaysApply: true
+---
+# Development Principles
+
+The UseClassy plugin follows strict development principles to maintain high performance, type safety, and minimal complexity. The core implementation in [src/useClassy.ts](mdc:src/useClassy.ts) demonstrates these principles.
+
+## Performance First
+
+1. **Vite Integration**
+   - Direct integration with Vite's plugin system
+   - Uses Vite's built-in file watching and caching
+   - Avoids redundant file processing
+   - Maintains minimal memory footprint
+
+2. **Efficient Processing**
+   - Uses regex-based transformations for speed
+   - Implements caching to avoid reprocessing unchanged files
+   - Skips unnecessary file reads and transformations
+   - Processes files only when needed during development
+
+## TypeScript Best Practices
+
+1. **Strong Typing**
+   - All functions and interfaces are fully typed
+   - No `any` types unless absolutely necessary
+   - Extensive use of TypeScript interfaces for plugin options
+   - Type guards for safe runtime checks
+
+2. **Type Safety**
+   - Strict null checks enabled
+   - Explicit return types on public functions
+   - Proper error handling with type checking
+   - No type assertions unless unavoidable
+
+## Minimal Surface Area
+
+1. **Code Organization**
+   - Single primary file for core logic
+   - Functions are small and focused
+   - Clear separation of concerns
+   - Minimal internal state
+
+2. **Zero Dependencies**
+   - Only uses Node.js built-in modules (fs, path, crypto)
+   - No external runtime dependencies
+   - Vite as only peer dependency
+   - Reduces security and maintenance burden
+
+## Example of Principles
+
+```typescript
+// Bad: Multiple dependencies, complex logic
+import _ from 'lodash';
+import globby from 'globby';
+function processFiles(pattern: any) { ... }
+
+// Good: Built-in modules, clear types, focused logic
+import { readFileSync } from 'fs';
+import { join } from 'path';
+function processFile(filePath: string): string { ... }
+```
+
+These principles ensure the plugin remains fast, reliable, and maintainable while keeping the codebase small and focused.

@@ -1,17 +1,21 @@
-import { defineConfig } from 'vite'
-import react from '@vitejs/plugin-react'
-import classyPlugin from '../../src/useClassy.ts'
-import tailwindcss from '@tailwindcss/vite'
-import path from 'path'
+import { defineConfig } from "vite";
+import react from "@vitejs/plugin-react";
+import useClassy from "../../src/index.ts";
+import tailwindcss from "@tailwindcss/vite";
+import path from "path";
 
 export default defineConfig({
-  plugins: [react(), classyPlugin({ language: 'react' }), tailwindcss()],
+  plugins: [
+    react(),
+    useClassy({ language: "react", debug: true }),
+    tailwindcss(),
+  ],
   server: {
-    port: 3001
+    port: 3001,
   },
   resolve: {
     alias: {
-      '@': path.resolve(__dirname, './src')
-    }
-  }
-})
+      "@": path.resolve(__dirname, "./src"),
+    },
+  },
+});
