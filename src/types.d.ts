@@ -3,6 +3,7 @@ import type { Plugin, ViteDevServer } from "vite";
 
 type VariantClassNames = {
   [key: `class${string}`]: string;
+  [key: `className${string}`]: string;
 };
 
 export type DivWithVariants = DetailedHTMLProps<
@@ -60,5 +61,6 @@ export interface ViteServer extends ViteDevServer {
 // Type for React component props that can use class variants
 export type ClassyProps<TProps = {}> = TProps & {
   [key: `class:${string}`]: string;
+  [key: `className:${string}`]: string;
   className?: string;
 };

@@ -230,7 +230,7 @@ export default function useClassy(options: ClassyOptions = {}): Plugin {
       if (className.includes(":")) allClassesSet.add(className);
     });
 
-    // Transform the code
+    // Transform the code - apply the modifiers
     const transformedCode = transformClassModifiers(
       code,
       generatedClassesSet,
@@ -238,6 +238,7 @@ export default function useClassy(options: ClassyOptions = {}): Plugin {
       classAttrName
     );
 
+    // Merge all class/className attributes into a single attribute
     const result = mergeClassAttributes(transformedCode, classAttrName);
 
     return result;

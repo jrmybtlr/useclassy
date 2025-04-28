@@ -10,10 +10,12 @@ export const CLASS_MODIFIER_REGEX = /class:([\w-:]+)="([^"]*)"/g;
 export const MULTIPLE_CLASS_REGEX = /class="[^"]*"(\s*class="[^"]*")*/g;
 
 // React-specific constants
-export const REACT_CLASS_REGEX = /className="([^"]*)"(?![^>]*:className)/g;
-export const REACT_CLASS_MODIFIER_REGEX = /className:([\w-:]+)="([^"]*)"/g;
+export const REACT_CLASS_REGEX =
+  /className=(?:"([^"]*)"|{([^}]*)})(?![^>]*?:)/g;
+export const REACT_CLASS_MODIFIER_REGEX =
+  /(?:className|class):([\w-:]+)="([^"]*)"/g;
 export const REACT_MULTIPLE_CLASS_REGEX =
-  /className="[^"]*"(\s*className="[^"]*")*/g;
+  /(?:className|class)=(?:"[^"]*"|{[^}]*})(?:\s*(?:className|class)=(?:"[^"]*"|{[^}]*}))*|(?:className|class)="[^"]*"(?:\s*(?:className|class)="[^"]*")*/g;
 
 /**
  * Generates a hash string from the input string
@@ -38,10 +40,9 @@ export function extractClasses(
   classRegex: RegExp,
   classModifierRegex: RegExp
 ): void {
-  // Extract regular classes
   let classMatch;
   while ((classMatch = classRegex.exec(code)) !== null) {
-    const classes = classMatch[1];
+    const classes = classMatch[1] || classMatch[2];
     if (classes) {
       classes.split(" ").forEach((cls) => {
         if (cls.trim()) {
@@ -65,7 +66,6 @@ export function extractClasses(
           // Add the full modifier:class combination
           generatedClassesSet.add(`${modifiers}:${cls.trim()}`);
 
-          // Add individual modifier parts for better coverage
           if (modifierParts.length > 1) {
             modifierParts.forEach((part) => {
               if (part) generatedClassesSet.add(`${part}:${cls.trim()}`);
@@ -124,7 +124,11 @@ export function transformClassModifiers(
       }
     });
 
-    return `${classAttrName}="${modifiedClassesArr.join(" ")}"`;
+    // For React components, always use className as the attribute name
+    // regardless of whether the original was class: or className:
+    const finalAttrName =
+      classAttrName === "className" ? "className" : classAttrName;
+    return `${finalAttrName}="${modifiedClassesArr.join(" ")}"`;
   });
 }
 
@@ -133,21 +137,61 @@ export function transformClassModifiers(
  */
 export function mergeClassAttributes(code: string, attrName: string): string {
   const multipleClassRegex = new RegExp(
-    `${attrName}="[^"]*"(\\s*${attrName}="[^"]*")*`,
+    `(?:${attrName}|class)=(?:"[^"]*"|{[^}]*})(?:\\s*(?:${attrName}|class)=(?:"[^"]*"|{[^}]*}))*`,
     "g"
   );
 
   return code.replace(multipleClassRegex, (match) => {
-    const allClasses =
-      match
-        .match(new RegExp(`${attrName}="([^"]*)"`, "g"))
-        ?.map((cls) => {
-          const subMatch = cls.match(new RegExp(`${attrName}="([^"]*)"`));
-          return subMatch ? subMatch[1] : "";
-        })
-        .filter(Boolean)
-        .join(" ") || "";
+    const allClasses: string[] = [];
 
-    return `${attrName}="${allClasses}"`;
+    const quotedMatches = match.match(
+      new RegExp(`(?:${attrName}|class)="([^"]*)"`, "g")
+    );
+    if (quotedMatches) {
+      quotedMatches.forEach((quoted) => {
+        const subMatch = quoted.match(
+          new RegExp(`(?:${attrName}|class)="([^"]*)"`)
+        );
+        if (subMatch && subMatch[1] && subMatch[1].trim()) {
+          allClasses.push(subMatch[1].trim());
+        }
+      });
+    }
+
+    const jsxMatches = match.match(
+      new RegExp(`(?:${attrName}|class)={([^}]*)}`, "g")
+    );
+
+    if (jsxMatches) {
+      jsxMatches.forEach((jsx) => {
+        const templateMatch = jsx.match(/(?:className|class)={`([^`]*)`}/);
+        if (templateMatch?.[1]?.trim()) {
+          allClasses.push(templateMatch[1].trim());
+          return;
+        }
+
+        const exprMatch = jsx.match(/(?:className|class)={(.*)}/);
+        const expr = exprMatch?.[1]?.trim();
+        if (!expr) return;
+
+        if (allClasses.length === 0) return `${attrName}={${expr}}`;
+
+        return expr.includes("twMerge")
+          ? `${attrName}={${expr.replace(
+              /twMerge\(["']([^"']*)["']\)/,
+              `twMerge("$1 ${allClasses.join(" ")}")`
+            )}}`
+          : `${attrName}={\`${expr} ${allClasses.join(" ")}\`}`;
+      });
+    }
+
+    const finalAttrName = attrName === "className" ? "className" : attrName;
+
+    if (allClasses.length > 0 && !jsxMatches) {
+      return `${finalAttrName}="${allClasses.join(" ")}"`;
+    }
+
+    // If we couldn't process it properly, return the original
+    return match;
   });
 }
