@@ -81,7 +81,7 @@
                 <div class="ml-4">
                   <div class="ml-4">@import "tailwindcss";</div>
                   <div class="ml-4 text-white">
-                    @source "./../../.classy/output.classy.jsx";
+                    @source "./../../.classy/output.classy.html";
                   </div>
                   <div class="ml-4">...other config</div>
                 </div>

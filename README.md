@@ -1,14 +1,15 @@
 # vite-plugin-useclassy
 
-UseClassy enables simple separation of your Tailwind variants. Write cleaner component markup by using modifier attributes instead of complex class strings.
+UseClassy transforms Tailwind variant modifier attributes (`class:hover="..."`) into standard Tailwind classes (`hover:...`). This allows for cleaner component markup by separating base classes from stateful or responsive variants.
 
 ## Features
 
-- ✅ Transform `class:hover="text-blue-500"` to `class="hover:text-blue-500"`
-- ✅ Support for React (`className`) and Vue/HTML (`class`)
-- ✅ No runtime overhead - transforms during build/dev
-- ✅ Works with both Vite and Nuxt
-- ✅ Provides React hooks for class management
+- Transforms attributes like `class:hover="text-blue-500"` to standard `class="hover:text-blue-500"`.
+- Supports chaining modifiers like `class:dark:hover="text-blue-500"`.
+- Works seamlessly with React (`className`) and Vue/HTML (`class`).
+- Integrates with Vite's build process and dev server. No runtime overhead.
+- Smart Caching: Avoids reprocessing unchanged files during development.
+- Tailwind JIT Integration: Generates an output file containing all discovered variant classes to ensure Tailwind includes them in the final build.
 
 ## Installation
 
@@ -25,128 +26,104 @@ pnpm add vite-plugin-useclassy -D
 
 ## Vite Configuration
 
+Add `useClassy` to your Vite plugins. It's recommended to place it *before* Tailwind or other CSS processing plugins.
+
 ```ts
-import useClassy from 'vite-plugin-useclassy'
+// vite.config.ts
+import useClassy from 'vite-plugin-useclassy';
 
 export default {
   plugins: [
     useClassy({
-      // Optional: specify framework (defaults to auto-detect)
-      language: 'react', // or 'vue'
-      
-      // Optional: customize output directory
-      outputDir: '.classy',
-      
-      // Optional: customize output file name
-      outputFileName: 'output.classy.jsx'
-    })
+      language: 'react',  // or 'vue'
+
+      // Optional: Customize output directory. Defaults to '.classy'.
+      // outputDir: '.classy',
+
+      // Optional: Customize output file name. Defaults to 'output.classy.html'.
+      // outputFileName: 'generated-classes.html' 
+    }),
+    // ... other plugins
   ],
-}
+};
 ```
 
-## React Usage
+## React Usage (`className`)
 
-### Variant Classes
+### Variant Attributes
 
 ```jsx
-// Before (with plugin)
-<div 
-  className="text-black"
-  class:hover="text-blue-500"
-  class:dark="text-white"
-  class:sm:hover="font-bold"
+// Input (using class:variant attributes)
+<button 
+  className="px-4 py-2 rounded bg-blue-600 text-white"
+  class:hover="bg-blue-700 scale-105"
+  class:focus="ring-2 ring-blue-300"
+  class:disabled="opacity-50 cursor-not-allowed"
+  class:dark="bg-sky-700"
 />
 
-// After transformation
-<div className="text-black hover:text-blue-500 dark:text-white sm:hover:font-bold" />
+// Output (after transformation by the plugin)
+<button 
+  className="px-4 py-2 rounded bg-blue-600 text-white hover:bg-blue-700 hover:scale-105 focus:ring-2 focus:ring-blue-300 disabled:opacity-50 disabled:cursor-not-allowed dark:bg-sky-700 dark:hover:bg-sky-800" 
+/>
 ```
 
-### React Hooks (Optional)
-
-```jsx
-import { useClassyHook, classy } from 'vite-plugin-useclassy/react';
-
-// Hook version (for components)
-function Component({ isActive }) {
-  const buttonClass = useClassyHook(
-    'px-4 py-2 rounded', 
-    { 'bg-blue-500 text-white': isActive },
-    isActive && 'font-bold'
-  );
-  
-  return <button className={buttonClass}>Click Me</button>;
-}
-
-// Function version (for non-component contexts)
-const divClass = classy(
-  'p-4 border', 
-  { 'border-red-500': hasError },
-  responsive && ['sm:w-full', 'md:w-1/2']
-);
-```
-
-## Vue Usage
+## Vue / HTML Usage (`class`)
 
 ```vue
 <template>
-  <!-- Before (with plugin) -->
-  <div 
-    class="text-black"
-    class:hover="text-blue-500"
-    class:dark="text-white"
-    class:sm:hover="font-bold"
-  >Content</div>
-  
-  <!-- After transformation -->
-  <div class="text-black hover:text-blue-500 dark:text-white sm:hover:font-bold">
-    Content
-  </div>
+  <button
+    class="px-4 py-2 rounded bg-blue-600 text-white"
+    class:hover="bg-blue-700 scale-105"
+    class:focus="ring-2 ring-blue-300"
+    class:dark="bg-sky-700"
+  />
+
+  <!-- Output -->
+  <button
+    class="px-4 py-2 rounded bg-blue-600 text-white hover:bg-blue-700 hover:scale-105 focus:ring-2 focus:ring-blue-300 disabled:opacity-50 disabled:cursor-not-allowed dark:bg-sky-700 dark:hover:bg-sky-800"
+  />
 </template>
 ```
 
-## Tailwind Integration
+## Tailwind JIT Integration
 
-The plugin automatically creates a file with all used variant classes to ensure Tailwind JIT properly picks them up:
+Simply add the `output.classy.html` file to your project and include it as a source file in your tailwind config.
 
-```jsx
-// .classy/output.classy.jsx (auto-generated)
-export const classyClasses = [
-  'hover:text-blue-500',
-  'dark:text-white',
-  'sm:hover:font-bold',
-  // ... other variant classes
-];
-
-export default function ClassyOutput() {
-  return (
-    <div className={classyClasses.join(' ')} style={{ display: 'none' }}>
-      {/* This component is used for Tailwind JIT to detect used classes */}
-    </div>
-  );
-}
+```css
+/* your-main-css-file.css */
+@import "tailwindcss";
+@source "./../../.classy/output.classy.html";
 ```
 
-## VS Code Tailwind IntelliSense
+## Tailwind IntelliSense
 
-Add to your project's `.vscode/settings.json`:
+Add the following to your VSCode settings to enable IntelliSense for UseClassy.
 
 ```json
 {
-  "tailwindCSS.classAttributes": [
-    "class",
-    "className",
-    "class:.*"
-  ]
+  "tailwindCSS.classAttributes": ["class", "className", "class:[\\w:-]*"]
 }
 ```
 
-## Performance
+## Debugging
 
-The plugin is designed with performance in mind:
-- Uses regex-based transformations for speed
-- Implements caching to avoid reprocessing unchanged files
-- Only processes relevant files with supported extensions
+Enable debugging by setting `debug: true` in the plugin options. This will log detailed information about the plugin's operation to the console.
+
+```ts
+useClassy({
+  debug: true,
+});
+```
+
+## Processing Rules
+- Only processes files with `.vue`, `.ts`, `.tsx`, `.js`, `.jsx`, `.html` extensions.
+- Does not process files in the `node_modules` directory.
+- Does not process files in `.gitignore` directories.
+- Does not process virtual modules.
+
+## Contributing
+Contributions are welcome! Please open an issue or submit a pull request.
 
 ## License
-
 MIT
