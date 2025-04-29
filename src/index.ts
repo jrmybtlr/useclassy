@@ -1,5 +1,6 @@
 import type { Plugin } from "vite";
 import fs from "fs";
+import path from "path";
 
 // Import utility functions
 import {
@@ -16,8 +17,10 @@ import {
 import {
   loadIgnoredDirectories,
   shouldProcessFile,
-  writeOutputFile,
+  writeOutputFileDebounced,
+  writeOutputFileDirect,
   writeGitignore,
+  debounce,
 } from "./utils";
 
 // Import types
@@ -30,6 +33,7 @@ import type { ClassyOptions, ViteServer } from "./types";
  * @param options.language - The framework language to use (e.g., "vue" or "react")
  * @param options.outputDir - The directory to output the generated class file
  * @param options.outputFileName - The filename for the generated class file
+ * @param options.debug - Enable debug logging
  * @example
  * // vite.config.js
  * import useClassy from 'vite-plugin-useclassy';
@@ -39,7 +43,7 @@ import type { ClassyOptions, ViteServer } from "./types";
  *     useClassy({
  *       language: 'react',
  *       outputDir: '.classy',
- *       outputFileName: 'output.classy.jsx'
+ *       outputFileName: 'output.classy.html'
  *     })
  *   ]
  * }
@@ -47,13 +51,15 @@ import type { ClassyOptions, ViteServer } from "./types";
  */
 export default function useClassy(options: ClassyOptions = {}): Plugin {
   const transformCache: Map<string, string> = new Map();
-  const ignoredDirectories = loadIgnoredDirectories();
-  const allClassesSet: Set<string> = new Set();
+  let ignoredDirectories: string[] = [];
+  let allClassesSet: Set<string> = new Set();
+  let isBuild = false;
 
   // Options
   const outputDir = options.outputDir || ".classy";
-  const outputFileName = options.outputFileName || "output.classy.jsx";
+  const outputFileName = options.outputFileName || "output.classy.html";
   const isReact = options.language === "react";
+  const debug = options.debug || false;
 
   // Ensure output directory is in .gitignore
   writeGitignore(outputDir);
@@ -65,172 +71,275 @@ export default function useClassy(options: ClassyOptions = {}): Plugin {
     : CLASS_MODIFIER_REGEX;
   const classAttrName = isReact ? "className" : "class";
 
-  let needsOutputUpdate = false;
-  let initialOutputWritten = false;
-  let filesProcessed = 0;
+  let initialScanComplete = false;
+  let lastWrittenClassCount = -1;
+  let notifyWsDebounced: (() => void) | null = null;
 
   return {
     name: "useClassy",
     enforce: "pre",
 
+    configResolved(config) {
+      isBuild = config.command === "build";
+      ignoredDirectories = loadIgnoredDirectories();
+      if (debug)
+        console.log(`useClassy: Running in ${isBuild ? "build" : "dev"} mode.`);
+    },
+
     configureServer(server: ViteServer) {
+      if (isBuild) return;
+
+      if (debug) console.log("🎩 Configuring dev server...");
       setupFileWatchers(server);
       setupOutputEndpoint(server);
-      setupWebSocketCommunication(server);
+      notifyWsDebounced = setupWebSocketCommunicationAndReturnNotifier(server);
 
-      if (server.httpServer) {
-        server.httpServer.once("listening", () => {
-          if (needsOutputUpdate && !initialOutputWritten) {
-            writeOutputFile(allClassesSet, outputDir, outputFileName, isReact);
-            initialOutputWritten = true;
-          }
-        });
-      }
+      server.httpServer?.once("listening", () => {
+        if (
+          initialScanComplete &&
+          allClassesSet.size > 0 &&
+          lastWrittenClassCount !== allClassesSet.size
+        ) {
+          if (debug) console.log("🎩 Initial write on server ready.");
+          writeOutputFileDirect(allClassesSet, outputDir, outputFileName);
+          lastWrittenClassCount = allClassesSet.size;
+        }
+      });
     },
 
     transform(code: string, id: string) {
-      if (!shouldProcessFile(id, ignoredDirectories)) return;
-
-      if (options.debug) console.log("Processing file:", id);
+      if (!shouldProcessFile(id, ignoredDirectories)) return null;
 
       this.addWatchFile(id);
       const cacheKey = generateCacheKey(id, code);
 
-      if (options.debug) console.log("Cache key:", cacheKey);
-
       if (transformCache.has(cacheKey)) {
+        if (debug) console.log("🎩 Cache key" + cacheKey + " hit for:", id);
         return transformCache.get(cacheKey);
       }
 
-      const result = processCode(code, allClassesSet);
-      filesProcessed++;
+      if (options.debug) console.log("Processing file:", id);
+      if (options.debug) console.log("Cache key:", cacheKey);
 
-      if (options.debug) console.log("Files processed:", filesProcessed);
+      const { transformedCode, classesChanged } = processCode(
+        code,
+        allClassesSet
+      );
 
-      if (filesProcessed === 1 && !initialOutputWritten) {
-        setTimeout(() => {
-          writeOutputFile(allClassesSet, outputDir, outputFileName, isReact);
-          initialOutputWritten = true;
-        }, 0);
+      transformCache.set(cacheKey, transformedCode);
+
+      if (!isBuild && classesChanged) {
+        if (debug)
+          console.log(
+            "useClassy: Classes changed, scheduling debounced write & WS notify."
+          );
+        writeOutputFileDebounced(
+          allClassesSet,
+          outputDir,
+          outputFileName,
+          isReact
+        );
+        notifyWsDebounced?.();
       }
 
-      transformCache.set(cacheKey, result);
+      if (!initialScanComplete) {
+        if (debug) console.log("🎩 Initial scan marked as complete.");
+        initialScanComplete = true;
+      }
 
-      return result;
+      // Return transformed code as a CodeObject for source maps if needed later
+      // For now, just the string is fine based on current logic.
+      return {
+        code: transformedCode,
+        map: null, // No source map generated currently
+      };
     },
 
-    // TODO: UPDATE THIS
     buildStart() {
-      // Reset state for build
-      // allClassesSet.clear();
-      // transformCache.clear();
-      // initialOutputWritten = false;
-      // needsOutputUpdate = true;
+      if (debug) console.log("🎩 Build starting, resetting state.");
+      allClassesSet = new Set();
+      transformCache.clear();
+      lastWrittenClassCount = -1;
+      initialScanComplete = false;
     },
 
     buildEnd() {
-      // Generate final output file with all collected classes
-      // if (allClassesSet.size > 0) {
-      //   writeOutputFile(allClassesSet, outputDir, outputFileName, isReact);
-      // }
-    },
+      if (!isBuild) return;
 
-    closeBundle() {
-      // Clean up resources
-      // transformCache.clear();
-      // allClassesSet.clear();
+      if (allClassesSet.size > 0) {
+        if (debug)
+          console.log("useClassy: Build ended, writing final output file.");
+        writeOutputFileDirect(allClassesSet, outputDir, outputFileName);
+      } else {
+        if (debug)
+          console.log("useClassy: Build ended, no classes found to write.");
+      }
     },
   };
 
-  /**
-   * Sets up file watchers for ViteServer
-   */
   function setupFileWatchers(server: ViteServer) {
-    function isIgnored(filePath: string) {
-      return (
-        filePath.endsWith("useClassy.ts") ||
-        filePath.includes("/.classy/output.classy.jsx") ||
-        !shouldProcessFile(filePath, ignoredDirectories)
+    const processChange = async (filePath: string, event: "change" | "add") => {
+      const normalizedPath = path.normalize(filePath);
+      if (!shouldProcessFile(normalizedPath, ignoredDirectories)) return;
+
+      if (debug) console.log(`🎩 Saving ${event} file:`, normalizedPath);
+
+      try {
+        if (fs.existsSync(normalizedPath)) {
+          const code = fs.readFileSync(normalizedPath, "utf-8");
+          // Invalidate cache *before* transformRequest
+          transformCache.delete(generateCacheKey(normalizedPath, code));
+          // Retransform - transform hook handles write/notify
+          await server.transformRequest(normalizedPath);
+        } else {
+          // File deleted - just trigger write/notify
+          if (debug)
+            console.log(
+              `useClassy: Watched file deleted (during ${event}):`,
+              normalizedPath
+            );
+          writeOutputFileDebounced(
+            allClassesSet,
+            outputDir,
+            outputFileName,
+            isReact
+          );
+          notifyWsDebounced?.();
+          return; // Skip transform if file doesn't exist
+        }
+      } catch (error) {
+        console.error(
+          `useClassy: Error processing ${event} for ${normalizedPath}:`,
+          error
+        );
+      }
+    };
+
+    server.watcher.on("change", (filePath: string) =>
+      processChange(filePath, "change")
+    );
+    server.watcher.on("add", (filePath: string) =>
+      processChange(filePath, "add")
+    );
+    server.watcher.on("unlink", (filePath: string) => {
+      const normalizedPath = path.normalize(filePath);
+      if (!shouldProcessFile(normalizedPath, ignoredDirectories)) return;
+      if (debug) console.log(`🎩 Watcher detected unlink:`, normalizedPath);
+      // Invalidate cache for the deleted file path - might not be strictly necessary
+      // but good practice if using path-based cache keys elsewhere.
+      // Assume generateCacheKey uses path; find a way to remove based on path?
+      // Simple approach: Just trigger write/notify. A full rescan would be needed
+      // to accurately remove classes originating *only* from this file.
+      writeOutputFileDebounced(
+        allClassesSet,
+        outputDir,
+        outputFileName,
+        isReact
       );
-    }
-
-    server.watcher.on("change", async (filePath: string) => {
-      if (isIgnored(filePath)) return;
-      const code = fs.readFileSync(filePath, "utf-8");
-      transformCache.delete(generateCacheKey(filePath, code));
-      await server.transformRequest(filePath);
-      needsOutputUpdate = true;
-      writeOutputFile(allClassesSet, outputDir, outputFileName, isReact);
-    });
-
-    server.watcher.on("add", async (filePath: string) => {
-      if (isIgnored(filePath)) return;
-      await server.transformRequest(filePath);
-      needsOutputUpdate = true;
-      writeOutputFile(allClassesSet, outputDir, outputFileName, isReact);
+      notifyWsDebounced?.();
     });
   }
 
-  /**
-   * Sets up the output endpoint for the server
-   */
   function setupOutputEndpoint(server: ViteServer) {
     server.middlewares.use(
       "/__useClassy__/generate-output",
       (_req: any, res: any) => {
-        if (needsOutputUpdate) {
-          writeOutputFile(allClassesSet, outputDir, outputFileName, isReact);
-          needsOutputUpdate = false;
-          res.statusCode = 200;
-          res.end("Output file generated");
-        } else {
-          res.statusCode = 304;
-          res.end("No changes to generate");
-        }
+        if (debug)
+          console.log(
+            "useClassy: Manual output generation requested via HTTP endpoint."
+          );
+        writeOutputFileDirect(allClassesSet, outputDir, outputFileName);
+        lastWrittenClassCount = allClassesSet.size;
+        res.statusCode = 200;
+        res.end(`Output file generated (${allClassesSet.size} classes)`);
       }
     );
   }
 
-  /**
-   * Sets up WebSocket communication for the server
-   */
-  function setupWebSocketCommunication(server: ViteServer) {
-    // Notify clients when classes are updated
-    server.ws.on("connection", () => {
-      // Send initial classes on connection
+  function setupWebSocketCommunicationAndReturnNotifier(
+    server: ViteServer
+  ): () => void {
+    // Use Vite's standard custom event structure
+    const sendUpdate = () => {
+      if (server.ws) {
+        const payload = {
+          type: "custom", // Vite standard type
+          event: "classy:classes-updated",
+          data: { count: allClassesSet.size },
+        } as const; // Use 'as const' for stricter typing if needed
+        server.ws.send(payload);
+        if (debug)
+          console.log(
+            "useClassy: Sent WebSocket update: classy:classes-updated"
+          );
+      }
+    };
+
+    const debouncedSendUpdate = debounce(sendUpdate, 150);
+
+    server.ws?.on("connection", (client) => {
+      if (debug) console.log("🎩 WebSocket client connected.");
       if (allClassesSet.size > 0) {
-        server.ws.send("classy:classes-updated", {
-          count: allClassesSet.size,
-        });
+        sendUpdate();
+      }
+
+      // Listen for Vite-style custom events from the client
+      client.on("message", (rawMsg) => {
+        try {
+          const message = JSON.parse(rawMsg.toString());
+          if (
+            message.type === "custom" &&
+            message.event === "classy:generate-output"
+          ) {
+            if (debug)
+              console.log(
+                "useClassy: Manual output generation requested via WebSocket."
+              );
+            writeOutputFileDirect(allClassesSet, outputDir, outputFileName);
+            lastWrittenClassCount = allClassesSet.size;
+            // Send confirmation back using the same structure
+            client.send(
+              JSON.stringify({
+                // Ensure payload is stringified
+                type: "custom",
+                event: "classy:output-generated",
+                data: { success: true, count: allClassesSet.size },
+              })
+            );
+            sendUpdate(); // Also send the updated class count
+          }
+        } catch (e) {
+          // Ignore non-JSON messages or messages with incorrect format
+          if (debug)
+            console.log(
+              "useClassy: Received non-standard WS message",
+              rawMsg.toString()
+            );
+        }
+      });
+    });
+
+    return debouncedSendUpdate;
+  }
+
+  function processCode(
+    code: string,
+    currentGlobalClasses: Set<string>
+  ): { transformedCode: string; classesChanged: boolean } {
+    let classesChanged = false;
+    const generatedClassesSet: Set<string> = new Set();
+
+    extractClasses(code, generatedClassesSet, classRegex, classModifierRegex);
+
+    generatedClassesSet.forEach((className) => {
+      if (className.includes(":")) {
+        if (!currentGlobalClasses.has(className)) {
+          currentGlobalClasses.add(className);
+          classesChanged = true;
+        }
       }
     });
 
-    // Listen for client requests to generate output
-    server.ws.on("classy:generate-output", (_, client) => {
-      writeOutputFile(allClassesSet, outputDir, outputFileName, isReact);
-      needsOutputUpdate = false;
-      client.send("classy:output-generated", {
-        success: true,
-        count: allClassesSet.size,
-      });
-    });
-  }
-
-  /**
-   * Processes the code to extract and transform classes
-   */
-  function processCode(code: string, allClassesSet: Set<string>): string {
-    const generatedClassesSet: Set<string> = new Set();
-
-    // Extract all classes from the code
-    extractClasses(code, generatedClassesSet, classRegex, classModifierRegex);
-
-    // Add special classes to the global set
-    generatedClassesSet.forEach((className) => {
-      if (className.includes(":")) allClassesSet.add(className);
-    });
-
-    // Transform the code - apply the modifiers
     const transformedCode = transformClassModifiers(
       code,
       generatedClassesSet,
@@ -238,10 +347,15 @@ export default function useClassy(options: ClassyOptions = {}): Plugin {
       classAttrName
     );
 
-    // Merge all class/className attributes into a single attribute
     const result = mergeClassAttributes(transformedCode, classAttrName);
 
-    return result;
+    if (debug && classesChanged) {
+      console.log(
+        `useClassy: Global class set size changed to ${currentGlobalClasses.size}`
+      );
+    }
+
+    return { transformedCode: result, classesChanged };
   }
 }
 
