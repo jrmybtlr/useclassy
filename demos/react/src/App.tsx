@@ -11,9 +11,12 @@ function App() {
         React Demo
       </h1>
 
-      {/* <div className={twMerge("text-red-500")} class:hover="text-blue-500">
+      <div
+        className={twMerge("mt-12 text-4xl text-red-500")}
+        class:hover="text-blue-500"
+      >
         Tailwind Merge
-      </div> */}
+      </div>
     </div>
   );
 }

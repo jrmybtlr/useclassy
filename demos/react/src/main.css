@@ -1,5 +1,5 @@
 @import "tailwindcss";
-@source "./../.classy/output.classy.jsx";
+@source "./../.classy/output.classy.html";
 
 body {
   @apply bg-zinc-950 text-white;
