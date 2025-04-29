@@ -136,62 +136,107 @@ export function transformClassModifiers(
  * Merges multiple class attributes into a single one
  */
 export function mergeClassAttributes(code: string, attrName: string): string {
+  // Regex to find blocks of adjacent class/className attributes
   const multipleClassRegex = new RegExp(
-    `(?:${attrName}|class)=(?:"[^"]*"|{[^}]*})(?:\\s*(?:${attrName}|class)=(?:"[^"]*"|{[^}]*}))*`,
+    // Match the first attribute (quoted string or JSX)
+    `((?:${attrName}|class)=(?:(?:"[^"]*")|(?:{[^}]*})))` +
+      // Match subsequent attributes separated by whitespace
+      `(?:\\s+((?:${attrName}|class)=(?:(?:"[^"]*")|(?:{[^}]*}))))*`,
     "g"
   );
 
   return code.replace(multipleClassRegex, (match) => {
-    const allClasses: string[] = [];
+    const staticClasses: string[] = [];
+    let jsxExpr: string | null = null;
+    let isFunctionCall = false;
 
-    const quotedMatches = match.match(
-      new RegExp(`(?:${attrName}|class)="([^"]*)"`, "g")
-    );
-    if (quotedMatches) {
-      quotedMatches.forEach((quoted) => {
-        const subMatch = quoted.match(
-          new RegExp(`(?:${attrName}|class)="([^"]*)"`)
-        );
-        if (subMatch && subMatch[1] && subMatch[1].trim()) {
-          allClasses.push(subMatch[1].trim());
-        }
-      });
-    }
-
-    const jsxMatches = match.match(
-      new RegExp(`(?:${attrName}|class)={([^}]*)}`, "g")
+    // Regex to find individual attributes (quoted string or JSX) within the matched block
+    const attrFinderRegex = new RegExp(
+      `(?:${attrName}|class)=(?:(?:"([^"]*)")|(?:{([^}]*)}))`,
+      "g"
     );
 
-    if (jsxMatches) {
-      jsxMatches.forEach((jsx) => {
-        const templateMatch = jsx.match(/(?:className|class)={`([^`]*)`}/);
-        if (templateMatch?.[1]?.trim()) {
-          allClasses.push(templateMatch[1].trim());
-          return;
+    let singleAttrMatch;
+    while ((singleAttrMatch = attrFinderRegex.exec(match)) !== null) {
+      const staticClassValue = singleAttrMatch[1]; // Content of "..."
+      const potentialJsx = singleAttrMatch[2]; // Content of {...}
+
+      if (staticClassValue !== undefined) {
+        // Directly add static classes from quoted attributes
+        if (staticClassValue.trim()) {
+          staticClasses.push(staticClassValue.trim());
         }
+      } else if (potentialJsx !== undefined) {
+        const currentJsx = potentialJsx.trim();
+        if (currentJsx) {
+          // Check if it's a template literal like {`...`}, treat its content as static
+          if (currentJsx.startsWith("`") && currentJsx.endsWith("`")) {
+            const literalContent = currentJsx.slice(1, -1).trim();
+            if (literalContent) {
+              staticClasses.push(literalContent);
+            }
+          } else {
+            // It's a non-literal JSX expression. Store it.
+            // Prioritize function calls if encountered.
+            const currentIsFunctionCall = /^[a-zA-Z_][\w.]*\(.*\)$/.test(
+              currentJsx
+            );
 
-        const exprMatch = jsx.match(/(?:className|class)={(.*)}/);
-        const expr = exprMatch?.[1]?.trim();
-        if (!expr) return;
-
-        if (allClasses.length === 0) return `${attrName}={${expr}}`;
-
-        return expr.includes("twMerge")
-          ? `${attrName}={${expr.replace(
-              /twMerge\(["']([^"']*)["']\)/,
-              `twMerge("$1 ${allClasses.join(" ")}")`
-            )}}`
-          : `${attrName}={\`${expr} ${allClasses.join(" ")}\`}`;
-      });
+            if (!jsxExpr || (currentIsFunctionCall && !isFunctionCall)) {
+              // Store if it's the first JSX or if it's a function call and the previous wasn't
+              jsxExpr = currentJsx;
+              isFunctionCall = currentIsFunctionCall;
+            } else if (currentIsFunctionCall && isFunctionCall) {
+              // If both current and previous are function calls, prefer the current one (last encountered)
+              jsxExpr = currentJsx;
+            } else if (!jsxExpr) {
+              // If no JSX stored yet, store the current non-function expression
+              jsxExpr = currentJsx;
+              isFunctionCall = false;
+            }
+          }
+        }
+      }
     }
 
     const finalAttrName = attrName === "className" ? "className" : attrName;
+    const combinedStatic = staticClasses.join(" ").trim();
 
-    if (allClasses.length > 0 && !jsxMatches) {
-      return `${finalAttrName}="${allClasses.join(" ")}"`;
+    if (jsxExpr) {
+      if (!combinedStatic) {
+        // Only JSX expression found
+        return `${finalAttrName}={${jsxExpr}}`;
+      }
+
+      if (isFunctionCall) {
+        // Try to inject static classes into the function call
+        const lastParenIndex = jsxExpr.lastIndexOf(")");
+        if (lastParenIndex !== -1) {
+          // Add static classes as a new template literal argument
+          const modifiedJsxExpr = `${jsxExpr.substring(
+            0,
+            lastParenIndex
+          )}, \`${combinedStatic}\`${jsxExpr.substring(lastParenIndex)}`;
+          return `${finalAttrName}={${modifiedJsxExpr}}`;
+        } else {
+          // Fallback if function call format is unexpected
+          console.warn(
+            "Could not inject classes into function call format:",
+            jsxExpr
+          );
+          // Combine using template literal as a fallback
+          return `${finalAttrName}={\`${combinedStatic} \${${jsxExpr}}\`}`;
+        }
+      } else {
+        // Combine static classes and non-function JSX using a template literal
+        return `${finalAttrName}={\`${combinedStatic} \${${jsxExpr}}\`}`;
+      }
+    } else if (combinedStatic) {
+      // Only static classes found
+      return `${finalAttrName}="${combinedStatic}"`;
+    } else {
+      // No classes found at all (e.g. class="" className={undefined})
+      return ""; // Return empty string to remove the attributes
     }
-
-    // If we couldn't process it properly, return the original
-    return match;
   });
 }

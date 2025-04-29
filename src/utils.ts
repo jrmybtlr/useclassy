@@ -232,6 +232,5 @@ export function shouldProcessFile(
   }
   return true;
 }
-
 // Remove original writeOutputFile export if it existed to avoid conflict
 // (Assuming the provided snippet was partial and it might have existed below)
