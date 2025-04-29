@@ -75,6 +75,9 @@ export default function useClassy(options: ClassyOptions = {}): Plugin {
   let lastWrittenClassCount = -1;
   let notifyWsDebounced: (() => void) | null = null;
 
+  // Pre-allocate the set for generated classes from each file
+  const generatedClassesSet: Set<string> = new Set();
+
   return {
     name: "useClassy",
     enforce: "pre",
@@ -275,7 +278,10 @@ export default function useClassy(options: ClassyOptions = {}): Plugin {
       }
     };
 
-    const debouncedSendUpdate = debounce(sendUpdate, 150);
+    // Only create the debounced function once
+    if (!notifyWsDebounced) {
+      notifyWsDebounced = debounce(sendUpdate, 150);
+    }
 
     server.ws?.on("connection", (client) => {
       if (debug) console.log("🎩 WebSocket client connected.");
@@ -319,7 +325,7 @@ export default function useClassy(options: ClassyOptions = {}): Plugin {
       });
     });
 
-    return debouncedSendUpdate;
+    return notifyWsDebounced; // Return the memoized debounced function
   }
 
   function processCode(
@@ -327,7 +333,7 @@ export default function useClassy(options: ClassyOptions = {}): Plugin {
     currentGlobalClasses: Set<string>
   ): { transformedCode: string; classesChanged: boolean } {
     let classesChanged = false;
-    const generatedClassesSet: Set<string> = new Set();
+    generatedClassesSet.clear();
 
     extractClasses(code, generatedClassesSet, classRegex, classModifierRegex);
 
