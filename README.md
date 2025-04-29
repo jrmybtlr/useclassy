@@ -4,11 +4,10 @@ UseClassy enables simple separation of your Tailwind variants. Write cleaner com
 
 ## Features
 
-- ✅ Transform `class:hover="text-blue-500"` to `class="hover:text-blue-500"`
-- ✅ Support for React (`className`) and Vue/HTML (`class`)
-- ✅ No runtime overhead - transforms during build/dev
-- ✅ Works with both Vite and Nuxt
-- ✅ Provides React hooks for class management
+- Transform `class:hover="text-blue-500"` to `class="hover:text-blue-500"`
+- Support for React (`className`) and Vue/HTML (`class`)
+- No runtime overhead - transforms during build/dev
+- Works with Vite and Tailwind 4
 
 ## Installation
 
@@ -31,14 +30,13 @@ import useClassy from 'vite-plugin-useclassy'
 export default {
   plugins: [
     useClassy({
-      // Optional: specify framework (defaults to auto-detect)
       language: 'react', // or 'vue'
       
       // Optional: customize output directory
       outputDir: '.classy',
       
       // Optional: customize output file name
-      outputFileName: 'output.classy.jsx'
+      outputFileName: 'output.classy.html'
     })
   ],
 }
@@ -59,30 +57,6 @@ export default {
 
 // After transformation
 <div className="text-black hover:text-blue-500 dark:text-white sm:hover:font-bold" />
-```
-
-### React Hooks (Optional)
-
-```jsx
-import { useClassyHook, classy } from 'vite-plugin-useclassy/react';
-
-// Hook version (for components)
-function Component({ isActive }) {
-  const buttonClass = useClassyHook(
-    'px-4 py-2 rounded', 
-    { 'bg-blue-500 text-white': isActive },
-    isActive && 'font-bold'
-  );
-  
-  return <button className={buttonClass}>Click Me</button>;
-}
-
-// Function version (for non-component contexts)
-const divClass = classy(
-  'p-4 border', 
-  { 'border-red-500': hasError },
-  responsive && ['sm:w-full', 'md:w-1/2']
-);
 ```
 
 ## Vue Usage
