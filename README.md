@@ -1,6 +1,6 @@
-# vite-plugin-useclassy
+# 🎩 UseClassy
 
-UseClassy transforms Tailwind variant modifier attributes (`class:hover="..."`) into standard Tailwind classes (`hover:...`). This allows for cleaner component markup by separating base classes from stateful or responsive variants.
+UseClassy transforms Tailwind variant attributes (`class:hover="..."`) into standard Tailwind classes (`hover:...`). This allows for cleaner component markup by separating base classes from stateful or responsive variants.
 
 ## Features
 
@@ -9,7 +9,7 @@ UseClassy transforms Tailwind variant modifier attributes (`class:hover="..."`) 
 - Works seamlessly with React (`className`) and Vue/HTML (`class`).
 - Integrates with Vite's build process and dev server. No runtime overhead.
 - Smart Caching: Avoids reprocessing unchanged files during development.
-- Tailwind JIT Integration: Generates an output file containing all discovered variant classes to ensure Tailwind includes them in the final build.
+- Runs before Tailwind JIT compiler with HMR and TailwindMerge support.
 
 ## Installation
 
@@ -26,7 +26,7 @@ pnpm add vite-plugin-useclassy -D
 
 ## Vite Configuration
 
-Add `useClassy` to your Vite plugins. It's recommended to place it *before* Tailwind or other CSS processing plugins.
+Add `useClassy` to your Vite plugins. It's recommended that you place it before Tailwind or other CSS processing plugins.
 
 ```ts
 // vite.config.ts
@@ -37,7 +37,7 @@ export default {
     useClassy({
       language: 'react',  // or 'vue'
 
-      // Optional: Customize output directory. Defaults to '.classy'.
+      // Optional: Customize the output directory. Defaults to '.classy'.
       // outputDir: '.classy',
 
       // Optional: Customize output file name. Defaults to 'output.classy.html'.
@@ -88,7 +88,7 @@ export default {
 
 ## Tailwind JIT Integration
 
-Simply add the `output.classy.html` file to your project and include it as a source file in your tailwind config.
+Add the `output.classy.html` as a source file in your tailwind config.
 
 ```css
 /* your-main-css-file.css */
