@@ -5,5 +5,5 @@
     "allowImportingTsExtensions": true,
     "noEmit": true
   },
-  "include": ["src/**/*.ts", "src/**/*.tsx", "src/**/*.vue"]
+  "include": ["app/**/*.ts", "app/**/*.tsx", "app/**/*.vue", "nuxt.config.ts"]
 }
