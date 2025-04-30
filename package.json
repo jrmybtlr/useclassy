@@ -6,11 +6,12 @@
     "dev": "pnpm -r dev",
     "test": "vitest run src/*",
     "test:watch": "vitest src/*",
-    "release:major": "pnpm run test && changelogen --release --major && pnpm publish && pnpm run nuxt-module:release",
-    "release:minor": "pnpm run test && changelogen --release --minor && pnpm publish && pnpm run nuxt-module:release",
-    "release:patch": "pnpm run test && changelogen --release --patch && pnpm publish && pnpm run nuxt-module:release",
-    "build": "pnpm i --no-frozen-lockfile && pnpm -r --stream build",
-    "prepublishOnly": "pnpm run --prefix docs bundle",
+    "release:major": "changelogen --release --major && pnpm publish",
+    "release:minor": "changelogen --release --minor && pnpm publish",
+    "release:patch": "changelogen --release --patch && pnpm publish",
+    "build": "vite build",
+    "build:website": "pnpm i --no-frozen-lockfile && pnpm -r --stream build",
+    "prepublishOnly": "pnpm run build",
     "deploy": "pnpm dlx nuxthub deploy --prefix ./nuxt-web"
   },
   "keywords": [
@@ -58,18 +59,19 @@
     "url": "git+https://github.com/jrmybtlr/use-classy.git"
   },
   "devDependencies": {
-    "changelogen": "^0.5.7",
-    "vitest": "^3.1.1",
-    "jsdom": "^26.0.0",
-    "vite": "^6.3.2",
+    "@types/react": "^18.2.0",
     "@vitest/ui": "^3.0.6",
-    "vite-plugin-inspect": "^11.0.1",
+    "changelogen": "^0.5.7",
+    "jsdom": "^26.0.0",
     "typescript": "^5.0.2",
-    "vite-plugin-dts": "^3.7.3"
+    "vite": "^6.3.2",
+    "vite-plugin-dts": "^3.7.3",
+    "vite-plugin-inspect": "^11.0.1",
+    "vitest": "^3.1.1"
   },
   "peerDependencies": {
-    "vite": "^5.0.0 || ^6.0.0",
-    "react": "^16.8.0 || ^17.0.0 || ^18.0.0"
+    "react": "^16.8.0 || ^17.0.0 || ^18.0.0",
+    "vite": "^5.0.0 || ^6.0.0"
   },
   "resolutions": {
     "debug": "4.3.4",

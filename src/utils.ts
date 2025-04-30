@@ -124,7 +124,7 @@ function _writeOutputFile(
     // Check if file exists before deciding to skip write based on empty classes
     const filePath = path.join(process.cwd(), outputDir, outputFileName);
     if (allClasses.length === 0 && fs.existsSync(filePath)) {
-      console.log("useClassy: No modified classes detected, skipping write.");
+      console.log("🎩 No modified classes detected, skipping write.");
       return;
     }
 
@@ -155,14 +155,10 @@ function _writeOutputFile(
     fs.writeFileSync(tempFilePath, fileContent, { encoding: "utf-8" });
     fs.renameSync(tempFilePath, filePath);
     console.log(
-      "useClassy: Output file written to " +
-        filePath +
-        " (" +
-        allClasses.length +
-        " classes)"
+      "🎩 Output" + allClasses.length + "classes written to " + filePath
     );
   } catch (error) {
-    console.error("useClassy: Error writing output file:", error);
+    console.error("🎩 Error writing output file:", error);
   }
 }
 
