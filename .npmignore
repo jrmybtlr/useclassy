@@ -1,0 +1,25 @@
+# Development files
+.git/
+.github/
+.vscode/
+.cursor/
+node_modules/
+demos/
+src/
+tests/
+.gitignore
+.npmrc
+*.log
+
+# Configuration files
+.eslintrc*
+.prettierrc*
+tsconfig*.json
+vite.config.ts
+vitest.config.js
+pnpm-workspace.yaml
+pnpm-lock.yaml
+
+# Demo and test files
+**/*.test.ts
+**/*.spec.ts 

@@ -88,7 +88,7 @@ export default function useClassy(options: ClassyOptions = {}): Plugin {
       isBuild = config.command === "build";
       ignoredDirectories = loadIgnoredDirectories();
       if (options.debug)
-        console.log(`useClassy: Running in ${isBuild ? "build" : "dev"} mode.`);
+        console.log(`🎩 Running in ${isBuild ? "build" : "dev"} mode.`);
     },
 
     configureServer(server: ViteServer) {
@@ -126,8 +126,8 @@ export default function useClassy(options: ClassyOptions = {}): Plugin {
         return transformCache.get(cacheKey);
       }
 
-      if (options.debug) console.log("Processing file:", id);
-      if (options.debug) console.log("Cache key:", cacheKey);
+      if (options.debug) console.log("🎩 Processing file:", id);
+      if (options.debug) console.log("🎩 Cache key:", cacheKey);
 
       // Process the code, get transformed code, changes, and classes
       // Also update the global set of classes
@@ -144,7 +144,7 @@ export default function useClassy(options: ClassyOptions = {}): Plugin {
       if (!isBuild && classesChanged) {
         if (options.debug)
           console.log(
-            "useClassy: Classes changed, scheduling debounced write & WS notify."
+            "🎩 Classes changed, scheduling debounced write & WS notify."
           );
         writeOutputFileDebounced(
           allClassesSet,
@@ -181,11 +181,11 @@ export default function useClassy(options: ClassyOptions = {}): Plugin {
 
       if (allClassesSet.size > 0) {
         if (options.debug)
-          console.log("useClassy: Build ended, writing final output file.");
+          console.log("🎩 Build ended, writing final output file.");
         writeOutputFileDirect(allClassesSet, outputDir, outputFileName);
       } else {
         if (options.debug)
-          console.log("useClassy: Build ended, no classes found to write.");
+          console.log("🎩 Build ended, no classes found to write.");
       }
     },
   };
@@ -208,10 +208,7 @@ export default function useClassy(options: ClassyOptions = {}): Plugin {
         } else {
           // File deleted - just trigger write/notify
           if (options.debug)
-            console.log(
-              `useClassy: Watched file deleted (during ${event}):`,
-              normalizedPath
-            );
+            console.log(`🎩 File deleted (during ${event}):`, normalizedPath);
           writeOutputFileDebounced(
             allClassesSet,
             outputDir,
@@ -223,7 +220,7 @@ export default function useClassy(options: ClassyOptions = {}): Plugin {
         }
       } catch (error) {
         console.error(
-          `useClassy: Error processing ${event} for ${normalizedPath}:`,
+          `🎩 Error processing ${event} for ${normalizedPath}:`,
           error
         );
       }
@@ -250,7 +247,7 @@ export default function useClassy(options: ClassyOptions = {}): Plugin {
         if (classesToRemove) {
           if (options.debug)
             console.log(
-              `useClassy: Removing ${classesToRemove.size} classes from deleted file: ${normalizedPath}`
+              `🎩 Removing ${classesToRemove.size} classes from deleted file: ${normalizedPath}`
             );
           classesToRemove.forEach((cls) => {
             // Remove from the global set and track if removal happened
@@ -264,7 +261,7 @@ export default function useClassy(options: ClassyOptions = {}): Plugin {
       } else {
         if (options.debug)
           console.log(
-            `useClassy: Unlinked file not found in fileClassMap: ${normalizedPath}`
+            `🎩 Unlinked file not found in fileClassMap: ${normalizedPath}`
           );
       }
 
@@ -278,7 +275,7 @@ export default function useClassy(options: ClassyOptions = {}): Plugin {
       if (classesActuallyRemoved) {
         if (options.debug)
           console.log(
-            "useClassy: Classes removed due to unlink, scheduling debounced write & WS notify."
+            "🎩 Classes removed due to unlink, scheduling debounced write & WS notify."
           );
         writeOutputFileDebounced(
           allClassesSet,
@@ -290,7 +287,7 @@ export default function useClassy(options: ClassyOptions = {}): Plugin {
       } else {
         if (options.debug)
           console.log(
-            "useClassy: Unlink event, but no classes needed removal from global set."
+            "🎩 Unlink event, but no classes needed removal from global set."
           );
       }
     });
@@ -302,7 +299,7 @@ export default function useClassy(options: ClassyOptions = {}): Plugin {
       (_req: any, res: any) => {
         if (options.debug)
           console.log(
-            "useClassy: Manual output generation requested via HTTP endpoint."
+            "🎩 Manual output generation requested via HTTP endpoint."
           );
         writeOutputFileDirect(allClassesSet, outputDir, outputFileName);
         lastWrittenClassCount = allClassesSet.size;
@@ -315,19 +312,16 @@ export default function useClassy(options: ClassyOptions = {}): Plugin {
   function setupWebSocketCommunicationAndReturnNotifier(
     server: ViteServer
   ): () => void {
-    // Use Vite's standard custom event structure
     const sendUpdate = () => {
       if (server.ws) {
         const payload = {
-          type: "custom", // Vite standard type
+          type: "custom",
           event: "classy:classes-updated",
           data: { count: allClassesSet.size },
-        } as const; // Use 'as const' for stricter typing if needed
+        } as const;
         server.ws.send(payload);
         if (options.debug)
-          console.log(
-            "useClassy: Sent WebSocket update: classy:classes-updated"
-          );
+          console.log("🎩 WebSocket -> classy:classes-updated");
       }
     };
 
@@ -352,7 +346,7 @@ export default function useClassy(options: ClassyOptions = {}): Plugin {
           ) {
             if (options.debug)
               console.log(
-                "useClassy: Manual output generation requested via WebSocket."
+                "🎩 Manual output generation requested via WebSocket."
               );
             writeOutputFileDirect(allClassesSet, outputDir, outputFileName);
             lastWrittenClassCount = allClassesSet.size;
@@ -371,7 +365,7 @@ export default function useClassy(options: ClassyOptions = {}): Plugin {
           // Ignore non-JSON messages or messages with incorrect format
           if (options.debug)
             console.log(
-              "useClassy: Received non-standard WS message",
+              "🎩 Received non-standard WS message",
               rawMsg.toString()
             );
         }
@@ -423,7 +417,7 @@ export default function useClassy(options: ClassyOptions = {}): Plugin {
 
     if (debug && classesChanged) {
       console.log(
-        `useClassy: Global class set size changed to ${currentGlobalClasses.size}`
+        `🎩 Global class set size changed to ${currentGlobalClasses.size}`
       );
     }
 
