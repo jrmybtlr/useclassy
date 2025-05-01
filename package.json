@@ -60,6 +60,7 @@
   },
   "devDependencies": {
     "@types/react": "^18.2.0",
+    "@vitest/coverage-v8": "3.1.2",
     "@vitest/ui": "^3.0.6",
     "changelogen": "^0.5.7",
     "jsdom": "^26.0.0",
