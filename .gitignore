@@ -27,3 +27,31 @@ node_modules/.pnpm/@babel+compat-data@7.26.8/node_modules/@babel/compat-data/plu
 
 # Generated Classy files
 .classy/
+coverage/base.css
+coverage/block-navigation.js
+coverage/clover.xml
+coverage/coverage-final.json
+coverage/favicon.png
+coverage/index.html
+coverage/prettify.css
+coverage/prettify.js
+coverage/sort-arrow-sprite.png
+coverage/sorter.js
+coverage/demos/react/src/App.tsx.html
+coverage/demos/react/src/index.html
+coverage/demos/react/src/main.tsx.html
+coverage/demos/vue/index.html
+coverage/demos/vue/nuxt.config.ts.html
+coverage/demos/vue/app/app.vue.html
+coverage/demos/vue/app/index.html
+coverage/demos/vue/app/components/ClassExample.vue.html
+coverage/demos/vue/app/components/Code.vue.html
+coverage/demos/vue/app/components/CodeBlock.vue.html
+coverage/demos/vue/app/components/index.html
+coverage/demos/vue/app/components/Step.vue.html
+coverage/demos/vue/app/components/StepNumber.vue.html
+coverage/src/core.ts.html
+coverage/src/index.html
+coverage/src/index.ts.html
+coverage/src/react.ts.html
+coverage/src/utils.ts.html

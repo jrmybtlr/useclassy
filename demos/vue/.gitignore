@@ -24,3 +24,5 @@ logs
 !.env.example
 # Generated Classy files
 .classy/
+
+.wrangler

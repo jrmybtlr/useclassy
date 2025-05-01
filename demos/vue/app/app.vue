@@ -41,7 +41,7 @@
         <!-- Install -->
         <Step :number="1" title="Install">
           <Code class="mt-6 w-full" showCopy>
-            <code> npm install use-classy </code>
+            <code> npm install vite-plugin-useclassy --save-dev </code>
           </Code>
         </Step>
 
@@ -53,14 +53,18 @@
         >
           <Code class="mt-6 w-full text-zinc-500" showCopy>
             <code>
+              <div class="text-white">
+                import useClassy from 'vite-plugin-useclassy';
+              </div>
               <div>{</div>
               <div>
                 <div class="ml-4">
-                  <div class="ml-4">vite: {</div>
-                  <div class="ml-8">plugins: [</div>
-                  <div class="ml-12 text-white">useClassy(),</div>
-                  <div class="ml-12">tailwindcss(),</div>
-                  <div class="ml-8">],</div>
+                  <div class="ml-4">plugins: [</div>
+                  <div class="ml-8 text-white">useClassy({</div>
+                  <div class="ml-12 text-white">language: 'vue',</div>
+                  <div class="ml-8 text-white">}),</div>
+                  <div class="ml-8">// ... other plugins</div>
+                  <div class="ml-4">],</div>
                 </div>
               </div>
               <div>}</div>
@@ -72,7 +76,7 @@
         <Step
           :number="3"
           title="Tailwind"
-          description="UseClassy creates a .classy folder in your project root. Import the output.classy.jsx file into your Tailwind CSS configuration."
+          description="UseClassy creates a .classy folder in your project root. Import the output.classy.html file into your Tailwind CSS configuration."
         >
           <Code class="mt-6 w-full text-zinc-500" showCopy>
             <code>
