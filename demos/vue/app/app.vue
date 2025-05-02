@@ -140,8 +140,34 @@
 </template>
 
 <script setup lang="ts">
-import StepNumber from "./components/StepNumber.vue";
-import Step from "./components/Step.vue";
+useSeoMeta({
+  title: "UseClassy",
+  description:
+    "Make your Tailwind variant modifiers fast, simple, and much more readable.",
+  ogTitle: "UseClassy",
+  ogDescription:
+    "Make your Tailwind variant modifiers fast, simple, and much more readable.",
+  ogImage: "assets.useclassy.com/og-image.png",
+  ogUrl: "https://useclassy.com",
+  twitterTitle: "UseClassy",
+  twitterDescription:
+    "Make your Tailwind variant modifiers fast, simple, and much more readable.",
+  twitterImage: "assets.useclassy.com/og-image-twitter.png",
+  twitterCard: "summary_large_image",
+});
+
+useHead({
+  htmlAttrs: {
+    lang: "en",
+  },
+  link: [
+    {
+      rel: "icon",
+      type: "image/png",
+      href: "/favicon.png",
+    },
+  ],
+});
 
 const classExamples = {
   // Base styles
