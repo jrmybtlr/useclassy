@@ -1,11 +1,18 @@
 <template>
-  <div class="min-h-screen gap-8 py-12" class:dark="bg-zinc-950 text-white">
-    <div class="container mx-auto flex flex-col items-center max-w-2xl">
+  <div
+    class="min-h-screen gap-8 py-4"
+    class:md="py-12"
+    class:dark="bg-zinc-950 text-white"
+  >
+    <div
+      class="container mx-auto flex flex-col items-center max-w-2xl w-screen overflow-clip"
+    >
       <!-- Title -->
       <section>
         <div class="text-white flex items-center -space-x-[8%] group">
           <div
-            class="text-[180px] rotate-0 transition-transform duration-300 motion-preset-blur-up motion-delay-500 z-10"
+            class="text-[140px] rotate-0 transition-transform duration-300 motion-preset-blur-up motion-delay-500 z-10"
+            class:md="text-[170px]"
             class:group-hover="-rotate-6 -translate-y-8"
             class:hover="rotate-12 -translate-y-4"
           >
@@ -13,7 +20,7 @@
           </div>
           <div
             class="font-serif flex flex-col items-start font-extralight tracking-tight"
-            class:max-md="text-4xl"
+            class:max-md="text-6xl"
             class:md="text-7xl"
             class:lg="text-8xl"
           >
@@ -81,11 +88,13 @@
           <Code class="mt-6 w-full text-zinc-500" showCopy>
             <code>
               <div>{</div>
+              <div class="ml-8">...update to your file location</div>
+              <div class="ml-8">@source ".classy/output.classy.html";</div>
               <div>
                 <div class="ml-4">
                   <div class="ml-4">@import "tailwindcss";</div>
                   <div class="ml-4 text-white">
-                    @source "./../../.classy/output.classy.html";
+                    @source ".classy/output.classy.html";
                   </div>
                   <div class="ml-4">...other config</div>
                 </div>
@@ -140,8 +149,34 @@
 </template>
 
 <script setup lang="ts">
-import StepNumber from "./components/StepNumber.vue";
-import Step from "./components/Step.vue";
+useSeoMeta({
+  title: "UseClassy",
+  description:
+    "Make your Tailwind variant modifiers fast, simple, and much more readable.",
+  ogTitle: "UseClassy",
+  ogDescription:
+    "Make your Tailwind variant modifiers fast, simple, and much more readable.",
+  ogImage: "assets.useclassy.com/og-image.png",
+  ogUrl: "https://useclassy.com",
+  twitterTitle: "UseClassy",
+  twitterDescription:
+    "Make your Tailwind variant modifiers fast, simple, and much more readable.",
+  twitterImage: "assets.useclassy.com/og-image-twitter.png",
+  twitterCard: "summary_large_image",
+});
+
+useHead({
+  htmlAttrs: {
+    lang: "en",
+  },
+  link: [
+    {
+      rel: "icon",
+      type: "image/png",
+      href: "/favicon.png",
+    },
+  ],
+});
 
 const classExamples = {
   // Base styles

@@ -42,6 +42,9 @@ export default {
 
       // Optional: Customize output file name. Defaults to 'output.classy.html'.
       // outputFileName: 'generated-classes.html' 
+
+      // Optional: Enable debugging. Defaults to false.
+      // debug: true,
     }),
     // ... other plugins
   ],
@@ -99,11 +102,14 @@ Add the `output.classy.html` as a source file in your tailwind config.
 
 ## Tailwind IntelliSense
 
-Add the following to your VSCode settings to enable IntelliSense for UseClassy.
+Add the following to your editor settings to enable IntelliSense for UseClassy.
 
 ```json
 {
-  "tailwindCSS.classAttributes": ["class", "className", "class:[\\w:-]*"]
+  "tailwindCSS.classAttributes": [
+    ...other settings,
+    "class:[\\w:-]*"
+  ]
 }
 ```
 

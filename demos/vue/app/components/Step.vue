@@ -3,7 +3,7 @@
     <div class="flex items-start gap-5">
       <StepNumber>{{ number }}</StepNumber>
       <div class="flex-1">
-        <h3 class="text-2xl font-semibold text-centerd">{{ title }}</h3>
+        <h3 class="text-2xl font-semibold">{{ title }}</h3>
         <p v-if="description" class="mt-2 text-zinc-400">{{ description }}</p>
         <slot></slot>
       </div>

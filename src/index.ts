@@ -43,7 +43,8 @@ import type { ClassyOptions, ViteServer } from "./types";
  *     useClassy({
  *       language: 'react',
  *       outputDir: '.classy',
- *       outputFileName: 'output.classy.html'
+ *       outputFileName: 'output.classy.html',
+ *       debug: true
  *     })
  *   ]
  * }
@@ -264,12 +265,6 @@ export default function useClassy(options: ClassyOptions = {}): Plugin {
             `🎩 Unlinked file not found in fileClassMap: ${normalizedPath}`
           );
       }
-
-      // Invalidate any potential transform cache entry for the deleted file
-      // Need a way to get the cache key; might require iterating cache keys
-      // or storing cache keys differently. Simpler: clear relevant cache if needed,
-      // but transformCache is likely keyed by content hash + path, so deleting
-      // the file implicitly invalidates its specific cache entry.
 
       // Only trigger update if classes were actually removed from the global set
       if (classesActuallyRemoved) {

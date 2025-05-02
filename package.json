@@ -10,9 +10,8 @@
     "release:minor": "changelogen --release --minor && pnpm publish",
     "release:patch": "changelogen --release --patch && pnpm publish",
     "build": "vite build",
-    "build:website": "pnpm i --no-frozen-lockfile && pnpm -r --stream build",
-    "prepublishOnly": "pnpm run build",
-    "deploy": "pnpm dlx nuxthub deploy --prefix ./nuxt-web"
+    "build:website": "pnpm i --no-frozen-lockfile && cd demos/vue && pnpm run build",
+    "prepublishOnly": "pnpm run build"
   },
   "keywords": [
     "vite-plugin",
@@ -59,16 +58,16 @@
     "url": "git+https://github.com/jrmybtlr/use-classy.git"
   },
   "devDependencies": {
-    "@types/react": "^18.2.0",
+    "@types/react": "^18.3.20",
     "@vitest/coverage-v8": "3.1.2",
-    "@vitest/ui": "^3.0.6",
+    "@vitest/ui": "^3.1.2",
     "changelogen": "^0.5.7",
-    "jsdom": "^26.0.0",
-    "typescript": "^5.0.2",
-    "vite": "^6.3.2",
-    "vite-plugin-dts": "^3.7.3",
+    "jsdom": "^26.1.0",
+    "typescript": "^5.8.3",
+    "vite": "^6.3.4",
+    "vite-plugin-dts": "^3.9.1",
     "vite-plugin-inspect": "^11.0.1",
-    "vitest": "^3.1.1"
+    "vitest": "^3.1.2"
   },
   "peerDependencies": {
     "react": "^16.8.0 || ^17.0.0 || ^18.0.0",
@@ -77,5 +76,8 @@
   "resolutions": {
     "debug": "4.3.4",
     "supports-color": "8.1.1"
+  },
+  "dependencies": {
+    "arktype": "^2.1.20"
   }
 }
