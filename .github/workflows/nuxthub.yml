@@ -36,7 +36,7 @@ jobs:
         run: pnpx nuxthub@latest ensure
 
       - name: Build application
-        run: pnpm build:website
+        run: cd demos/vue && pnpm build:website
 
       - name: Deploy to NuxtHub
         uses: nuxt-hub/action@v1
