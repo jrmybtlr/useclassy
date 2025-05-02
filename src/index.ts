@@ -43,7 +43,8 @@ import type { ClassyOptions, ViteServer } from "./types";
  *     useClassy({
  *       language: 'react',
  *       outputDir: '.classy',
- *       outputFileName: 'output.classy.html'
+ *       outputFileName: 'output.classy.html',
+ *       debug: true
  *     })
  *   ]
  * }

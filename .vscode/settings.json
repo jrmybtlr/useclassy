@@ -1,6 +1,12 @@
 {
   "tailwindCSS.validate": true,
   "editor.formatOnSave": true,
+  "editor.quickSuggestions": {
+    "strings": "on"
+  },
+  "typescript.preferences.autoImportSpecifierExcludeRegexes": [
+    "^(node:)?os$"
+  ],
   "tailwindCSS.classAttributes": [
     "class",
     "className",
