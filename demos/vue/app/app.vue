@@ -83,16 +83,15 @@
         <Step
           :number="3"
           title="Tailwind"
-          description="UseClassy creates a .classy folder in your project root. Import the output.classy.html file into your Tailwind CSS configuration."
+          description="UseClassy creates a ./.classy/output.classy.html file. Import this file into your Tailwind CSS configuration."
         >
           <Code class="mt-6 w-full text-zinc-500" showCopy>
             <code>
               <div>{</div>
-              <div class="ml-8">...update to your file location</div>
-              <div class="ml-8">@source ".classy/output.classy.html";</div>
               <div>
                 <div class="ml-4">
                   <div class="ml-4">@import "tailwindcss";</div>
+                  <div class="ml-4">...update to your file location</div>
                   <div class="ml-4 text-white">
                     @source ".classy/output.classy.html";
                   </div>
@@ -102,7 +101,19 @@
               <div>}</div>
             </code>
           </Code>
-        </Step>
+
+          <p class="mt-8">
+            For Tailwind 3, add the following to your Tailwind config.
+            <Code class="mt-4">
+              <code>
+                <div class="text-zinc-500">content: [</div>
+                <div class="ml-4 text-zinc-500">// ... other content paths</div>
+                <div class="ml-4">".classy/output.classy.html"</div>
+                <div class="text-zinc-500">]</div>
+              </code>
+            </Code>
+          </p></Step
+        >
 
         <!-- Intellisense -->
         <Step
