@@ -12,6 +12,23 @@
 ### 🏡 Chore
 
 - Remove npm-publish workflow and update tsconfig include paths ([0308828](https://github.com/jrmybtlr/use-classy/commit/0308828))
+- **release:** V2.1.0 ([7fd33b8](https://github.com/jrmybtlr/use-classy/commit/7fd33b8))
+
+### ❤️ Contributors
+
+- Jeremy Butler <jeremy@jeremymbutler.com>
+
+## v2.1.0
+
+[compare changes](https://github.com/jrmybtlr/use-classy/compare/v2.0.0...v2.1.0)
+
+### 🩹 Fixes
+
+- Update build command and change version to 0.1.0 ([32b92d7](https://github.com/jrmybtlr/use-classy/commit/32b92d7))
+
+### 🏡 Chore
+
+- Remove npm-publish workflow and update tsconfig include paths ([0308828](https://github.com/jrmybtlr/use-classy/commit/0308828))
 
 ### ❤️ Contributors
 
