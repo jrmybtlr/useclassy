@@ -94,10 +94,19 @@ export default {
 
 Add the `output.classy.html` as a source file in your tailwind config.
 
+For Tailwind 4
 ```css
 /* your-main-css-file.css */
 @import "tailwindcss";
-@source "./../../.classy/output.classy.html";
+@source "./.classy/output.classy.html";
+```
+
+For Tailwind 3 you need to add the following to your Tailwind config.
+```json
+  "content": [
+    // ... other content paths
+    "./.classy/output.classy.html"
+  ]
 ```
 
 ## Tailwind IntelliSense
