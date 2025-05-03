@@ -1,4 +1,4 @@
-import type { Plugin } from "vite";
+import type { PluginOption } from "vite";
 import fs from "fs";
 import path from "path";
 
@@ -50,7 +50,7 @@ import type { ClassyOptions, ViteServer } from "./types";
  * }
  *
  */
-export default function useClassy(options: ClassyOptions = {}): Plugin {
+export default function useClassy(options: ClassyOptions = {}): PluginOption {
   let ignoredDirectories: string[] = [];
   let allClassesSet: Set<string> = new Set();
   let isBuild = false;
@@ -77,6 +77,8 @@ export default function useClassy(options: ClassyOptions = {}): Plugin {
 
   // Pre-allocate the set for generated classes from each file
   const generatedClassesSet: Set<string> = new Set();
+  // Pre-allocate a separate set for classes specifically derived from modifiers (for output.classy.html)
+  const modifierDerivedClassesSet: Set<string> = new Set();
 
   // Ensure .gitignore * is in .classy/ directory
   writeGitignore(outputDir);
@@ -376,30 +378,34 @@ export default function useClassy(options: ClassyOptions = {}): Plugin {
   ): {
     transformedCode: string;
     classesChanged: boolean;
-    fileSpecificClasses: Set<string>; // Return the classes found in *this* file
+    fileSpecificClasses: Set<string>; // Still return all classes found in this file
   } {
     let classesChanged = false;
-    // This set is cleared and reused
+    // Clear the reusable sets for this file processing
     generatedClassesSet.clear();
+    modifierDerivedClassesSet.clear();
 
-    // Populates generatedClassesSet with classes (including modifiers) from this file
-    extractClasses(code, generatedClassesSet, classRegex, classModifierRegex);
+    // Populates both sets: one with all classes, one with only modifier-derived classes
+    extractClasses(
+      code,
+      generatedClassesSet,
+      modifierDerivedClassesSet,
+      classRegex,
+      classModifierRegex
+    );
 
-    // Check which of the file's classes need to be added to the global set
-    generatedClassesSet.forEach((className) => {
-      // We only care about classes with modifiers for the output file
-      if (className.includes(":")) {
-        if (!currentGlobalClasses.has(className)) {
-          currentGlobalClasses.add(className);
-          classesChanged = true; // Global set was modified
-        }
+    // Check which of the *modifier-derived* classes need to be added to the global set
+    modifierDerivedClassesSet.forEach((className) => {
+      if (!currentGlobalClasses.has(className)) {
+        currentGlobalClasses.add(className);
+        classesChanged = true;
       }
     });
 
     // Transform the code (replace class:mod with actual classes)
     const transformedCodeWithModifiers = transformClassModifiers(
       code,
-      generatedClassesSet, // Use the file-specific classes for transformation context
+      generatedClassesSet,
       classModifierRegex,
       classAttrName
     );
@@ -417,11 +423,11 @@ export default function useClassy(options: ClassyOptions = {}): Plugin {
     }
 
     // Return the final code, whether global classes changed,
-    // and the set of classes extracted specifically from this file
+    // and the set of ALL classes extracted specifically from this file
     return {
       transformedCode: finalTransformedCode,
       classesChanged,
-      fileSpecificClasses: generatedClassesSet, // Return the reference to the reused set
+      fileSpecificClasses: generatedClassesSet, // Return the reference to the set with all classes
     };
   }
 }

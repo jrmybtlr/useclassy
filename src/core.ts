@@ -10,8 +10,7 @@ export const CLASS_MODIFIER_REGEX = /class:([\w-:]+)="([^"]*)"/g;
 export const MULTIPLE_CLASS_REGEX = /class="[^"]*"(\s*class="[^"]*")*/g;
 
 // React-specific constants
-export const REACT_CLASS_REGEX =
-  /className=(?:"([^"]*)"|{([^}]*)})(?![^>]*?:)/g;
+export const REACT_CLASS_REGEX = /className=(?:"([^"]*)"|{([^}]*)})(?![^>]*:)/g;
 export const REACT_CLASS_MODIFIER_REGEX =
   /(?:className|class):([\w-:]+)="([^"]*)"/g;
 export const REACT_MULTIPLE_CLASS_REGEX =
@@ -32,43 +31,87 @@ export function generateCacheKey(id: string, code: string): string {
 }
 
 /**
- * Extracts classes from the code
+ * Extracts classes from the code, separating base classes and modifier-derived classes.
  */
 export function extractClasses(
   code: string,
-  generatedClassesSet: Set<string>,
+  allFileClasses: Set<string>,
+  modifierDerivedClasses: Set<string>,
   classRegex: RegExp,
   classModifierRegex: RegExp
 ): void {
+  allFileClasses.clear();
+  modifierDerivedClasses.clear();
+
+  // Extract base classes from class="..." or className="..."
   let classMatch;
   while ((classMatch = classRegex.exec(code)) !== null) {
-    const classes = classMatch[1] || classMatch[2];
-    if (classes) {
-      classes.split(" ").forEach((cls) => {
-        if (cls.trim()) {
-          generatedClassesSet.add(cls.trim());
+    // Handle quoted strings (group 1)
+    const staticClasses = classMatch[1];
+    if (staticClasses) {
+      staticClasses.split(/\s+/).forEach((cls) => {
+        const trimmedCls = cls.trim();
+        if (trimmedCls) {
+          allFileClasses.add(trimmedCls);
         }
       });
     }
+
+    // Handle JSX expressions (group 2)
+    const jsxClasses = classMatch[2];
+    if (jsxClasses) {
+      const trimmedJsx = jsxClasses.trim();
+      // Check if it's a template literal and try to extract static classes from the start
+      if (trimmedJsx.startsWith("`") && trimmedJsx.endsWith("`")) {
+        const literalContent = trimmedJsx.slice(1, -1);
+        // Extract parts before the first interpolation
+        const staticPart = literalContent.split("${")[0];
+        if (staticPart) {
+          staticPart.split(/\s+/).forEach((cls) => {
+            const trimmedCls = cls.trim();
+            if (trimmedCls) {
+              allFileClasses.add(trimmedCls);
+            }
+          });
+        }
+      } else {
+        // If it's not a template literal (e.g., a variable or function call),
+        // we cannot extract static classes reliably here.
+        // The mergeClassAttributes function handles preserving these expressions later.
+      }
+    }
   }
 
-  // Extract class modifiers
+  // Extract and process classes from class:modifier="..." or className:modifier="..."
   let modifierMatch;
   while ((modifierMatch = classModifierRegex.exec(code)) !== null) {
-    const modifiers = modifierMatch[1];
-    const classes = modifierMatch[2];
+    const modifiers = modifierMatch[1]; // e.g., "hover", "sm:focus"
+    const classes = modifierMatch[2]; // e.g., "bg-blue-500 text-white"
 
     if (modifiers && classes) {
-      const modifierParts = modifiers.split(":");
+      classes.split(/\s+/).forEach((cls) => {
+        // Split by any whitespace
+        const trimmedCls = cls.trim();
+        if (trimmedCls) {
+          // Construct the fully modified class name (e.g., "hover:bg-blue-500")
+          const modifiedClass = `${modifiers}:${trimmedCls}`;
 
-      classes.split(" ").forEach((cls) => {
-        if (cls.trim()) {
-          // Add the full modifier:class combination
-          generatedClassesSet.add(`${modifiers}:${cls.trim()}`);
+          // Add to the set containing ALL classes for transformation context
+          allFileClasses.add(modifiedClass);
 
+          // Add ONLY the derived class to the set used for the output file
+          modifierDerivedClasses.add(modifiedClass);
+
+          // Handle multi-part modifiers like sm:hover
+          // Add individual parts as well to the modifierDerivedClasses for Tailwind JIT
+          const modifierParts = modifiers.split(":");
           if (modifierParts.length > 1) {
             modifierParts.forEach((part) => {
-              if (part) generatedClassesSet.add(`${part}:${cls.trim()}`);
+              if (part) {
+                const partialModifiedClass = `${part}:${trimmedCls}`;
+                allFileClasses.add(partialModifiedClass); // Also add to all classes context
+                modifierDerivedClasses.add(partialModifiedClass);
+              }
             });
           }
         }

@@ -154,9 +154,6 @@ function _writeOutputFile(
     const tempFilePath = path.join(dirPath, `.${outputFileName}.tmp`);
     fs.writeFileSync(tempFilePath, fileContent, { encoding: "utf-8" });
     fs.renameSync(tempFilePath, filePath);
-    console.log(
-      "🎩 Output" + allClasses.length + "classes written to " + filePath
-    );
   } catch (error) {
     console.error("🎩 Error writing output file:", error);
   }

@@ -46,80 +46,204 @@ describe("core module", () => {
   describe("extractClasses", () => {
     it("should extract standard classes from code", () => {
       const code = '<div class="flex items-center p-4">Content</div>';
-      const classes = new Set<string>();
+      const allClasses = new Set<string>();
+      const modifierClasses = new Set<string>();
 
-      extractClasses(code, classes, CLASS_REGEX, CLASS_MODIFIER_REGEX);
+      extractClasses(
+        code,
+        allClasses,
+        modifierClasses,
+        CLASS_REGEX,
+        CLASS_MODIFIER_REGEX
+      );
 
-      expect(classes.size).toBe(3);
-      expect(classes.has("flex")).toBeTruthy();
-      expect(classes.has("items-center")).toBeTruthy();
-      expect(classes.has("p-4")).toBeTruthy();
+      expect(allClasses.size).toBe(3);
+      expect(allClasses.has("flex")).toBeTruthy();
+      expect(allClasses.has("items-center")).toBeTruthy();
+      expect(allClasses.has("p-4")).toBeTruthy();
+      expect(modifierClasses.size).toBe(0);
     });
 
     it("should extract modifier classes from code", () => {
       const code = '<div class:hover="text-blue-500 bg-gray-100">Content</div>';
-      const classes = new Set<string>();
+      const allClasses = new Set<string>();
+      const modifierClasses = new Set<string>();
 
-      extractClasses(code, classes, CLASS_REGEX, CLASS_MODIFIER_REGEX);
+      extractClasses(
+        code,
+        allClasses,
+        modifierClasses,
+        CLASS_REGEX,
+        CLASS_MODIFIER_REGEX
+      );
 
-      expect(classes.size).toBe(2);
-      expect(classes.has("hover:text-blue-500")).toBeTruthy();
-      expect(classes.has("hover:bg-gray-100")).toBeTruthy();
+      expect(allClasses.size).toBe(2);
+      expect(modifierClasses.size).toBe(2);
+      expect(allClasses.has("hover:text-blue-500")).toBeTruthy();
+      expect(allClasses.has("hover:bg-gray-100")).toBeTruthy();
+      expect(modifierClasses.has("hover:text-blue-500")).toBeTruthy();
+      expect(modifierClasses.has("hover:bg-gray-100")).toBeTruthy();
     });
 
     it("should extract nested modifier classes", () => {
       const code = '<div class:sm:hover="text-blue-500">Content</div>';
-      const classes = new Set<string>();
+      const allClasses = new Set<string>();
+      const modifierClasses = new Set<string>();
 
-      extractClasses(code, classes, CLASS_REGEX, CLASS_MODIFIER_REGEX);
+      extractClasses(
+        code,
+        allClasses,
+        modifierClasses,
+        CLASS_REGEX,
+        CLASS_MODIFIER_REGEX
+      );
 
-      expect(classes.size).toBe(3);
-      expect(classes.has("sm:hover:text-blue-500")).toBeTruthy();
-      expect(classes.has("sm:text-blue-500")).toBeTruthy();
-      expect(classes.has("hover:text-blue-500")).toBeTruthy();
+      expect(allClasses.size).toBe(3);
+      expect(modifierClasses.size).toBe(3);
+      expect(allClasses.has("sm:hover:text-blue-500")).toBeTruthy();
+      expect(allClasses.has("sm:text-blue-500")).toBeTruthy();
+      expect(allClasses.has("hover:text-blue-500")).toBeTruthy();
+      expect(modifierClasses.has("sm:hover:text-blue-500")).toBeTruthy();
+      expect(modifierClasses.has("sm:text-blue-500")).toBeTruthy();
+      expect(modifierClasses.has("hover:text-blue-500")).toBeTruthy();
     });
 
     it("should extract multiple classes from React code", () => {
       const code =
         '<div className="flex items-center" className:hover="text-blue-500">Content</div>';
-      const classes = new Set<string>();
+      const allClasses = new Set<string>();
+      const modifierClasses = new Set<string>();
 
-      // Let's just confirm we can extract the className:hover modifier class
       extractClasses(
         code,
-        classes,
+        allClasses,
+        modifierClasses,
         REACT_CLASS_REGEX,
         REACT_CLASS_MODIFIER_REGEX
       );
 
-      expect(classes.has("hover:text-blue-500")).toBeTruthy();
+      expect(allClasses.has("flex")).toBeFalsy();
+      expect(allClasses.has("items-center")).toBeFalsy();
+      expect(allClasses.has("hover:text-blue-500")).toBeTruthy();
+      expect(modifierClasses.has("hover:text-blue-500")).toBeTruthy();
     });
 
     it("should handle JSX expressions in className", () => {
       const code =
         '<div className={`flex ${active ? "bg-blue-500" : ""}`}>Content</div>';
-      const classes = new Set<string>();
+      const allClasses = new Set<string>();
+      const modifierClasses = new Set<string>();
 
-      // The actual behavior may vary based on the regex implementation, so let's
-      // just check that we don't throw an error when processing JSX expressions
       extractClasses(
         code,
-        classes,
+        allClasses,
+        modifierClasses,
         REACT_CLASS_REGEX,
         REACT_CLASS_MODIFIER_REGEX
       );
 
-      // We won't make specific assertions about content, as JSX parsing is complex
-      expect(true).toBeTruthy();
+      expect(allClasses.has("flex")).toBeFalsy();
+      expect(allClasses.has("bg-blue-500")).toBeFalsy();
+      expect(modifierClasses.size).toBe(0);
     });
 
     it("should ignore empty classes", () => {
       const code = '<div class="  ">Content</div>';
-      const classes = new Set<string>();
+      const allClasses = new Set<string>();
+      const modifierClasses = new Set<string>();
 
-      extractClasses(code, classes, CLASS_REGEX, CLASS_MODIFIER_REGEX);
+      extractClasses(
+        code,
+        allClasses,
+        modifierClasses,
+        CLASS_REGEX,
+        CLASS_MODIFIER_REGEX
+      );
 
-      expect(classes.size).toBe(0);
+      expect(allClasses.size).toBe(0);
+      expect(modifierClasses.size).toBe(0);
+    });
+
+    it("should handle mixed standard and modifier classes", () => {
+      const code =
+        '<div class="flex" class:hover="text-blue-500">Content</div>';
+      const allClasses = new Set<string>();
+      const modifierClasses = new Set<string>();
+
+      extractClasses(
+        code,
+        allClasses,
+        modifierClasses,
+        CLASS_REGEX,
+        CLASS_MODIFIER_REGEX
+      );
+
+      expect(allClasses.size).toBe(2);
+      expect(modifierClasses.size).toBe(1);
+      expect(allClasses.has("flex")).toBeTruthy();
+      expect(allClasses.has("hover:text-blue-500")).toBeTruthy();
+      expect(modifierClasses.has("hover:text-blue-500")).toBeTruthy();
+    });
+
+    it("should not include modified classes from standard class attributes in modifierClasses", () => {
+      const code =
+        '<div class="flex items-center dark:text-gray-500 hover:text-white">Content</div>';
+      const allClasses = new Set<string>();
+      const modifierClasses = new Set<string>();
+
+      extractClasses(
+        code,
+        allClasses,
+        modifierClasses,
+        CLASS_REGEX,
+        CLASS_MODIFIER_REGEX
+      );
+
+      // All classes should be in allClasses
+      expect(allClasses.size).toBe(4);
+      expect(allClasses.has("flex")).toBeTruthy();
+      expect(allClasses.has("items-center")).toBeTruthy();
+      expect(allClasses.has("dark:text-gray-500")).toBeTruthy();
+      expect(allClasses.has("hover:text-white")).toBeTruthy();
+
+      // Modified classes from standard attributes should NOT be in modifierClasses
+      expect(modifierClasses.size).toBe(0);
+      expect(modifierClasses.has("dark:text-gray-500")).toBeFalsy();
+      expect(modifierClasses.has("hover:text-white")).toBeFalsy();
+    });
+
+    it("should only include modified classes from class:modifier attributes in modifierClasses", () => {
+      const code = `
+        <div 
+          class="flex items-center dark:text-gray-500" 
+          class:hover="text-white"
+          class:dark="bg-gray-800"
+        >Content</div>
+      `;
+      const allClasses = new Set<string>();
+      const modifierClasses = new Set<string>();
+
+      extractClasses(
+        code,
+        allClasses,
+        modifierClasses,
+        CLASS_REGEX,
+        CLASS_MODIFIER_REGEX
+      );
+
+      // All classes should be in allClasses
+      expect(allClasses.size).toBe(5);
+      expect(allClasses.has("flex")).toBeTruthy();
+      expect(allClasses.has("items-center")).toBeTruthy();
+      expect(allClasses.has("dark:text-gray-500")).toBeTruthy();
+      expect(allClasses.has("hover:text-white")).toBeTruthy();
+      expect(allClasses.has("dark:bg-gray-800")).toBeTruthy();
+
+      // Only classes from class:modifier attributes should be in modifierClasses
+      expect(modifierClasses.size).toBe(2);
+      expect(modifierClasses.has("hover:text-white")).toBeTruthy();
+      expect(modifierClasses.has("dark:bg-gray-800")).toBeTruthy();
+      expect(modifierClasses.has("dark:text-gray-500")).toBeFalsy();
     });
   });
 

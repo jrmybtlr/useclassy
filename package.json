@@ -1,6 +1,6 @@
 {
   "name": "vite-plugin-useclassy",
-  "version": "0.1.0",
+  "version": "2.1.0",
   "description": "UseClassy automatically appends class attributes to your components and lets you separate media queries, hover states, and other styles.",
   "scripts": {
     "dev": "pnpm -r dev",
@@ -25,8 +25,8 @@
     "next"
   ],
   "license": "MIT",
-  "homepage": "https://github.com/jrmybtlr/use-classy#readme",
-  "bugs": "https://github.com/jrmybtlr/use-classy/issues",
+  "homepage": "https://github.com/jrmybtlr/useclassy#readme",
+  "bugs": "https://github.com/jrmybtlr/useclassy/issues",
   "author": "Jeremy Butler <jeremy@jeremymbutler.com>",
   "contributors": [
     {
@@ -55,7 +55,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/jrmybtlr/use-classy.git"
+    "url": "git+https://github.com/jrmybtlr/useclassy.git"
   },
   "devDependencies": {
     "@types/react": "^18.3.20",
