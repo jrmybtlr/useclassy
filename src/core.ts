@@ -64,7 +64,6 @@ export function extractClasses(
       // Check if it's a template literal and try to extract static classes from the start
       if (trimmedJsx.startsWith('`') && trimmedJsx.endsWith('`')) {
         const literalContent = trimmedJsx.slice(1, -1)
-        // Extract parts before the first interpolation
         const staticPart = literalContent.split('${')[0]
         if (staticPart) {
           staticPart.split(/\s+/).forEach((cls) => {
@@ -74,11 +73,6 @@ export function extractClasses(
             }
           })
         }
-      }
-      else {
-        // If it's not a template literal (e.g., a variable or function call),
-        // we cannot extract static classes reliably here.
-        // The mergeClassAttributes function handles preserving these expressions later.
       }
     }
   }
