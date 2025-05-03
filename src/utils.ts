@@ -1,39 +1,40 @@
-import fs from "fs";
-import path from "path";
-import { SUPPORTED_FILES } from "./core";
+import fs from 'fs'
+import path from 'path'
+import { SUPPORTED_FILES } from './core'
 
 /**
  * Simple debounce function
  * @param func The function to debounce
  * @param wait The debounce delay in milliseconds
  */
-export function debounce<T extends (...args: any[]) => any>(
+export function debounce<T extends (
+  ...args: unknown[]) => unknown>(
   func: T,
-  wait: number
+  wait: number,
 ): (...args: Parameters<T>) => void {
-  let timeout: NodeJS.Timeout | null = null;
+  let timeout: NodeJS.Timeout | null = null
 
   return function executedFunction(...args: Parameters<T>) {
     const later = () => {
-      timeout = null;
-      func(...args);
-    };
+      timeout = null
+      func(...args)
+    }
 
     if (timeout) {
-      clearTimeout(timeout);
+      clearTimeout(timeout)
     }
-    timeout = setTimeout(later, wait);
-  };
+    timeout = setTimeout(later, wait)
+  }
 }
 
 /**
  * Simple hash function for string values
  */
 export function hashFunction(str: string): number {
-  return str.split("").reduce((a, b) => {
-    a = (a << 5) - a + b.charCodeAt(0);
-    return a & a;
-  }, 0);
+  return str.split('').reduce((a, b) => {
+    a = (a << 5) - a + b.charCodeAt(0)
+    return a & a
+  }, 0)
 }
 
 /**
@@ -41,27 +42,29 @@ export function hashFunction(str: string): number {
  */
 export function loadIgnoredDirectories(): string[] {
   try {
-    const gitignorePath = path.join(process.cwd(), ".gitignore");
+    const gitignorePath = path.join(process.cwd(), '.gitignore')
     if (!fs.existsSync(gitignorePath)) {
-      return ["node_modules", "dist"];
+      return ['node_modules', 'dist']
     }
 
-    const gitignoreContent = fs.readFileSync(gitignorePath, "utf-8");
+    const gitignoreContent = fs.readFileSync(gitignorePath, 'utf-8')
     return gitignoreContent
-      .split("\n")
-      .map((line) => line.trim())
+      .split('\n')
+      .map(line => line.trim())
       .filter(
-        (line) =>
-          line &&
-          !line.startsWith("#") &&
-          !line.includes("*") &&
-          !line.startsWith("!")
-      );
-  } catch (error) {
+        line =>
+          line
+          && !line.startsWith('#')
+          && !line.includes('*')
+          && !line.startsWith('!'),
+      )
+  }
+  catch (error) {
     console.warn(
-      "Could not load .gitignore file. Using default ignore patterns."
-    );
-    return ["node_modules", "dist"];
+      'Could not load .gitignore file. Using default ignore patterns.',
+      error,
+    )
+    return ['node_modules', 'dist']
   }
 }
 
@@ -69,20 +72,22 @@ export function loadIgnoredDirectories(): string[] {
  * Add output directory to .gitignore
  */
 export function writeGitignore(outputDir: string): void {
-  const gitignorePath = path.join(process.cwd(), ".gitignore");
-  const gitignoreEntry = `\n# Generated Classy files\n${outputDir}/\n`;
+  const gitignorePath = path.join(process.cwd(), '.gitignore')
+  const gitignoreEntry = `\n# Generated Classy files\n${outputDir}/\n`
 
   try {
     if (fs.existsSync(gitignorePath)) {
-      const currentContent = fs.readFileSync(gitignorePath, "utf-8");
+      const currentContent = fs.readFileSync(gitignorePath, 'utf-8')
       if (!currentContent.includes(`${outputDir}/`)) {
-        fs.appendFileSync(gitignorePath, gitignoreEntry);
+        fs.appendFileSync(gitignorePath, gitignoreEntry)
       }
-    } else {
-      fs.writeFileSync(gitignorePath, gitignoreEntry.trim());
     }
-  } catch (error) {
-    console.warn("Failed to update .gitignore file:", error);
+    else {
+      fs.writeFileSync(gitignorePath, gitignoreEntry.trim())
+    }
+  }
+  catch (error) {
+    console.warn('Failed to update .gitignore file:', error)
   }
 }
 
@@ -91,22 +96,22 @@ export function writeGitignore(outputDir: string): void {
  */
 export function isInIgnoredDirectory(
   filePath: string,
-  ignoredDirectories: string[]
+  ignoredDirectories: string[],
 ): boolean {
-  if (!ignoredDirectories.length) return false;
-  const relativePath = path.relative(process.cwd(), filePath);
+  if (!ignoredDirectories.length) return false
+  const relativePath = path.relative(process.cwd(), filePath)
   return ignoredDirectories.some(
-    (dir) => relativePath.startsWith(dir + "/") || relativePath === dir
-  );
+    dir => relativePath.startsWith(dir + '/') || relativePath === dir,
+  )
 }
 
 // Debounce duration in milliseconds
-const WRITE_DEBOUNCE_MS = 200;
-let debouncedWrite: (() => void) | null = null;
-let lastClassesSet: Set<string> | null = null;
-let lastOutputDir: string | null = null;
-let lastOutputFileName: string | null = null;
-let lastIsReact: boolean | null = null;
+const WRITE_DEBOUNCE_MS = 200
+let debouncedWrite: (() => void) | null = null
+let lastClassesSet: Set<string> | null = null
+let lastOutputDir: string | null = null
+let lastOutputFileName: string | null = null
+let lastIsReact: boolean | null = null
 
 /**
  * Write the output file with all collected classes (Internal implementation)
@@ -114,48 +119,49 @@ let lastIsReact: boolean | null = null;
 function _writeOutputFile(
   allClassesSet: Set<string>,
   outputDir: string,
-  outputFileName: string
+  outputFileName: string,
 ): void {
   try {
     const allClasses = Array.from(allClassesSet).filter(
-      (cls) => cls && cls.includes(":")
-    );
+      cls => cls && cls.includes(':'),
+    )
 
     // Check if file exists before deciding to skip write based on empty classes
-    const filePath = path.join(process.cwd(), outputDir, outputFileName);
+    const filePath = path.join(process.cwd(), outputDir, outputFileName)
     if (allClasses.length === 0 && fs.existsSync(filePath)) {
-      console.log("🎩 No modified classes detected, skipping write.");
-      return;
+      console.log('🎩 No modified classes detected, skipping write.')
+      return
     }
 
-    const dirPath = path.join(process.cwd(), outputDir);
+    const dirPath = path.join(process.cwd(), outputDir)
     if (!fs.existsSync(dirPath)) {
-      fs.mkdirSync(dirPath, { recursive: true });
+      fs.mkdirSync(dirPath, { recursive: true })
     }
 
-    const classyGitignorePath = path.join(dirPath, ".gitignore");
+    const classyGitignorePath = path.join(dirPath, '.gitignore')
     if (!fs.existsSync(classyGitignorePath)) {
       fs.writeFileSync(
         classyGitignorePath,
-        "# Ignore all files in this directory\n*"
-      );
+        '# Ignore all files in this directory\n*',
+      )
     }
 
-    writeGitignore(outputDir);
-    const fileContent =
-      "<!-- Auto-generated by useClassy at " +
-      new Date().toISOString() +
-      " -->\n" +
-      allClasses
-        .map((cls) => `<div class="${cls}" style="display: none;"/>`)
-        .join("\n") +
-      "\n";
+    writeGitignore(outputDir)
+    const fileContent
+      = '<!-- Auto-generated by useClassy at '
+        + new Date().toISOString()
+        + ' -->\n'
+        + allClasses
+          .map(cls => `<div class="${cls}" style="display: none;"/>`)
+          .join('\n')
+          + '\n'
 
-    const tempFilePath = path.join(dirPath, `.${outputFileName}.tmp`);
-    fs.writeFileSync(tempFilePath, fileContent, { encoding: "utf-8" });
-    fs.renameSync(tempFilePath, filePath);
-  } catch (error) {
-    console.error("🎩 Error writing output file:", error);
+    const tempFilePath = path.join(dirPath, `.${outputFileName}.tmp`)
+    fs.writeFileSync(tempFilePath, fileContent, { encoding: 'utf-8' })
+    fs.renameSync(tempFilePath, filePath)
+  }
+  catch (error) {
+    console.error('🎩 Error writing output file:', error)
   }
 }
 
@@ -166,32 +172,32 @@ function scheduleWriteOutputFile(
   allClassesSet: Set<string>,
   outputDir: string,
   outputFileName: string,
-  isReact: boolean
+  isReact: boolean,
 ): void {
-  lastClassesSet = allClassesSet;
-  lastOutputDir = outputDir;
-  lastOutputFileName = outputFileName;
-  lastIsReact = isReact;
+  lastClassesSet = allClassesSet
+  lastOutputDir = outputDir
+  lastOutputFileName = outputFileName
+  lastIsReact = isReact
 
   if (!debouncedWrite) {
     debouncedWrite = debounce(() => {
       if (
-        lastClassesSet &&
-        lastOutputDir &&
-        lastOutputFileName !== null &&
-        lastIsReact !== null
+        lastClassesSet
+        && lastOutputDir
+        && lastOutputFileName !== null
+        && lastIsReact !== null
       ) {
-        _writeOutputFile(lastClassesSet, lastOutputDir, lastOutputFileName);
+        _writeOutputFile(lastClassesSet, lastOutputDir, lastOutputFileName)
       }
-    }, WRITE_DEBOUNCE_MS);
+    }, WRITE_DEBOUNCE_MS)
   }
 
-  debouncedWrite();
+  debouncedWrite()
 }
 
 // Export the debounced and direct functions
-export const writeOutputFileDebounced = scheduleWriteOutputFile;
-export const writeOutputFileDirect = _writeOutputFile;
+export const writeOutputFileDebounced = scheduleWriteOutputFile
+export const writeOutputFileDirect = _writeOutputFile
 // Keep original export for backwards compatibility or specific direct use if needed elsewhere?
 // Let's remove the old one to avoid confusion. If needed, call `writeOutputFileDirect`.
 // export { _writeOutputFile as writeOutputFile }; // Removing this old export
@@ -201,29 +207,29 @@ export const writeOutputFileDirect = _writeOutputFile;
  */
 export function shouldProcessFile(
   filePath: string,
-  ignoredDirectories: string[]
+  ignoredDirectories: string[],
 ): boolean {
   if (isInIgnoredDirectory(filePath, ignoredDirectories)) {
-    return false;
+    return false
   }
-  if (!SUPPORTED_FILES.some((ext) => filePath?.endsWith(ext))) {
-    return false;
+  if (!SUPPORTED_FILES.some(ext => filePath?.endsWith(ext))) {
+    return false
   }
   // Use lastOutputDir captured by the debounced writer setup
   const outputDirNormalized = lastOutputDir
     ? path.normalize(lastOutputDir)
-    : null;
+    : null
   if (
-    filePath.includes("node_modules") ||
-    filePath.includes("\0") ||
-    (outputDirNormalized && filePath.includes(outputDirNormalized))
+    filePath.includes('node_modules')
+    || filePath.includes('\0')
+    || (outputDirNormalized && filePath.includes(outputDirNormalized))
   ) {
-    return false;
+    return false
   }
-  if (filePath.includes("virtual:") || filePath.includes("runtime")) {
-    return false;
+  if (filePath.includes('virtual:') || filePath.includes('runtime')) {
+    return false
   }
-  return true;
+  return true
 }
 // Remove original writeOutputFile export if it existed to avoid conflict
 // (Assuming the provided snippet was partial and it might have existed below)
