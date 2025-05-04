@@ -62,6 +62,7 @@ export function extractClasses(
     if (jsxClasses) {
       const trimmedJsx = jsxClasses.trim()
       // Check if it's a template literal and try to extract static classes from the start
+      // This is used for React components
       if (trimmedJsx.startsWith('`') && trimmedJsx.endsWith('`')) {
         const literalContent = trimmedJsx.slice(1, -1)
         const staticPart = literalContent.split('${')[0]
@@ -80,31 +81,22 @@ export function extractClasses(
   // Extract and process classes from class:modifier="..." or className:modifier="..."
   let modifierMatch
   while ((modifierMatch = classModifierRegex.exec(code)) !== null) {
-    const modifiers = modifierMatch[1] // e.g., "hover", "sm:focus"
-    const classes = modifierMatch[2] // e.g., "bg-blue-500 text-white"
+    const modifiers = modifierMatch[1] // "hover", "sm:focus"
+    const classes = modifierMatch[2] // "bg-blue-500 text-white"
 
     if (modifiers && classes) {
       classes.split(/\s+/).forEach((cls) => {
-        // Split by any whitespace
-        const trimmedCls = cls.trim()
+        const trimmedCls = cls.trim() // Split by any whitespace
         if (trimmedCls) {
-          // Construct the fully modified class name (e.g., "hover:bg-blue-500")
           const modifiedClass = `${modifiers}:${trimmedCls}`
-
-          // Add to the set containing ALL classes for transformation context
           allFileClasses.add(modifiedClass)
-
-          // Add ONLY the derived class to the set used for the output file
           modifierDerivedClasses.add(modifiedClass)
-
-          // Handle multi-part modifiers like sm:hover
-          // Add individual parts as well to the modifierDerivedClasses for Tailwind JIT
           const modifierParts = modifiers.split(':')
           if (modifierParts.length > 1) {
             modifierParts.forEach((part) => {
               if (part) {
                 const partialModifiedClass = `${part}:${trimmedCls}`
-                allFileClasses.add(partialModifiedClass) // Also add to all classes context
+                allFileClasses.add(partialModifiedClass)
                 modifierDerivedClasses.add(partialModifiedClass)
               }
             })
@@ -135,10 +127,8 @@ export function transformClassModifiers(
       .map((value: string) => value.trim())
       .filter((value: string) => value && value !== '')
       .flatMap((value: string) => {
-        // Create an array with the full modifier:class combination
         const result = [`${modifiers}:${value}`]
 
-        // Also add individual modifier parts for better coverage
         if (modifierParts.length > 1) {
           modifierParts.forEach((part: string) => {
             if (part) {
@@ -176,9 +166,7 @@ export function transformClassModifiers(
 export function mergeClassAttributes(code: string, attrName: string): string {
   // Regex to find blocks of adjacent class/className attributes
   const multipleClassRegex = new RegExp(
-    // Match the first attribute (quoted string or JSX)
     `((?:${attrName}|class)=(?:(?:"[^"]*")|(?:{[^}]*})))`
-    // Match subsequent attributes separated by whitespace
     + `(?:\\s+((?:${attrName}|class)=(?:(?:"[^"]*")|(?:{[^}]*}))))*`,
     'g',
   )
@@ -199,16 +187,13 @@ export function mergeClassAttributes(code: string, attrName: string): string {
       const staticClassValue = singleAttrMatch[1] // Content of "..."
       const potentialJsx = singleAttrMatch[2] // Content of {...}
 
-      if (staticClassValue !== undefined) {
-        // Directly add static classes from quoted attributes
-        if (staticClassValue.trim()) {
-          staticClasses.push(staticClassValue.trim())
-        }
+      if (staticClassValue !== undefined && staticClassValue.trim()) {
+        staticClasses.push(staticClassValue.trim())
       }
       else if (potentialJsx !== undefined) {
         const currentJsx = potentialJsx.trim()
         if (currentJsx) {
-          // Check if it's a template literal like {`...`}, treat its content as static
+          // Check if it's a template literal like {`...`}
           if (currentJsx.startsWith('`') && currentJsx.endsWith('`')) {
             const literalContent = currentJsx.slice(1, -1).trim()
             if (literalContent) {
@@ -217,22 +202,18 @@ export function mergeClassAttributes(code: string, attrName: string): string {
           }
           else {
             // It's a non-literal JSX expression. Store it.
-            // Prioritize function calls if encountered.
             const currentIsFunctionCall = /^[a-zA-Z_][\w.]*\(.*\)$/.test(
               currentJsx,
             )
 
             if (!jsxExpr || (currentIsFunctionCall && !isFunctionCall)) {
-              // Store if it's the first JSX or if it's a function call and the previous wasn't
               jsxExpr = currentJsx
               isFunctionCall = currentIsFunctionCall
             }
             else if (currentIsFunctionCall && isFunctionCall) {
-              // If both current and previous are function calls, prefer the current one (last encountered)
               jsxExpr = currentJsx
             }
             else if (!jsxExpr) {
-              // If no JSX stored yet, store the current non-function expression
               jsxExpr = currentJsx
               isFunctionCall = false
             }
@@ -246,15 +227,12 @@ export function mergeClassAttributes(code: string, attrName: string): string {
 
     if (jsxExpr) {
       if (!combinedStatic) {
-        // Only JSX expression found
         return `${finalAttrName}={${jsxExpr}}`
       }
 
       if (isFunctionCall) {
-        // Try to inject static classes into the function call
         const lastParenIndex = jsxExpr.lastIndexOf(')')
         if (lastParenIndex !== -1) {
-          // Add static classes as a new template literal argument
           const modifiedJsxExpr = `${jsxExpr.substring(
             0,
             lastParenIndex,
@@ -262,27 +240,23 @@ export function mergeClassAttributes(code: string, attrName: string): string {
           return `${finalAttrName}={${modifiedJsxExpr}}`
         }
         else {
-          // Fallback if function call format is unexpected
           console.warn(
             'Could not inject classes into function call format:',
             jsxExpr,
           )
-          // Combine using template literal as a fallback
           return `${finalAttrName}={\`${combinedStatic} \${${jsxExpr}}\`}`
         }
       }
       else {
-        // Combine static classes and non-function JSX using a template literal
         return `${finalAttrName}={\`${combinedStatic} \${${jsxExpr}}\`}`
       }
     }
     else if (combinedStatic) {
-      // Only static classes found
       return `${finalAttrName}="${combinedStatic}"`
     }
     else {
-      // No classes found at all (e.g. class="" className={undefined})
-      return '' // Return empty string to remove the attributes
+      console.warn('No classes found in class attribute:', match)
+      return ''
     }
   })
 }

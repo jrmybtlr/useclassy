@@ -223,7 +223,7 @@ export default function useClassy(options: ClassyOptions = {}): PluginOption {
             isReact,
           )
           notifyWsDebounced?.()
-          return // Skip transform if file doesn't exist
+          return // Skip
         }
       }
       catch (error) {
@@ -440,6 +440,7 @@ export default function useClassy(options: ClassyOptions = {}): PluginOption {
 }
 
 // Export React-specific utilities
+// React hooks are not fully tested yet
 export { classy, useClassy as useClassyHook } from './react'
 export { writeGitignore } from './utils'
 export type { ClassyOptions } from './types.d.ts'
