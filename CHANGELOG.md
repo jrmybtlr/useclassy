@@ -1,5 +1,25 @@
 # Changelog
 
+## v2.2.0
+
+[compare changes](https://github.com/jrmybtlr/useclassy/compare/v2.1.0...v2.2.0)
+
+### 🚀 Enhancements
+
+- Add ESLint configuration and update dependencies for improved code quality ([7ae14c8](https://github.com/jrmybtlr/useclassy/commit/7ae14c8))
+
+### 🩹 Fixes
+
+- Improve type definitions and enhance class name handling in useClassy and classy functions ([f6c2bf2](https://github.com/jrmybtlr/useclassy/commit/f6c2bf2))
+
+### 💅 Refactors
+
+- Simplify class extraction logic in extractClasses function ([f2f8578](https://github.com/jrmybtlr/useclassy/commit/f2f8578))
+
+### ❤️ Contributors
+
+- Jeremy Butler <jeremy@jeremymbutler.com>
+
 ## v2.1.0
 
 [compare changes](https://github.com/jrmybtlr/useclassy/compare/v2.0.0...v2.1.0)
