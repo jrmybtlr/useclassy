@@ -134,7 +134,7 @@ useClassy({
 
 ## Processing Rules
 
-- Only processes files with `.vue`, `.ts`, `.tsx`, `.js`, `.jsx`, `.html` extensions.
+- Only processes files with `.vue`, `.tsx`, `.jsx`, `.html` extensions.
 - Does not process files in the `node_modules` directory.
 - Does not process files in `.gitignore` directories.
 - Does not process virtual modules.
