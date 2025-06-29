@@ -28,7 +28,7 @@
           @mouseleave="hoveredSection = null"
         >
           <span class="text-blue-400">
-            {{ format === "react" && index === 0 ? "className" : "class"
+            {{ format === "react" ? "className" : "class"
             }}{{ key === "base" ? "" : ":" + key }}
           </span>
           <span class="text-zinc-300">="{{ value }}"</span>

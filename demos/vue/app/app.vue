@@ -198,7 +198,7 @@ const classExamples = {
   focus: "ring-2 ring-blue-500 ring-offset-2",
 
   // Dark mode
-  dark: "bg-zinc-800 text-white border-zinc-700 ring-zinc-700",
+  dark: "bg-zinc-800 text-white border-zinc-700",
 
   // Responsive design
   lg: "p-6 text-base mt-4",
