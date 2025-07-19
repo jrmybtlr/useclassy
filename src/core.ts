@@ -20,7 +20,7 @@ export const REACT_MULTIPLE_CLASS_REGEX
  * Generates a hash string from the input string
  */
 export function hashString(str: string): string {
-  return crypto.createHash('md5').update(str).digest('hex').substring(0, 8)
+  return crypto.createHash('md5').update(str).digest('hex').slice(0, 8)
 }
 
 /**
@@ -61,8 +61,6 @@ export function extractClasses(
     const jsxClasses = classMatch[2]
     if (jsxClasses) {
       const trimmedJsx = jsxClasses.trim()
-      // Check if it's a template literal and try to extract static classes from the start
-      // This is used for React components
       if (trimmedJsx.startsWith('`') && trimmedJsx.endsWith('`')) {
         const literalContent = trimmedJsx.slice(1, -1)
         const staticPart = literalContent.split('${')[0]
@@ -86,7 +84,7 @@ export function extractClasses(
 
     if (modifiers && classes) {
       classes.split(/\s+/).forEach((cls) => {
-        const trimmedCls = cls.trim() // Split by any whitespace
+        const trimmedCls = cls.trim()
         if (trimmedCls) {
           const modifiedClass = `${modifiers}:${trimmedCls}`
           allFileClasses.add(modifiedClass)
@@ -117,7 +115,7 @@ export function transformClassModifiers(
   classAttrName: string,
 ): string {
   return code.replace(classModifierRegex, (match, modifiers, classes) => {
-    if (!modifiers || modifiers.trim() === '') return match
+    if (!modifiers?.trim()) return match
 
     const modifierParts = modifiers.split(':')
 
@@ -125,7 +123,7 @@ export function transformClassModifiers(
     const modifiedClassesArr = classes
       .split(' ')
       .map((value: string) => value.trim())
-      .filter((value: string) => value && value !== '')
+      .filter(Boolean)
       .flatMap((value: string) => {
         const result = [`${modifiers}:${value}`]
 
@@ -152,10 +150,7 @@ export function transformClassModifiers(
       }
     })
 
-    // For React components, always use className as the attribute name
-    // regardless of whether the original was class: or className:
-    const finalAttrName
-      = classAttrName === 'className' ? 'className' : classAttrName
+    const finalAttrName = classAttrName === 'className' ? 'className' : classAttrName
     return `${finalAttrName}="${modifiedClassesArr.join(' ')}"`
   })
 }
@@ -164,7 +159,6 @@ export function transformClassModifiers(
  * Merges multiple class attributes into a single one
  */
 export function mergeClassAttributes(code: string, attrName: string): string {
-  // Regex to find blocks of adjacent class/className attributes
   const multipleClassRegex = new RegExp(
     `((?:${attrName}|class)=(?:(?:"[^"]*")|(?:{[^}]*})))`
     + `(?:\\s+((?:${attrName}|class)=(?:(?:"[^"]*")|(?:{[^}]*}))))*`,
@@ -176,7 +170,6 @@ export function mergeClassAttributes(code: string, attrName: string): string {
     let jsxExpr: string | null = null
     let isFunctionCall = false
 
-    // Regex to find individual attributes (quoted string or JSX) within the matched block
     const attrFinderRegex = new RegExp(
       `(?:${attrName}|class)=(?:(?:"([^"]*)")|(?:{([^}]*)}))`,
       'g',
@@ -187,10 +180,10 @@ export function mergeClassAttributes(code: string, attrName: string): string {
       const staticClassValue = singleAttrMatch[1] // Content of "..."
       const potentialJsx = singleAttrMatch[2] // Content of {...}
 
-      if (staticClassValue !== undefined && staticClassValue.trim()) {
+      if (staticClassValue?.trim()) {
         staticClasses.push(staticClassValue.trim())
       }
-      else if (potentialJsx !== undefined) {
+      else if (potentialJsx) {
         const currentJsx = potentialJsx.trim()
         if (currentJsx) {
           // Check if it's a template literal like {`...`}
@@ -201,10 +194,7 @@ export function mergeClassAttributes(code: string, attrName: string): string {
             }
           }
           else {
-            // It's a non-literal JSX expression. Store it.
-            const currentIsFunctionCall = /^[a-zA-Z_][\w.]*\(.*\)$/.test(
-              currentJsx,
-            )
+            const currentIsFunctionCall = /^[a-zA-Z_][\w.]*\(.*\)$/.test(currentJsx)
 
             if (!jsxExpr || (currentIsFunctionCall && !isFunctionCall)) {
               jsxExpr = currentJsx

@@ -105,7 +105,6 @@ export function isInIgnoredDirectory(
   )
 }
 
-// Debounce duration in milliseconds
 const WRITE_DEBOUNCE_MS = 200
 let debouncedWrite: (() => void) | null = null
 let lastClassesSet: Set<string> | null = null
@@ -198,9 +197,6 @@ function scheduleWriteOutputFile(
 // Export the debounced and direct functions
 export const writeOutputFileDebounced = scheduleWriteOutputFile
 export const writeOutputFileDirect = _writeOutputFile
-// Keep original export for backwards compatibility or specific direct use if needed elsewhere?
-// Let's remove the old one to avoid confusion. If needed, call `writeOutputFileDirect`.
-// export { _writeOutputFile as writeOutputFile }; // Removing this old export
 
 /**
  * Determine if a file should be processed
@@ -215,7 +211,6 @@ export function shouldProcessFile(
   if (!SUPPORTED_FILES.some(ext => filePath?.endsWith(ext))) {
     return false
   }
-  // Use lastOutputDir captured by the debounced writer setup
   const outputDirNormalized = lastOutputDir
     ? path.normalize(lastOutputDir)
     : null
@@ -231,5 +226,3 @@ export function shouldProcessFile(
   }
   return true
 }
-// Remove original writeOutputFile export if it existed to avoid conflict
-// (Assuming the provided snippet was partial and it might have existed below)

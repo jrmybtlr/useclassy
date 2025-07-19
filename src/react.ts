@@ -5,11 +5,9 @@ import { useMemo, DependencyList } from 'react'
  * This is similar to the classnames package but optimized for react and memoization
  */
 export function useClassy(...args: (string | Record<string, boolean> | (string | Record<string, boolean>)[])[]): string {
-  // Create stable dependency list by stringifying object arguments
   const deps: DependencyList = useMemo(
     () =>
       args.map(arg => (typeof arg === 'object' ? JSON.stringify(arg) : arg)),
-    // This helps React correctly identify when dependencies change
     [JSON.stringify(args)],
   )
 
