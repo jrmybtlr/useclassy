@@ -33,6 +33,30 @@ export function generateCacheKey(id: string, code: string): string {
 /**
  * Extracts classes from the code, separating base classes and modifier-derived classes.
  */
+function processClassString(classStr: string, allFileClasses: Set<string>): void {
+  let start = 0
+  const len = classStr.length
+
+  for (let i = 0; i <= len; i++) {
+    const char = classStr[i]
+    if (char === ' ' || char === '\t' || char === '\n' || i === len) {
+      if (i > start) {
+        const cls = classStr.substring(start, i)
+        if (cls) {
+          allFileClasses.add(cls)
+        }
+      }
+      while (i < len && /\s/.test(classStr[i + 1])) {
+        i++
+      }
+      start = i + 1
+    }
+  }
+}
+
+/**
+ * Extracts classes from the code
+ */
 export function extractClasses(
   code: string,
   allFileClasses: Set<string>,
@@ -49,12 +73,7 @@ export function extractClasses(
     // Handle quoted strings (group 1)
     const staticClasses = classMatch[1]
     if (staticClasses) {
-      staticClasses.split(/\s+/).forEach((cls) => {
-        const trimmedCls = cls.trim()
-        if (trimmedCls) {
-          allFileClasses.add(trimmedCls)
-        }
-      })
+      processClassString(staticClasses, allFileClasses)
     }
 
     // Handle JSX expressions (group 2)
@@ -65,12 +84,7 @@ export function extractClasses(
         const literalContent = trimmedJsx.slice(1, -1)
         const staticPart = literalContent.split('${')[0]
         if (staticPart) {
-          staticPart.split(/\s+/).forEach((cls) => {
-            const trimmedCls = cls.trim()
-            if (trimmedCls) {
-              allFileClasses.add(trimmedCls)
-            }
-          })
+          processClassString(staticPart, allFileClasses)
         }
       }
     }
@@ -79,28 +93,44 @@ export function extractClasses(
   // Extract and process classes from class:modifier="..." or className:modifier="..."
   let modifierMatch
   while ((modifierMatch = classModifierRegex.exec(code)) !== null) {
-    const modifiers = modifierMatch[1] // "hover", "sm:focus"
-    const classes = modifierMatch[2] // "bg-blue-500 text-white"
+    const modifiers = modifierMatch[1]
+    const classes = modifierMatch[2]
 
     if (modifiers && classes) {
-      classes.split(/\s+/).forEach((cls) => {
-        const trimmedCls = cls.trim()
-        if (trimmedCls) {
-          const modifiedClass = `${modifiers}:${trimmedCls}`
-          allFileClasses.add(modifiedClass)
-          modifierDerivedClasses.add(modifiedClass)
-          const modifierParts = modifiers.split(':')
-          if (modifierParts.length > 1) {
-            modifierParts.forEach((part) => {
-              if (part) {
-                const partialModifiedClass = `${part}:${trimmedCls}`
-                allFileClasses.add(partialModifiedClass)
-                modifierDerivedClasses.add(partialModifiedClass)
+      // Process modifier classes with optimized string parsing
+      let start = 0
+      const len = classes.length
+
+      for (let i = 0; i <= len; i++) {
+        const char = classes[i]
+        if (char === ' ' || char === '\t' || char === '\n' || i === len) {
+          if (i > start) {
+            const cls = classes.substring(start, i)
+            if (cls) {
+              const modifiedClass = `${modifiers}:${cls}`
+              allFileClasses.add(modifiedClass)
+              modifierDerivedClasses.add(modifiedClass)
+
+              // Handle nested modifiers efficiently
+              if (modifiers.includes(':')) {
+                const modifierParts = modifiers.split(':')
+                for (const part of modifierParts) {
+                  if (part) {
+                    const partialModifiedClass = `${part}:${cls}`
+                    allFileClasses.add(partialModifiedClass)
+                    modifierDerivedClasses.add(partialModifiedClass)
+                  }
+                }
               }
-            })
+            }
           }
+          // Skip to next non-whitespace
+          while (i < len && /\s/.test(classes[i + 1])) {
+            i++
+          }
+          start = i + 1
         }
-      })
+      }
     }
   }
 }
@@ -155,25 +185,38 @@ export function transformClassModifiers(
   })
 }
 
+// Pre-compiled regex cache for performance
+const regexCache = new Map<string, { multipleClassRegex: RegExp, attrFinderRegex: RegExp }>()
+
+function getCompiledRegexes(attrName: string) {
+  let cached = regexCache.get(attrName)
+  if (!cached) {
+    cached = {
+      multipleClassRegex: new RegExp(
+        `((?:${attrName}|class)=(?:(?:"[^"]*")|(?:{[^}]*})))`
+        + `(?:\\s+((?:${attrName}|class)=(?:(?:"[^"]*")|(?:{[^}]*}))))*`,
+        'g',
+      ),
+      attrFinderRegex: new RegExp(
+        `(?:${attrName}|class)=(?:(?:"([^"]*)")|(?:{([^}]*)}))`,
+        'g',
+      ),
+    }
+    regexCache.set(attrName, cached)
+  }
+  return cached
+}
+
 /**
  * Merges multiple class attributes into a single one
  */
 export function mergeClassAttributes(code: string, attrName: string): string {
-  const multipleClassRegex = new RegExp(
-    `((?:${attrName}|class)=(?:(?:"[^"]*")|(?:{[^}]*})))`
-    + `(?:\\s+((?:${attrName}|class)=(?:(?:"[^"]*")|(?:{[^}]*}))))*`,
-    'g',
-  )
+  const { multipleClassRegex, attrFinderRegex } = getCompiledRegexes(attrName)
 
   return code.replace(multipleClassRegex, (match) => {
     const staticClasses: string[] = []
     let jsxExpr: string | null = null
     let isFunctionCall = false
-
-    const attrFinderRegex = new RegExp(
-      `(?:${attrName}|class)=(?:(?:"([^"]*)")|(?:{([^}]*)}))`,
-      'g',
-    )
 
     let singleAttrMatch
     while ((singleAttrMatch = attrFinderRegex.exec(match)) !== null) {
