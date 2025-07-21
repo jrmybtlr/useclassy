@@ -1,5 +1,4 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest'
-import useClassy from '../index'
 import type { Plugin } from 'vite'
 
 // Mock process.cwd
@@ -30,18 +29,25 @@ vi.mock('path', () => ({
 }))
 
 // Mock utils module
-vi.mock('../utils', () => ({
+vi.doMock('../utils', () => ({
   SUPPORTED_FILES: ['.vue', '.ts', '.tsx', '.js', '.jsx', '.html'],
   loadIgnoredDirectories: vi.fn().mockReturnValue(['node_modules', 'dist']),
   writeGitignore: vi.fn(),
   writeOutputFileDebounced: vi.fn(),
   writeOutputFileDirect: vi.fn(),
   debounce: vi.fn(fn => fn),
-  shouldProcessFile: vi.fn().mockReturnValue(true),
+  shouldProcessFile: vi.fn().mockImplementation((filePath: string) => {
+    // Mock implementation that returns true for supported files
+    const supportedFiles = ['.vue', '.ts', '.tsx', '.js', '.jsx', '.html']
+    return supportedFiles.some(ext => filePath?.endsWith(ext))
+      && !filePath.includes('node_modules')
+      && !filePath.includes('virtual:')
+      && !filePath.includes('runtime')
+  }),
 }))
 
 // Mock core module
-vi.mock('../core', () => ({
+vi.doMock('../core', () => ({
   SUPPORTED_FILES: ['.vue', '.ts', '.tsx', '.js', '.jsx', '.html'],
   CLASS_REGEX: /class="([^"]*)"(?![^>]*:class)/g,
   CLASS_MODIFIER_REGEX: /class:([\w-:]+)="([^"]*)"/g,
@@ -64,6 +70,9 @@ vi.mock('../core', () => ({
   }),
   mergeClassAttributes: vi.fn(code => code),
 }))
+
+// Import after mocks
+import useClassy from '../index'
 
 describe('useClassy plugin', () => {
   beforeEach(() => {
