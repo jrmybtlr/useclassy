@@ -50,6 +50,15 @@ import type { ClassyOptions, ViteServer } from './types'
  * }
  *
  */
+// Memory management constants
+const MAX_CACHE_SIZE = 1000
+const MAX_CLASSES = 10000
+const MAX_FILES = 500
+const MEMORY_CHECK_INTERVAL = 100
+
+// Performance constants
+const LARGE_FILE_THRESHOLD = 50000
+
 export default function useClassy(options: ClassyOptions = {}): PluginOption {
   let ignoredDirectories: string[] = []
   let allClassesSet: Set<string> = new Set()
@@ -57,10 +66,101 @@ export default function useClassy(options: ClassyOptions = {}): PluginOption {
   let initialScanComplete = false
   let lastWrittenClassCount = -1
   let notifyWsDebounced: (() => void) | null = null
+  let operationCount = 0
 
-  // Cache
+  // Cache with LRU tracking
   const transformCache: Map<string, string> = new Map()
   const fileClassMap: Map<string, Set<string>> = new Map()
+  const cacheAccessOrder: string[] = []
+
+  // Memory management functions
+  function evictLRUCache() {
+    if (transformCache.size > MAX_CACHE_SIZE) {
+      const toEvict = Math.floor(MAX_CACHE_SIZE * 0.2)
+      for (let i = 0; i < toEvict; i++) {
+        const oldestKey = cacheAccessOrder.shift()
+        if (oldestKey) {
+          transformCache.delete(oldestKey)
+        }
+      }
+    }
+  }
+
+  function evictFileClassMap() {
+    if (fileClassMap.size > MAX_FILES) {
+      const toEvict = Math.floor(MAX_FILES * 0.2)
+      const oldestFiles = Array.from(fileClassMap.keys()).slice(0, toEvict)
+      oldestFiles.forEach(file => fileClassMap.delete(file))
+    }
+  }
+
+  function trimClassSet() {
+    if (allClassesSet.size > MAX_CLASSES) {
+      const classArray = Array.from(allClassesSet)
+      // Keep most recently used classes (simple heuristic: shorter class names are often more basic/reused)
+      classArray.sort((a, b) => a.length - b.length)
+      allClassesSet = new Set(classArray.slice(0, Math.floor(MAX_CLASSES * 0.8)))
+    }
+  }
+
+  function performMemoryCheck() {
+    operationCount++
+    if (operationCount % MEMORY_CHECK_INTERVAL === 0) {
+      evictLRUCache()
+      evictFileClassMap()
+      trimClassSet()
+
+      if (debug) {
+        console.log(`🎩 Memory check: Cache=${transformCache.size}, Files=${fileClassMap.size}, Classes=${allClassesSet.size}`)
+      }
+    }
+  }
+
+  function updateCacheAccess(key: string) {
+    const index = cacheAccessOrder.indexOf(key)
+    if (index > -1) {
+      cacheAccessOrder.splice(index, 1)
+    }
+    cacheAccessOrder.push(key)
+  }
+
+  function updateGlobalClassesIncrementally(
+    fileId: string,
+    newFileClasses: Set<string>,
+    oldFileClasses?: Set<string>,
+  ): boolean {
+    let classesChanged = false
+
+    // Remove old classes that are no longer in this file
+    if (oldFileClasses) {
+      oldFileClasses.forEach((className) => {
+        if (!newFileClasses.has(className)) {
+          // Check if this class is used in other files before removing
+          let isUsedElsewhere = false
+          for (const [otherId, otherClasses] of fileClassMap) {
+            if (otherId !== fileId && otherClasses.has(className)) {
+              isUsedElsewhere = true
+              break
+            }
+          }
+          if (!isUsedElsewhere) {
+            allClassesSet.delete(className)
+            classesChanged = true
+          }
+        }
+      })
+    }
+
+    // Add new classes that weren't in the global set
+    newFileClasses.forEach((className) => {
+      if (!allClassesSet.has(className)) {
+        allClassesSet.add(className)
+        classesChanged = true
+      }
+    })
+
+    return classesChanged
+  }
 
   // Options
   const outputDir = options.outputDir || '.classy'
@@ -124,20 +224,56 @@ export default function useClassy(options: ClassyOptions = {}): PluginOption {
 
       if (transformCache.has(cacheKey)) {
         if (debug)
-          console.log('🎩 Cache key' + cacheKey + ' hit for:', id)
+          console.log('🎩 Cache key' + cacheKey + ': hit for:', id)
 
+        updateCacheAccess(cacheKey)
         return transformCache.get(cacheKey)
       }
 
       if (debug) console.log('🎩 Processing file:', id)
       if (debug) console.log('🎩 Cache key:', cacheKey)
 
-      const { transformedCode, classesChanged, fileSpecificClasses }
-        = processCode(code, allClassesSet)
+      // Handle large files with extra caution
+      if (code.length > LARGE_FILE_THRESHOLD) {
+        if (debug) console.log(`🎩 Large file detected (${code.length} bytes):`, id)
+        // For very large files, we might want to skip processing or limit it
+        if (code.length > LARGE_FILE_THRESHOLD * 10) {
+          console.warn(`🎩 Skipping extremely large file (${code.length} bytes):`, id)
+          return null
+        }
+      }
+
+      let transformedCode: string
+      let directClassesChanged: boolean
+      let fileSpecificClasses: Set<string>
+
+      try {
+        const result = processCode(code, allClassesSet)
+        transformedCode = result.transformedCode
+        directClassesChanged = result.classesChanged
+        fileSpecificClasses = result.fileSpecificClasses
+      }
+      catch (error) {
+        console.error(`🎩 Error processing file ${id}:`, error)
+        return null // Return original code without transformation
+      }
+
+      // Use incremental processing for better performance
+      const oldFileClasses = fileClassMap.get(id)
+      const incrementalClassesChanged = updateGlobalClassesIncrementally(
+        id,
+        fileSpecificClasses,
+        oldFileClasses,
+      )
 
       fileClassMap.set(id, new Set(fileSpecificClasses))
-
       transformCache.set(cacheKey, transformedCode)
+      updateCacheAccess(cacheKey)
+
+      performMemoryCheck()
+
+      // Use either direct or incremental change detection
+      const classesChanged = directClassesChanged || incrementalClassesChanged
 
       if (!isBuild && classesChanged) {
         if (debug)

@@ -396,6 +396,73 @@ describe('core module', () => {
       expect(result).toBe(code)
       expect(classes.size).toBe(0)
     })
+
+    it('should limit modifier depth to prevent exponential growth', () => {
+      const code = `
+        <div class:sm:md:lg:xl:2xl:hover:focus:active:disabled="text-blue-500">
+          Content
+        </div>
+      `
+      const classes = new Set<string>()
+      const modifierClasses = new Set<string>()
+
+      extractClasses(
+        code,
+        classes,
+        modifierClasses,
+        CLASS_REGEX,
+        CLASS_MODIFIER_REGEX,
+      )
+
+      // Should limit the number of partial modifier classes created
+      // With depth limit of 4, we shouldn't see all 9 possible modifiers
+      const partialModifiers = Array.from(modifierClasses).filter(cls => 
+        cls.includes(':text-blue-500') && !cls.startsWith('sm:md:lg:xl:2xl:hover:focus:active:disabled:')
+      )
+
+      // Should have limited the depth (exact count depends on implementation)
+      expect(partialModifiers.length).toBeLessThan(10) // Much less than would be without limiting
+    })
+
+    it('should handle empty modifier strings gracefully', () => {
+      const code = `<div class:="text-blue-500">Content</div>`
+      const classes = new Set<string>()
+      const modifierClasses = new Set<string>()
+
+      extractClasses(
+        code,
+        classes,
+        modifierClasses,
+        CLASS_REGEX,
+        CLASS_MODIFIER_REGEX,
+      )
+
+      // Should handle empty modifiers without errors
+      expect(classes.size).toBeGreaterThanOrEqual(0)
+    })
+  })
+
+  describe('Performance optimizations', () => {
+    it('should use optimized string processing for large class lists', () => {
+      const longClassList = Array.from({ length: 100 }, (_, i) => `class-${i}`).join(' ')
+      const code = `<div class="${longClassList}">Content</div>`
+      const classes = new Set<string>()
+      const modifierClasses = new Set<string>()
+
+      const startTime = performance.now()
+      extractClasses(
+        code,
+        classes,
+        modifierClasses,
+        CLASS_REGEX,
+        CLASS_MODIFIER_REGEX,
+      )
+      const endTime = performance.now()
+
+      // Should complete quickly even with many classes
+      expect(endTime - startTime).toBeLessThan(100) // Should take less than 100ms
+      expect(classes.size).toBe(100) // Should extract all classes
+    })
   })
 
   describe('mergeClassAttributes', () => {

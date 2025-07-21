@@ -4,6 +4,9 @@ import { hashFunction } from './utils'
 // Supported file extensions
 export const SUPPORTED_FILES = ['.vue', '.ts', '.tsx', '.js', '.jsx', '.html']
 
+// Performance constants
+const MAX_MODIFIER_DEPTH = 4
+
 // Base constants for class transformations
 export const CLASS_REGEX = /class="([^"]*)"(?![^>]*:class)/g
 export const CLASS_MODIFIER_REGEX = /class:([\w-:]+)="([^"]*)"/g
@@ -111,10 +114,13 @@ export function extractClasses(
               allFileClasses.add(modifiedClass)
               modifierDerivedClasses.add(modifiedClass)
 
-              // Handle nested modifiers efficiently
+              // Handle nested modifiers with depth limiting
               if (modifiers.includes(':')) {
                 const modifierParts = modifiers.split(':')
-                for (const part of modifierParts) {
+                // Limit modifier depth to prevent exponential class generation
+                const maxDepth = Math.min(modifierParts.length, MAX_MODIFIER_DEPTH)
+                for (let j = 0; j < maxDepth; j++) {
+                  const part = modifierParts[j]
                   if (part) {
                     const partialModifiedClass = `${part}:${cls}`
                     allFileClasses.add(partialModifiedClass)
