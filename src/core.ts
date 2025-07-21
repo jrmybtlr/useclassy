@@ -230,10 +230,13 @@ export function mergeClassAttributes(code: string, attrName: string): string {
           return `${finalAttrName}={${modifiedJsxExpr}}`
         }
         else {
-          console.warn(
-            'Could not inject classes into function call format:',
-            jsxExpr,
-          )
+          // Only warn in non-test environments to avoid noise during testing
+          if (process.env.NODE_ENV !== 'test') {
+            console.warn(
+              'Could not inject classes into function call format:',
+              jsxExpr,
+            )
+          }
           return `${finalAttrName}={\`${combinedStatic} \${${jsxExpr}}\`}`
         }
       }
@@ -245,7 +248,10 @@ export function mergeClassAttributes(code: string, attrName: string): string {
       return `${finalAttrName}="${combinedStatic}"`
     }
     else {
-      console.warn('No classes found in class attribute:', match)
+      // Only warn in non-test environments to avoid noise during testing
+      if (process.env.NODE_ENV !== 'test') {
+        console.warn('No classes found in class attribute:', match)
+      }
       return ''
     }
   })
