@@ -34,9 +34,9 @@
       <section class="mt-2">
         <p
           class="text-center font-semibold text-2xl motion-preset-blur-up motion-delay-600 text-balance"
+          class:md="text-3xl"
         >
-          Automatically append attributes to separate media queries, hover
-          states, and other styles. It's fast, simple, and much more readable.
+          Make your Tailwind variants fast, simple, and much more readable.
         </p>
         <ClassExample :examples="classExamples" class="mt-10" />
       </section>
@@ -167,12 +167,12 @@ useSeoMeta({
   ogTitle: "UseClassy",
   ogDescription:
     "Make your Tailwind variant modifiers fast, simple, and much more readable.",
-  ogImage: "assets.useclassy.com/og-image.png",
+  ogImage: "https://assets.useclassy.com/og-image.png",
   ogUrl: "https://useclassy.com",
   twitterTitle: "UseClassy",
   twitterDescription:
     "Make your Tailwind variant modifiers fast, simple, and much more readable.",
-  twitterImage: "assets.useclassy.com/og-image-twitter.png",
+  twitterImage: "https://assets.useclassy.com/og-image-twitter.png",
   twitterCard: "summary_large_image",
 });
 
