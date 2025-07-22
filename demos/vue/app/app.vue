@@ -34,7 +34,7 @@
       <section class="mt-2">
         <p
           class="text-center font-semibold text-2xl motion-preset-blur-up motion-delay-600 text-balance"
-          class:md="text-3xl"
+          class:md="text-3xl mt-2"
         >
           Make your Tailwind variants fast, simple, and much more readable.
         </p>

@@ -416,9 +416,8 @@ describe('core module', () => {
 
       // Should limit the number of partial modifier classes created
       // With depth limit of 4, we shouldn't see all 9 possible modifiers
-      const partialModifiers = Array.from(modifierClasses).filter(cls => 
-        cls.includes(':text-blue-500') && !cls.startsWith('sm:md:lg:xl:2xl:hover:focus:active:disabled:')
-      )
+      const partialModifiers = Array.from(modifierClasses).filter(cls =>
+        cls.includes(':text-blue-500') && !cls.startsWith('sm:md:lg:xl:2xl:hover:focus:active:disabled:'))
 
       // Should have limited the depth (exact count depends on implementation)
       expect(partialModifiers.length).toBeLessThan(10) // Much less than would be without limiting

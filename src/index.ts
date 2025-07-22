@@ -58,7 +58,6 @@ export default function useClassy(options: ClassyOptions = {}): PluginOption {
   const transformCache: Map<string, string> = new Map()
   const fileClassMap: Map<string, Set<string>> = new Map()
 
-
   function regenerateAllClasses(): boolean {
     const oldSize = allClassesSet.size
     allClassesSet.clear()
@@ -139,7 +138,6 @@ export default function useClassy(options: ClassyOptions = {}): PluginOption {
       if (debug) console.log('🎩 Processing file:', id)
       if (debug) console.log('🎩 Cache key:', cacheKey)
 
-
       let transformedCode: string
       let directClassesChanged: boolean
       let fileSpecificClasses: Set<string>
@@ -208,7 +206,6 @@ export default function useClassy(options: ClassyOptions = {}): PluginOption {
     },
   }
 
-
   function setupOutputEndpoint(server: ViteServer) {
     server.middlewares.use(
       '/__useClassy__/generate-output',
@@ -224,7 +221,6 @@ export default function useClassy(options: ClassyOptions = {}): PluginOption {
       },
     )
   }
-
 
   function processCode(
     code: string,
