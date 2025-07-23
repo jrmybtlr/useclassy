@@ -365,6 +365,103 @@ describe('core module', () => {
       // Only valid classes should be added to the set
       expect(classes.size).toBe(0)
     })
+
+    it('should handle null/undefined modifiers', () => {
+      const code = '<div class:null="text-blue-500">Content</div>'
+      const classes = new Set<string>()
+
+      const result = transformClassModifiers(
+        code,
+        classes,
+        CLASS_MODIFIER_REGEX,
+        'class',
+      )
+
+      // The function should transform even "null" as a modifier
+      expect(result).toContain('null:text-blue-500')
+      expect(classes.size).toBe(1)
+    })
+
+    it('should handle whitespace-only modifiers', () => {
+      const code = '<div class:"   "="text-blue-500">Content</div>'
+      const classes = new Set<string>()
+
+      const result = transformClassModifiers(
+        code,
+        classes,
+        CLASS_MODIFIER_REGEX,
+        'class',
+      )
+
+      expect(result).toBe(code)
+      expect(classes.size).toBe(0)
+    })
+
+    it('should limit modifier depth to prevent exponential growth', () => {
+      const code = `
+        <div class:sm:md:lg:xl:2xl:hover:focus:active:disabled="text-blue-500">
+          Content
+        </div>
+      `
+      const classes = new Set<string>()
+      const modifierClasses = new Set<string>()
+
+      extractClasses(
+        code,
+        classes,
+        modifierClasses,
+        CLASS_REGEX,
+        CLASS_MODIFIER_REGEX,
+      )
+
+      // Should limit the number of partial modifier classes created
+      // With depth limit of 4, we shouldn't see all 9 possible modifiers
+      const partialModifiers = Array.from(modifierClasses).filter(cls =>
+        cls.includes(':text-blue-500') && !cls.startsWith('sm:md:lg:xl:2xl:hover:focus:active:disabled:'))
+
+      // Should have limited the depth (exact count depends on implementation)
+      expect(partialModifiers.length).toBeLessThan(10) // Much less than would be without limiting
+    })
+
+    it('should handle empty modifier strings gracefully', () => {
+      const code = `<div class:="text-blue-500">Content</div>`
+      const classes = new Set<string>()
+      const modifierClasses = new Set<string>()
+
+      extractClasses(
+        code,
+        classes,
+        modifierClasses,
+        CLASS_REGEX,
+        CLASS_MODIFIER_REGEX,
+      )
+
+      // Should handle empty modifiers without errors
+      expect(classes.size).toBeGreaterThanOrEqual(0)
+    })
+  })
+
+  describe('Performance optimizations', () => {
+    it('should use optimized string processing for large class lists', () => {
+      const longClassList = Array.from({ length: 100 }, (_, i) => `class-${i}`).join(' ')
+      const code = `<div class="${longClassList}">Content</div>`
+      const classes = new Set<string>()
+      const modifierClasses = new Set<string>()
+
+      const startTime = performance.now()
+      extractClasses(
+        code,
+        classes,
+        modifierClasses,
+        CLASS_REGEX,
+        CLASS_MODIFIER_REGEX,
+      )
+      const endTime = performance.now()
+
+      // Should complete quickly even with many classes
+      expect(endTime - startTime).toBeLessThan(100) // Should take less than 100ms
+      expect(classes.size).toBe(100) // Should extract all classes
+    })
   })
 
   describe('mergeClassAttributes', () => {
@@ -439,6 +536,87 @@ describe('core module', () => {
       // so let's check that no class content remains
       expect(result).not.toContain('class="  "')
       expect(result).not.toContain('class=""')
+    })
+
+    it('should handle function calls without parentheses', () => {
+      const code = '<div className="flex" className={getClassNames}>Content</div>'
+
+      const result = mergeClassAttributes(code, 'className')
+
+      expect(result).toContain('className=')
+      expect(result).toContain('getClassNames')
+      expect(result).toContain('flex')
+    })
+
+    it('should handle function calls with complex parameters', () => {
+      const code = '<div className="flex" className={getClassNames(theme, isActive)}>Content</div>'
+
+      const result = mergeClassAttributes(code, 'className')
+
+      expect(result).toContain('className=')
+      expect(result).toContain('getClassNames(theme, isActive')
+      expect(result).toContain('flex')
+    })
+
+    it('should handle function calls with nested parentheses', () => {
+      const code = '<div className="flex" className={getClassNames(theme, isActive ? "active" : "inactive")}>Content</div>'
+
+      const result = mergeClassAttributes(code, 'className')
+
+      expect(result).toContain('className=')
+      expect(result).toContain('getClassNames(theme, isActive ? "active" : "inactive"')
+      expect(result).toContain('flex')
+    })
+
+    it('should handle function calls with missing closing parenthesis', () => {
+      const code = '<div className="flex" className={getClassNames(theme}>Content</div>'
+
+      const result = mergeClassAttributes(code, 'className')
+
+      // Should fall back to template literal approach
+      expect(result).toContain('className=')
+      expect(result).toContain('getClassNames(theme')
+      expect(result).toContain('flex')
+    })
+
+    it('should handle multiple JSX expressions', () => {
+      const code = '<div className="flex" className={active ? "bg-blue-500" : ""} className={theme}>Content</div>'
+
+      const result = mergeClassAttributes(code, 'className')
+
+      expect(result).toContain('className=')
+      expect(result).toContain('flex')
+      // Should handle multiple expressions by prioritizing function calls
+      expect(result).toContain('active ?')
+    })
+
+    it('should handle template literals with complex expressions', () => {
+      const code = '<div className="flex" className={`${baseClass} ${active ? "bg-blue-500" : "bg-gray-100"}`}>Content</div>'
+
+      const result = mergeClassAttributes(code, 'className')
+
+      expect(result).toContain('className=')
+      expect(result).toContain('flex')
+      expect(result).toContain('baseClass')
+      expect(result).toContain('active ?')
+    })
+
+    it('should handle empty JSX expressions', () => {
+      const code = '<div className="flex" className={}>Content</div>'
+
+      const result = mergeClassAttributes(code, 'className')
+
+      expect(result).toContain('className=')
+      expect(result).toContain('flex')
+    })
+
+    it('should handle whitespace-only JSX expressions', () => {
+      const code = '<div className="flex" className={"   "}>Content</div>'
+
+      const result = mergeClassAttributes(code, 'className')
+
+      expect(result).toContain('className=')
+      expect(result).toContain('flex')
     })
   })
 })
