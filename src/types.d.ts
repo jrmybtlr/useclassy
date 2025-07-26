@@ -18,7 +18,7 @@ export interface ClassyOptions {
    * Framework language to use for class attribute
    * @default "vue"
    */
-  language?: 'vue' | 'react'
+  language?: 'vue' | 'react' | 'blade'
 
   /**
    * Directory to output the generated class file
@@ -34,7 +34,7 @@ export interface ClassyOptions {
 
   /**
    * Files to watch for changes
-   * @default [".vue", ".tsx", ".jsx", ".html"]
+   * @default [".vue", ".tsx", ".jsx", ".html", ".blade.php"]
    */
   files?: string[]
 
@@ -55,6 +55,7 @@ export interface ClassyOptions {
 export interface ViteServer extends ViteDevServer {
   watcher: {
     on: (event: string, callback: (filePath: string) => void) => void
+    add: (file: string) => void
   }
   middlewares: {
     use: (path: string, handler: (req: import('http').IncomingMessage, res: import('http').ServerResponse) => void) => void

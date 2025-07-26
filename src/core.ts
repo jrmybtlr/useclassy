@@ -2,7 +2,7 @@ import crypto from 'crypto'
 import { hashFunction } from './utils'
 
 // Supported file extensions
-export const SUPPORTED_FILES = ['.vue', '.ts', '.tsx', '.js', '.jsx', '.html']
+export const SUPPORTED_FILES = ['.vue', '.ts', '.tsx', '.js', '.jsx', '.html', '.blade.php']
 
 // Performance constants
 const MAX_MODIFIER_DEPTH = 4
