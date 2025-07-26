@@ -22,6 +22,7 @@ import {
 import {
   scanBladeFiles,
   setupBladeFileWatching,
+  setupLaravelServiceProvider,
 } from './blade'
 
 import type { ClassyOptions, ViteServer } from './types'
@@ -103,6 +104,12 @@ export default function useClassy(options: ClassyOptions = {}): PluginOption {
     configResolved(config) {
       isBuild = config.command === 'build'
       ignoredDirectories = loadIgnoredDirectories()
+      
+      // Setup Laravel service provider if in blade mode
+      if (isBlade && !isBuild) {
+        setupLaravelServiceProvider(debug)
+      }
+      
       if (debug) {
         console.log(`🎩 Running in ${isBuild ? 'build' : 'dev'} mode.`)
       }
