@@ -25,13 +25,18 @@ npm install
 composer install
 ```
 
-2. **Environment setup:**
+2. **Install UseClassy Laravel package:**
+```bash
+composer require useclassy/laravel
+```
+
+3. **Environment setup:**
 ```bash
 cp .env.example .env
 php artisan key:generate
 ```
 
-3. **Run development servers:**
+4. **Run development servers:**
 ```bash
 # Terminal 1: Laravel server
 php artisan serve
@@ -40,18 +45,18 @@ php artisan serve
 npm run dev
 ```
 
-4. **Visit the demo:**
+5. **Visit the demo:**
    - Laravel app: http://localhost:8000
    - Vite dev server: http://localhost:5173
 
 ## How It Works
 
-1. **Automatic Setup**: When you configure the Vite plugin with `language: 'blade'`, it automatically:
-   - Creates `app/Providers/UseClassyServiceProvider.php`
-   - Registers the service provider in `bootstrap/providers.php`
+1. **Laravel Integration**: The `useclassy/laravel` Composer package automatically:
+   - Registers via Laravel's package auto-discovery
+   - Hooks into Blade compiler to transform UseClassy syntax
    - No manual PHP setup required!
 
-2. **Blade Transformation**: The service provider hooks into Laravel's Blade compiler to transform UseClassy syntax during template compilation.
+2. **Blade Transformation**: The service provider transforms `class:modifier="value"` syntax during template compilation.
 
 3. **Vite Integration**: The Vite plugin:
    - Scans `.blade.php` files for UseClassy classes
@@ -90,15 +95,14 @@ The demo showcases:
 
 ```
 demos/laravel/
-├── app/Providers/
-│   └── UseClassyServiceProvider.php  # Auto-generated
-├── bootstrap/providers.php           # Auto-updated
 ├── resources/views/
 │   └── welcome.blade.php             # Demo template
 ├── vite.config.js                    # UseClassy config
 └── .classy/
     └── output.classy.html            # Generated classes
 ```
+
+The Laravel service provider is provided by the `useclassy/laravel` Composer package.
 
 ## Laravel Documentation
 

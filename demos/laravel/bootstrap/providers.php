@@ -2,6 +2,4 @@
 
 return [
     App\Providers\AppServiceProvider::class,
-
-    App\Providers\UseClassyServiceProvider::class,
 ];
