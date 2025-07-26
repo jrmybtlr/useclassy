@@ -90,6 +90,37 @@ export default {
 </template>
 ```
 
+## Laravel Blade Usage
+
+For Laravel applications, install the dedicated Composer package:
+
+```bash
+composer require useclassy/laravel
+```
+
+The service provider will be automatically registered via Laravel's package auto-discovery.
+
+### Blade Template Usage
+
+```blade
+<h1 class="text-xl" class:lg="text-3xl" class:hover="text-blue-600">
+    Responsive heading that changes on large screens and hover
+</h1>
+```
+
+The package transforms these during Blade compilation:
+
+- `class:lg="text-3xl"` becomes `lg:text-3xl`
+- `class:hover="text-blue-600"` becomes `hover:text-blue-600`
+- `class:dark="bg-gray-800 text-white"` becomes `dark:bg-gray-800 dark:text-white`
+
+These transformed classes are merged with any existing `class` attributes.
+
+### Requirements
+
+- PHP ^8.1
+- Laravel ^10.0|^11.0|^12.0
+
 ## Tailwind JIT Integration
 
 Add the `output.classy.html` as a source file in your tailwind config.
