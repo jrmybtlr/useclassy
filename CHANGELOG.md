@@ -1,5 +1,17 @@
 # Changelog
 
+## v2.5.0
+
+[compare changes](https://github.com/jrmybtlr/useclassy/compare/v2.4.0...v2.5.0)
+
+### 🏡 Chore
+
+- **release:** V2.4.0 ([01f92ee](https://github.com/jrmybtlr/useclassy/commit/01f92ee))
+
+### ❤️ Contributors
+
+- Jeremy Butler <jeremy@jeremymbutler.com>
+
 ## v2.4.0
 
 [compare changes](https://github.com/jrmybtlr/useclassy/compare/v2.3.0...v2.4.0)
