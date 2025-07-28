@@ -19,6 +19,12 @@ import {
   writeGitignore,
 } from './utils'
 
+import {
+  scanBladeFiles,
+  setupBladeFileWatching,
+  setupLaravelServiceProvider,
+} from './blade'
+
 import type { ClassyOptions, ViteServer } from './types'
 
 /**
@@ -54,6 +60,7 @@ export default function useClassy(options: ClassyOptions = {}): PluginOption {
   let isBuild = false
   let initialScanComplete = false
   let lastWrittenClassCount = -1
+
   // Simple caching
   const transformCache: Map<string, string> = new Map()
   const fileClassMap: Map<string, Set<string>> = new Map()
@@ -74,9 +81,10 @@ export default function useClassy(options: ClassyOptions = {}): PluginOption {
   const outputDir = options.outputDir || '.classy'
   const outputFileName = options.outputFileName || 'output.classy.html'
   const isReact = options.language === 'react'
+  const isBlade = options.language === 'blade'
   const debug = options.debug || false
 
-  // Framework regex
+  // Framework regex (Blade uses same syntax as Vue - both use 'class' attribute)
   const classRegex = isReact ? REACT_CLASS_REGEX : CLASS_REGEX
   const classModifierRegex = isReact
     ? REACT_CLASS_MODIFIER_REGEX
@@ -97,6 +105,12 @@ export default function useClassy(options: ClassyOptions = {}): PluginOption {
     configResolved(config) {
       isBuild = config.command === 'build'
       ignoredDirectories = loadIgnoredDirectories()
+
+      // Setup Laravel service provider if in blade mode
+      if (isBlade && !isBuild) {
+        setupLaravelServiceProvider(debug)
+      }
+
       if (debug) {
         console.log(`🎩 Running in ${isBuild ? 'build' : 'dev'} mode.`)
       }
@@ -108,6 +122,35 @@ export default function useClassy(options: ClassyOptions = {}): PluginOption {
       if (debug) console.log('🎩 Configuring dev server...')
 
       setupOutputEndpoint(server)
+
+      // Only scan and watch Blade files if explicitly using blade language
+      if (isBlade) {
+        // Scan Blade files in dev mode too
+        scanBladeFiles(
+          ignoredDirectories,
+          allClassesSet,
+          fileClassMap,
+          regenerateAllClasses,
+          processCode,
+          outputDir,
+          outputFileName,
+          debug,
+        )
+
+        // Watch Blade files for changes in dev mode
+        setupBladeFileWatching(
+          server,
+          ignoredDirectories,
+          allClassesSet,
+          fileClassMap,
+          regenerateAllClasses,
+          processCode,
+          outputDir,
+          outputFileName,
+          isReact,
+          debug,
+        )
+      }
 
       server.httpServer?.once('listening', () => {
         if (
@@ -189,6 +232,21 @@ export default function useClassy(options: ClassyOptions = {}): PluginOption {
       fileClassMap.clear()
       lastWrittenClassCount = -1
       initialScanComplete = false
+
+      // Only scan Blade files during build if explicitly using blade language
+      if (isBlade) {
+        // Scan Blade files that aren't part of the module graph
+        scanBladeFiles(
+          ignoredDirectories,
+          allClassesSet,
+          fileClassMap,
+          regenerateAllClasses,
+          processCode,
+          outputDir,
+          outputFileName,
+          debug,
+        )
+      }
     },
 
     buildEnd() {

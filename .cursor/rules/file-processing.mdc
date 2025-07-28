@@ -10,7 +10,7 @@ The UseClassy plugin carefully manages which files it processes through the `sho
 ## File Filtering Rules
 
 1. **Supported Extensions**
-   - Only processes: `.vue`, `.ts`, `.tsx`, `.js`, `.jsx`, `.html`
+   - Only processes: `.vue`, `.ts`, `.tsx`, `.js`, `.jsx`, `.html`, `.blade.php`
    - Defined in `SUPPORTED_FILES` constant
 
 2. **Ignored Paths**

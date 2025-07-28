@@ -24,7 +24,7 @@ This works with both Vue (`class`) and React (`className`) syntax.
 ## Key Components
 
 1. **File Processing**
-   - Processes `.vue`, `.ts`, `.tsx`, `.js`, `.jsx`, and `.html` files
+   - Processes `.vue`, `.ts`, `.tsx`, `.js`, `.jsx`, `.html`, and `.blade.php` files
    - Skips `node_modules`, virtual files, and runtime files
    - Respects `.gitignore` patterns
 

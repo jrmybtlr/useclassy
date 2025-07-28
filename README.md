@@ -30,18 +30,18 @@ Add `useClassy` to your Vite plugins. It's recommended that you place it before 
 
 ```ts
 // vite.config.ts
-import useClassy from 'vite-plugin-useclassy';
+import useClassy from "vite-plugin-useclassy";
 
 export default {
   plugins: [
     useClassy({
-      language: 'react',  // or 'vue'
+      language: "react", // or 'vue' or 'blade'
 
       // Optional: Customize the output directory. Defaults to '.classy'.
       // outputDir: '.classy',
 
       // Optional: Customize output file name. Defaults to 'output.classy.html'.
-      // outputFileName: 'generated-classes.html' 
+      // outputFileName: 'generated-classes.html'
 
       // Optional: Enable debugging. Defaults to false.
       // debug: true,
@@ -57,7 +57,7 @@ export default {
 
 ```tsx
 // Input (using class:variant attributes)
-<button 
+<button
   className="px-4 py-2 rounded bg-blue-600 text-white"
   className:hover="bg-blue-700 scale-105"
   className:focus="ring-2 ring-blue-300"
@@ -66,8 +66,8 @@ export default {
 />
 
 // Output (after transformation by the plugin)
-<button 
-  className="px-4 py-2 rounded bg-blue-600 text-white hover:bg-blue-700 hover:scale-105 focus:ring-2 focus:ring-blue-300 disabled:opacity-50 disabled:cursor-not-allowed dark:bg-sky-700 dark:hover:bg-sky-800" 
+<button
+  className="px-4 py-2 rounded bg-blue-600 text-white hover:bg-blue-700 hover:scale-105 focus:ring-2 focus:ring-blue-300 disabled:opacity-50 disabled:cursor-not-allowed dark:bg-sky-700 dark:hover:bg-sky-800"
 />
 ```
 
@@ -90,11 +90,49 @@ export default {
 </template>
 ```
 
+## Laravel Blade Usage
+
+For Laravel applications, install the dedicated Composer package. The service provider will be automatically registered via Laravel's package auto-discovery.
+
+```bash
+composer require useclassy/laravel
+```
+
+### Add 'blade' to the language option in your Vite configuration
+
+```ts
+useClassy({
+  language: "blade",
+});
+```
+
+### Blade Template Usage
+
+```blade
+<h1 class="text-xl" class:lg="text-3xl" class:hover="text-blue-600">
+    Responsive heading that changes on large screens and hover
+</h1>
+```
+
+The package transforms these during Blade compilation:
+
+- `class:lg="text-3xl"` becomes `lg:text-3xl`
+- `class:hover="text-blue-600"` becomes `hover:text-blue-600`
+- `class:dark="bg-gray-800 text-white"` becomes `dark:bg-gray-800 dark:text-white`
+
+These transformed classes are merged with any existing `class` attributes.
+
+### Requirements
+
+- PHP ^8.1
+- Laravel ^10.0|^11.0|^12.0
+
 ## Tailwind JIT Integration
 
 Add the `output.classy.html` as a source file in your tailwind config.
 
 For Tailwind 4
+
 ```css
 /* your-main-css-file.css */
 @import "tailwindcss";
@@ -102,6 +140,7 @@ For Tailwind 4
 ```
 
 For Tailwind 3 you need to add the following to your Tailwind config.
+
 ```json
   "content": [
     // ... other content paths
@@ -134,7 +173,7 @@ useClassy({
 
 ## Processing Rules
 
-- Only processes files with `.vue`, `.tsx`, `.jsx`, `.html` extensions.
+- Only processes files with `.vue`, `.tsx`, `.jsx`, `.html`, `.blade.php` extensions.
 - Does not process files in the `node_modules` directory.
 - Does not process files in `.gitignore` directories.
 - Does not process virtual modules.
