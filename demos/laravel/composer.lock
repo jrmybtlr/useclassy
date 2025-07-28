@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "88970a0117c062eed55fa8728fc43833",
+    "content-hash": "3b86abd800735a90db02c9871799c437",
     "packages": [
         {
             "name": "brick/math",
@@ -5562,6 +5562,64 @@
             "time": "2024-12-21T16:25:41+00:00"
         },
         {
+            "name": "useclassy/laravel",
+            "version": "dev-main",
+            "dist": {
+                "type": "path",
+                "url": "../../../useclassy-laravel",
+                "reference": "85ea58c03295443a9ec097fd73f0a7b36d476299"
+            },
+            "require": {
+                "illuminate/support": "^10.0|^11.0|^12.0",
+                "illuminate/view": "^10.0|^11.0|^12.0",
+                "php": "^8.1"
+            },
+            "require-dev": {
+                "laravel/pint": "^1.0",
+                "mockery/mockery": "^1.4",
+                "orchestra/testbench": "^8.0|^9.0|^10.0",
+                "phpunit/phpunit": "^10.0|^11.0"
+            },
+            "type": "library",
+            "extra": {
+                "laravel": {
+                    "providers": [
+                        "UseClassy\\Laravel\\UseClassyServiceProvider"
+                    ]
+                }
+            },
+            "autoload": {
+                "psr-4": {
+                    "UseClassy\\Laravel\\": "src/"
+                }
+            },
+            "autoload-dev": {
+                "psr-4": {
+                    "UseClassy\\Laravel\\Tests\\": "tests/"
+                }
+            },
+            "license": [
+                "MIT"
+            ],
+            "authors": [
+                {
+                    "name": "Jeremy Butler",
+                    "email": "jeremy@jeremymbutler.com"
+                }
+            ],
+            "description": "Laravel integration for UseClassy - Transform class:modifier syntax in Blade templates",
+            "keywords": [
+                "blade",
+                "css",
+                "laravel",
+                "tailwind",
+                "useclassy"
+            ],
+            "transport-options": {
+                "relative": true
+            }
+        },
+        {
             "name": "vlucas/phpdotenv",
             "version": "v5.6.2",
             "source": {
@@ -8093,7 +8151,7 @@
         }
     ],
     "aliases": [],
-    "minimum-stability": "stable",
+    "minimum-stability": "dev",
     "stability-flags": [],
     "prefer-stable": true,
     "prefer-lowest": false,

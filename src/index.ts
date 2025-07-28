@@ -60,6 +60,7 @@ export default function useClassy(options: ClassyOptions = {}): PluginOption {
   let isBuild = false
   let initialScanComplete = false
   let lastWrittenClassCount = -1
+
   // Simple caching
   const transformCache: Map<string, string> = new Map()
   const fileClassMap: Map<string, Set<string>> = new Map()
@@ -104,12 +105,12 @@ export default function useClassy(options: ClassyOptions = {}): PluginOption {
     configResolved(config) {
       isBuild = config.command === 'build'
       ignoredDirectories = loadIgnoredDirectories()
-      
+
       // Setup Laravel service provider if in blade mode
       if (isBlade && !isBuild) {
         setupLaravelServiceProvider(debug)
       }
-      
+
       if (debug) {
         console.log(`🎩 Running in ${isBuild ? 'build' : 'dev'} mode.`)
       }
