@@ -35,7 +35,7 @@ import useClassy from "vite-plugin-useclassy";
 export default {
   plugins: [
     useClassy({
-      language: "react", // or 'vue'
+      language: "react", // or 'vue' or 'blade'
 
       // Optional: Customize the output directory. Defaults to '.classy'.
       // outputDir: '.classy',
@@ -92,13 +92,19 @@ export default {
 
 ## Laravel Blade Usage
 
-For Laravel applications, install the dedicated Composer package:
+For Laravel applications, install the dedicated Composer package. The service provider will be automatically registered via Laravel's package auto-discovery.
 
 ```bash
 composer require useclassy/laravel
 ```
 
-The service provider will be automatically registered via Laravel's package auto-discovery.
+### Add 'blade' to the language option in your Vite configuration
+
+```ts
+useClassy({
+  language: "blade",
+});
+```
 
 ### Blade Template Usage
 
