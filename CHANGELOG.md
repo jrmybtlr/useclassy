@@ -1,5 +1,9 @@
 # Changelog
 
+## v2.4.0
+
+[compare changes](https://github.com/jrmybtlr/useclassy/compare/v2.3.0...v2.4.0)
+
 ## v2.3.0
 
 [compare changes](https://github.com/jrmybtlr/useclassy/compare/v2.2.0...v2.3.0)
