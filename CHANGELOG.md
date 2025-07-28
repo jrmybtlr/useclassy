@@ -1,12 +1,13 @@
-## v2.7.0
+## v2.8.0
 
-[compare changes](https://github.com/jrmybtlr/useclassy/compare/v2.3.0...v2.7.0)
+[compare changes](https://github.com/jrmybtlr/useclassy/compare/v2.3.0...v2.8.0)
 
 ### 🏡 Chore
 
 - **release:** V2.4.0 ([01f92ee](https://github.com/jrmybtlr/useclassy/commit/01f92ee))
 - **release:** V2.5.0 ([dc0030d](https://github.com/jrmybtlr/useclassy/commit/dc0030d))
 - **release:** V2.6.0 ([56643d9](https://github.com/jrmybtlr/useclassy/commit/56643d9))
+- **release:** V2.7.0 ([af88b11](https://github.com/jrmybtlr/useclassy/commit/af88b11))
 
 ### ❤️ Contributors
 
