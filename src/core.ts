@@ -269,29 +269,9 @@ export function mergeClassAttributes(code: string, attrName: string): string {
         return `${finalAttrName}={${jsxExpr}}`
       }
 
-      if (isFunctionCall) {
-        const lastParenIndex = jsxExpr.lastIndexOf(')')
-        if (lastParenIndex !== -1) {
-          const modifiedJsxExpr = `${jsxExpr.substring(
-            0,
-            lastParenIndex,
-          )}, \`${combinedStatic}\`${jsxExpr.substring(lastParenIndex)}`
-          return `${finalAttrName}={${modifiedJsxExpr}}`
-        }
-        else {
-          // Only warn in non-test environments to avoid noise during testing
-          if (process.env.NODE_ENV !== 'test') {
-            console.warn(
-              'Could not inject classes into function call format:',
-              jsxExpr,
-            )
-          }
-          return `${finalAttrName}={\`${combinedStatic} \${${jsxExpr}}\`}`
-        }
-      }
-      else {
-        return `${finalAttrName}={\`${combinedStatic} \${${jsxExpr}}\`}`
-      }
+      // Always use template literal approach for combining static classes with JSX expressions
+      // This ensures valid JavaScript syntax regardless of the JSX expression type
+      return `${finalAttrName}={\`${combinedStatic} \${${jsxExpr}}\`}`
     }
     else if (combinedStatic) {
       return `${finalAttrName}="${combinedStatic}"`
