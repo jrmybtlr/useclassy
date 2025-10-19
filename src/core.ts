@@ -8,16 +8,16 @@ export const SUPPORTED_FILES = ['.vue', '.ts', '.tsx', '.js', '.jsx', '.html', '
 const MAX_MODIFIER_DEPTH = 4
 
 // Base constants for class transformations
-export const CLASS_REGEX = /class="([^"]*)"(?![^>]*:class)/g
-export const CLASS_MODIFIER_REGEX = /class:([\w-:]+)="([^"]*)"/g
-export const MULTIPLE_CLASS_REGEX = /class="[^"]*"(\s*class="[^"]*")*/g
+export const CLASS_REGEX = /(?<![:\w])class="([^"]*)"(?![^>]*:class)/g
+export const CLASS_MODIFIER_REGEX = /(?<![:\w])class:([\w-:]+)="([^"]*)"/g
+export const MULTIPLE_CLASS_REGEX = /(?<![:\w])class="[^"]*"(\s*(?<![:\w])class="[^"]*")*/g
 
 // React-specific constants
-export const REACT_CLASS_REGEX = /className=(?:"([^"]*)"|{([^}]*)})(?![^>]*:)/g
+export const REACT_CLASS_REGEX = /(?<![:\w])className=(?:"([^"]*)"|{([^}]*)})(?![^>]*:)/g
 export const REACT_CLASS_MODIFIER_REGEX
-  = /(?:className|class):([\w-:]+)="([^"]*)"/g
+  = /(?<![:\w])(?:className|class):([\w-:]+)="([^"]*)"/g
 export const REACT_MULTIPLE_CLASS_REGEX
-  = /(?:className|class)=(?:"[^"]*"|{[^}]*})(?:\s*(?:className|class)=(?:"[^"]*"|{[^}]*}))*|(?:className|class)="[^"]*"(?:\s*(?:className|class)="[^"]*")*/g
+  = /(?<![:\w])(?:className|class)=(?:"[^"]*"|{[^}]*})(?:\s*(?<![:\w])(?:className|class)=(?:"[^"]*"|{[^}]*}))*|(?<![:\w])(?:className|class)="[^"]*"(?:\s*(?<![:\w])(?:className|class)="[^"]*")*/g
 
 /**
  * Generates a hash string from the input string

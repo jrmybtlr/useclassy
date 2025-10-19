@@ -439,6 +439,60 @@ describe('core module', () => {
       // Should handle empty modifiers without errors
       expect(classes.size).toBeGreaterThanOrEqual(0)
     })
+
+    it('should NOT match when "class" is part of a larger word', () => {
+      const code = '<div someclass:hover="text-blue-500">Content</div>'
+      const classes = new Set<string>()
+      const modifierClasses = new Set<string>()
+
+      extractClasses(
+        code,
+        classes,
+        modifierClasses,
+        CLASS_REGEX,
+        CLASS_MODIFIER_REGEX,
+      )
+
+      // Should not extract any modifier classes when class is part of a larger word
+      expect(classes.size).toBe(0)
+      expect(modifierClasses.size).toBe(0)
+    })
+
+    it('should NOT match standalone :class patterns in Vue', () => {
+      const code = '<div :class="{active: isActive}">Content</div>'
+      const classes = new Set<string>()
+      const modifierClasses = new Set<string>()
+
+      extractClasses(
+        code,
+        classes,
+        modifierClasses,
+        CLASS_REGEX,
+        CLASS_MODIFIER_REGEX,
+      )
+
+      // Should not match Vue's :class pattern
+      expect(classes.size).toBe(0)
+      expect(modifierClasses.size).toBe(0)
+    })
+
+    it('should NOT match React className when part of larger word', () => {
+      const code = '<div myClassName:hover="text-blue-500">Content</div>'
+      const classes = new Set<string>()
+      const modifierClasses = new Set<string>()
+
+      extractClasses(
+        code,
+        classes,
+        modifierClasses,
+        REACT_CLASS_REGEX,
+        REACT_CLASS_MODIFIER_REGEX,
+      )
+
+      // Should not extract any modifier classes when className is part of a larger word
+      expect(classes.size).toBe(0)
+      expect(modifierClasses.size).toBe(0)
+    })
   })
 
   describe('Performance optimizations', () => {
