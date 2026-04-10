@@ -10,14 +10,14 @@ const MAX_MODIFIER_DEPTH = 4
 // Base constants for class transformations
 export const CLASS_REGEX = /(?<![:\w])class="([^"]*)"(?![^>]*:class)/g
 export const CLASS_MODIFIER_REGEX = /(?<![:\w])class:([\w-:]+)="([^"]*)"/g
-export const MULTIPLE_CLASS_REGEX = /(?<![:\w])class="[^"]*"(\s*(?<![:\w])class="[^"]*")*/g
+export const MULTIPLE_CLASS_REGEX = /(?<![:\w])class="[^"]*"(\s*class="[^"]*")*/g
 
 // React-specific constants
 export const REACT_CLASS_REGEX = /(?<![:\w])className=(?:"([^"]*)"|{([^}]*)})(?![^>]*:)/g
 export const REACT_CLASS_MODIFIER_REGEX
   = /(?<![:\w])(?:className|class):([\w-:]+)="([^"]*)"/g
 export const REACT_MULTIPLE_CLASS_REGEX
-  = /(?<![:\w])(?:className|class)=(?:"[^"]*"|{[^}]*})(?:\s*(?<![:\w])(?:className|class)=(?:"[^"]*"|{[^}]*}))*|(?<![:\w])(?:className|class)="[^"]*"(?:\s*(?<![:\w])(?:className|class)="[^"]*")*/g
+  = /(?<![:\w])(?:className|class)=(?:"[^"]*"|{[^}]*})(?:\s*(?:className|class)=(?:"[^"]*"|{[^}]*}))*/g
 
 /**
  * Generates a hash string from the input string
