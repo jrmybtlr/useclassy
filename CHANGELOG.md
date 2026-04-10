@@ -1,3 +1,9 @@
+## v3.0.0
+
+### ⚠️ Breaking changes
+
+- **peer:** `react` is now `^18.0.0 || ^19.0.0`. React 16 and 17 are no longer supported for `vite-plugin-useclassy/react` (`classy` / `useClassy`).
+
 ## v2.6.0
 
 [compare changes](https://github.com/jrmybtlr/useclassy/compare/v2.5.0...v2.6.0)

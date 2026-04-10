@@ -24,6 +24,8 @@ yarn add vite-plugin-useclassy -D
 pnpm add vite-plugin-useclassy -D
 ```
 
+When using the React helpers (`vite-plugin-useclassy/react`), install **React 18 or 19** (`react` satisfies `^18.0.0 || ^19.0.0`). The Vite plugin alone does not require React for Vue or Blade projects.
+
 ## Vite Configuration
 
 Add `useClassy` to your Vite plugins. It's recommended that you place it before Tailwind or other CSS processing plugins.
