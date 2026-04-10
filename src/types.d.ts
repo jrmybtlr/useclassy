@@ -51,6 +51,19 @@ export interface ClassyOptions {
   debug?: boolean
 }
 
+/** Result of transforming a single file's source for class extraction */
+export type ProcessCodeResult = {
+  transformedCode: string
+  fileSpecificClasses: Set<string>
+}
+
+export type ProcessCodeFn = (code: string) => ProcessCodeResult
+
+export type ApplyFileClassesFn = (
+  id: string,
+  classes: Set<string>,
+) => boolean
+
 // Helper interface to represent Vite's dev server with the properties we need
 export interface ViteServer extends ViteDevServer {
   watcher: {

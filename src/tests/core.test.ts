@@ -1,3 +1,4 @@
+import crypto from 'crypto'
 import { describe, it, expect, vi } from 'vitest'
 import {
   hashString,
@@ -10,11 +11,6 @@ import {
   REACT_CLASS_REGEX,
   REACT_CLASS_MODIFIER_REGEX,
 } from '../core'
-
-// Mock hashFunction
-vi.mock('../utils', () => ({
-  hashFunction: vi.fn(input => input.length.toString()),
-}))
 
 describe('core module', () => {
   describe('hashString', () => {
@@ -32,14 +28,25 @@ describe('core module', () => {
   })
 
   describe('generateCacheKey', () => {
-    it('should create a cache key from id and code', () => {
+    it('should create a stable SHA-256 hex cache key from id and code', () => {
       const id = 'file.tsx'
       const code = '<div>content</div>'
 
-      const result = generateCacheKey(id, code)
+      const expected = crypto
+        .createHash('sha256')
+        .update(id, 'utf8')
+        .update('\0', 'utf8')
+        .update(code, 'utf8')
+        .digest('hex')
 
-      expect(result).toBeDefined()
-      expect(result).toBe((id + code).length.toString())
+      expect(generateCacheKey(id, code)).toBe(expected)
+      expect(expected).toHaveLength(64)
+    })
+
+    it('should produce distinct keys for different inputs (no short-hash collisions)', () => {
+      const a = generateCacheKey('a', 'x')
+      const b = generateCacheKey('b', 'x')
+      expect(a).not.toBe(b)
     })
   })
 
