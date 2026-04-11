@@ -28,7 +28,7 @@ export interface ClassyOptions {
 
   /**
    * Filename for the generated class file
-   * @default "output.classy.jsx"
+   * @default "output.classy.html"
    */
   outputFileName?: string
 

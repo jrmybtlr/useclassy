@@ -14,7 +14,7 @@ importers:
     dependencies:
       react:
         specifier: ^18.0.0 || ^19.0.0
-        version: 18.3.1
+        version: 19.2.5
     devDependencies:
       '@eslint/js':
         specifier: ^9.39.4
@@ -23,7 +23,7 @@ importers:
         specifier: ^4.4.1
         version: 4.4.1(eslint@9.39.4(jiti@2.5.1))(typescript@5.9.3)
       '@types/react':
-        specifier: ^19.0.0
+        specifier: ^19.2.14
         version: 19.2.14
       '@typescript-eslint/eslint-plugin':
         specifier: ^8.58.1
@@ -5283,6 +5283,10 @@ packages:
 
   react@18.3.1:
     resolution: {integrity: sha512-wS+hAgJShR0KhEvPJArfuPVN1+Hz1t0Y6n5jLrGQbkb4urgPE/0Rve+1kMB1v/oWgHgm4WIcV+i7F2pTVj+2iQ==}
+    engines: {node: '>=0.10.0'}
+
+  react@19.2.5:
+    resolution: {integrity: sha512-llUJLzz1zTUBrskt2pwZgLq59AemifIftw4aB7JxOqf1HY2FDaGDxgwpAPVzHU1kdWabH7FauP4i1oEeer2WCA==}
     engines: {node: '>=0.10.0'}
 
   read-package-up@11.0.0:
@@ -12368,6 +12372,8 @@ snapshots:
   react@18.3.1:
     dependencies:
       loose-envify: 1.4.0
+
+  react@19.2.5: {}
 
   read-package-up@11.0.0:
     dependencies:

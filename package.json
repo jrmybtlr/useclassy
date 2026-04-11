@@ -36,8 +36,12 @@
     }
   ],
   "files": [
-    "dist"
+    "dist",
+    "templates"
   ],
+  "bin": {
+    "vite-plugin-useclassy": "./dist/cli.js"
+  },
   "main": "dist/index.js",
   "type": "module",
   "types": "dist/index.d.ts",
@@ -51,6 +55,11 @@
       "types": "./dist/react.d.ts",
       "import": "./dist/react.js",
       "require": "./dist/react.cjs"
+    },
+    "./tailwind": {
+      "types": "./dist/tailwind.d.ts",
+      "import": "./dist/tailwind.js",
+      "require": "./dist/tailwind.cjs"
     }
   },
   "repository": {
@@ -60,7 +69,7 @@
   "devDependencies": {
     "@eslint/js": "^9.39.4",
     "@stylistic/eslint-plugin": "^4.4.1",
-    "@types/react": "^19.0.0",
+    "@types/react": "^19.2.14",
     "@typescript-eslint/eslint-plugin": "^8.58.1",
     "@typescript-eslint/parser": "^8.58.1",
     "@vitest/coverage-v8": "^3.2.4",

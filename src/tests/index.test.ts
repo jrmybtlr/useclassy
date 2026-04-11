@@ -30,7 +30,16 @@ vi.mock('path', () => ({
 
 // Mock utils module
 vi.doMock('../utils', () => ({
-  SUPPORTED_FILES: ['.vue', '.ts', '.tsx', '.js', '.jsx', '.html', '.blade.php'],
+  SUPPORTED_FILES: [
+    '.vue',
+    '.svelte',
+    '.ts',
+    '.tsx',
+    '.js',
+    '.jsx',
+    '.html',
+    '.blade.php',
+  ],
   loadIgnoredDirectories: vi.fn().mockReturnValue(['node_modules', 'dist']),
   writeGitignore: vi.fn(),
   writeOutputFileDebounced: vi.fn(),
@@ -38,7 +47,16 @@ vi.doMock('../utils', () => ({
   debounce: vi.fn(fn => fn),
   shouldProcessFile: vi.fn().mockImplementation((filePath: string) => {
     // Mock implementation that returns true for supported files
-    const supportedFiles = ['.vue', '.ts', '.tsx', '.js', '.jsx', '.html', '.blade.php']
+    const supportedFiles = [
+      '.vue',
+      '.svelte',
+      '.ts',
+      '.tsx',
+      '.js',
+      '.jsx',
+      '.html',
+      '.blade.php',
+    ]
     return supportedFiles.some(ext => filePath?.endsWith(ext))
       && !filePath.includes('node_modules')
       && !filePath.includes('virtual:')
@@ -48,7 +66,16 @@ vi.doMock('../utils', () => ({
 
 // Mock core module
 vi.doMock('../core', () => ({
-  SUPPORTED_FILES: ['.vue', '.ts', '.tsx', '.js', '.jsx', '.html', '.blade.php'],
+  SUPPORTED_FILES: [
+    '.vue',
+    '.svelte',
+    '.ts',
+    '.tsx',
+    '.js',
+    '.jsx',
+    '.html',
+    '.blade.php',
+  ],
   CLASS_REGEX: /class="([^"]*)"(?![^>]*:class)/g,
   CLASS_MODIFIER_REGEX: /class:([\w-:]+)="([^"]*)"/g,
   REACT_CLASS_REGEX: /className=(?:"([^"]*)"|{([^}]*)})(?![^>]*:)/g,

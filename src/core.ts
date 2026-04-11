@@ -1,7 +1,16 @@
 import crypto from 'crypto'
 
 // Supported file extensions
-export const SUPPORTED_FILES = ['.vue', '.ts', '.tsx', '.js', '.jsx', '.html', '.blade.php']
+export const SUPPORTED_FILES = [
+  '.vue',
+  '.svelte',
+  '.ts',
+  '.tsx',
+  '.js',
+  '.jsx',
+  '.html',
+  '.blade.php',
+]
 
 const MAX_MODIFIER_DEPTH = 4
 

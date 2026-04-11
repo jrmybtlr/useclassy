@@ -309,6 +309,17 @@ export default function useClassy(options: ClassyOptions = {}): PluginOption {
   }
 }
 
+// Tailwind integration helpers (paths match plugin defaults unless overridden)
+export {
+  USECLASSY_DEFAULT_OUTPUT_DIR,
+  USECLASSY_DEFAULT_OUTPUT_FILE,
+  getUseClassyManifestPath,
+  getUseClassyTailwindSourceDirective,
+  getUseClassyTailwindSourceLineForRootStylesheet,
+  getUseClassyTailwindV3ContentEntry,
+} from './tailwind'
+export type { UseClassyTailwindPathsOptions } from './tailwind'
+
 // Export React-specific utilities
 // TODO: React hooks are not fully tested yet
 export { classy, useClassy as useClassyHook } from './react'
