@@ -1,5 +1,5 @@
 import crypto from 'crypto'
-import { describe, it, expect, vi } from 'vitest'
+import { describe, it, expect } from 'vitest'
 import {
   hashString,
   generateCacheKey,
@@ -678,6 +678,64 @@ describe('core module', () => {
 
       expect(result).toContain('className=')
       expect(result).toContain('flex')
+    })
+
+    it('should not modify standalone Vue :class bindings', () => {
+      const code = '<div :class="{active: isActive}">Content</div>'
+
+      const result = mergeClassAttributes(code, 'class')
+
+      expect(result).toBe(code)
+    })
+
+    it('should not merge static class into a preceding Vue :class binding', () => {
+      const code = '<div :class="x" class="a">Content</div>'
+
+      const result = mergeClassAttributes(code, 'class')
+
+      expect(result).toBe(code)
+    })
+
+    it('should merge static class attributes while preserving a trailing :class binding', () => {
+      const code = '<div class="a" class="b" :class="x">Content</div>'
+
+      const result = mergeClassAttributes(code, 'class')
+
+      expect(result).toBe('<div class="a b" :class="x">Content</div>')
+    })
+  })
+
+  describe('Vue :class with class modifiers pipeline', () => {
+    it('should transform class modifiers without touching :class bindings', () => {
+      const code = `<button
+        class="min-w-0 flex-1"
+        class:hover="text-blue-500"
+        :class="active ? 'bg-white' : 'text-zinc-400'"
+      ></button>`
+      const classes = new Set<string>()
+      const modifierClasses = new Set<string>()
+
+      extractClasses(
+        code,
+        classes,
+        modifierClasses,
+        CLASS_REGEX,
+        CLASS_MODIFIER_REGEX,
+      )
+
+      const afterModifiers = transformClassModifiers(
+        code,
+        classes,
+        CLASS_MODIFIER_REGEX,
+        'class',
+      )
+      const result = mergeClassAttributes(afterModifiers, 'class')
+
+      expect(result).toContain('class="min-w-0 flex-1 hover:text-blue-500"')
+      expect(result).toContain(
+        ':class="active ? \'bg-white\' : \'text-zinc-400\'"',
+      )
+      expect(result).not.toContain('class:hover')
     })
   })
 })

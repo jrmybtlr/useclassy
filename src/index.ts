@@ -321,7 +321,6 @@ export {
 export type { UseClassyTailwindPathsOptions } from './tailwind'
 
 // Export React-specific utilities
-// TODO: React hooks are not fully tested yet
 export { classy, useClassy as useClassyHook } from './react'
 export { writeGitignore } from './utils'
 export type { ClassyOptions } from './types.d.ts'

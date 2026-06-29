@@ -212,7 +212,7 @@ function getCompiledRegexes(attrName: string): {
   if (!cached) {
     cached = {
       multipleClassRegex: new RegExp(
-        `((?:${attrName}|class)=(?:(?:"[^"]*")|(?:{[^}]*})))`
+        `(?<![:\\w])((?:${attrName}|class)=(?:(?:"[^"]*")|(?:{[^}]*})))`
         + `(?:\\s+((?:${attrName}|class)=(?:(?:"[^"]*")|(?:{[^}]*}))))*`,
         'g',
       ),
