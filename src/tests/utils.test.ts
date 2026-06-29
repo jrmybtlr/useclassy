@@ -3,7 +3,6 @@ import fs from 'fs'
 import path from 'path'
 import {
   debounce,
-  hashFunction,
   loadIgnoredDirectories,
   writeGitignore,
   isInIgnoredDirectory,
@@ -99,34 +98,6 @@ describe('utils module', () => {
 
       // Now it should have been called
       expect(mockFn).toHaveBeenCalledTimes(1)
-    })
-  })
-
-  describe('hashFunction', () => {
-    it('should generate consistent hashes for same input', () => {
-      const input = 'test string'
-      const hash1 = hashFunction(input)
-      const hash2 = hashFunction(input)
-
-      expect(hash1).toBe(hash2)
-    })
-
-    it('should generate different hashes for different inputs', () => {
-      const hash1 = hashFunction('test string 1')
-      const hash2 = hashFunction('test string 2')
-
-      expect(hash1).not.toBe(hash2)
-    })
-
-    it('should handle empty string', () => {
-      const hash = hashFunction('')
-      expect(typeof hash).toBe('number')
-    })
-
-    it('should handle special characters', () => {
-      const hash1 = hashFunction('test')
-      const hash2 = hashFunction('test!@#$%')
-      expect(hash1).not.toBe(hash2)
     })
   })
 
@@ -444,10 +415,11 @@ describe('utils module', () => {
     it('should return true for supported file types that aren\'t ignored', () => {
       (path.relative as Mock).mockReturnValue('src/components/Button.vue')
 
-      const result = shouldProcessFile('src/components/Button.vue', [
-        'node_modules',
-        'dist',
-      ])
+      const result = shouldProcessFile(
+        'src/components/Button.vue',
+        ['node_modules', 'dist'],
+        '.classy',
+      )
 
       expect(result).toBe(true)
     })
@@ -455,65 +427,81 @@ describe('utils module', () => {
     it('should return false for files in ignored directories', () => {
       (path.relative as Mock).mockReturnValue('node_modules/some/file.js')
 
-      const result = shouldProcessFile('node_modules/some/file.js', [
-        'node_modules',
-      ])
+      const result = shouldProcessFile(
+        'node_modules/some/file.js',
+        ['node_modules'],
+        '.classy',
+      )
 
       expect(result).toBe(false)
     })
 
     it('should return false for unsupported file types', () => {
-      const result = shouldProcessFile('src/styles.css', ['node_modules'])
+      const result = shouldProcessFile('src/styles.css', ['node_modules'], '.classy')
 
       expect(result).toBe(false)
     })
 
     it('should return false for virtual files', () => {
-      const result = shouldProcessFile('virtual:some-module.js', [
-        'node_modules',
-      ])
+      const result = shouldProcessFile(
+        'virtual:some-module.js',
+        ['node_modules'],
+        '.classy',
+      )
 
       expect(result).toBe(false)
     })
 
     it('should return false for files with null bytes', () => {
-      const result = shouldProcessFile('file\0.js', ['node_modules'])
+      const result = shouldProcessFile('file\0.js', ['node_modules'], '.classy')
 
       expect(result).toBe(false)
     })
 
     it('should return false for runtime files', () => {
-      const result = shouldProcessFile('runtime-file.js', ['node_modules'])
+      const result = shouldProcessFile('runtime-file.js', ['node_modules'], '.classy')
 
       expect(result).toBe(false)
     })
 
     it('should return false for files in output directory', () => {
-      const result = shouldProcessFile('.classy/output.html', ['node_modules'])
+      const result = shouldProcessFile(
+        '.classy/output.html',
+        ['node_modules'],
+        '.classy',
+      )
 
       expect(result).toBe(false)
     })
 
     it('should handle null/undefined filePath', () => {
-      const result = shouldProcessFile(null as unknown as string, ['node_modules'])
+      const result = shouldProcessFile(
+        null as unknown as string,
+        ['node_modules'],
+        '.classy',
+      )
 
       expect(result).toBe(false)
     })
 
     it('should handle empty filePath', () => {
-      const result = shouldProcessFile('', ['node_modules'])
+      const result = shouldProcessFile('', ['node_modules'], '.classy')
 
       expect(result).toBe(false)
     })
 
     it('should handle filePath with only extension', () => {
-      const result = shouldProcessFile('.vue', ['node_modules'])
+      const result = shouldProcessFile('.vue', ['node_modules'], '.classy')
 
       expect(result).toBe(false)
     })
 
     it('should handle filePath with multiple dots', () => {
-      const result = shouldProcessFile('component.test.vue', ['node_modules'])
+      const result = shouldProcessFile(
+        'component.test.vue',
+        ['node_modules'],
+        '.classy',
+      )
 
       expect(result).toBe(false)
     })

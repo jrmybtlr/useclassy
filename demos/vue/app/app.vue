@@ -5,7 +5,7 @@
     class:dark="bg-zinc-950 text-white"
   >
     <div
-      class="container mx-auto flex flex-col items-center max-w-2xl w-screen overflow-clip"
+      class="container mx-auto flex w-full min-w-0 max-w-2xl flex-col items-center px-4 sm:px-6"
     >
       <!-- Title -->
       <section>
@@ -38,25 +38,78 @@
         >
           Make your Tailwind variants fast, simple, and much more readable.
         </p>
+
         <ClassExample :examples="classExamples" class="mt-10" />
+
+        <div class="mt-14 flex w-full flex-col items-center gap-2">
+          <SegmentedControl
+            v-model="setupMode"
+            aria-label="Setup instructions"
+            :options="setupModeOptions"
+            class="w-full"
+          />
+        </div>
       </section>
 
-      <div class="relative w-full">
+
+      <div class="relative mt-4 w-full min-w-0">
         <div
           class="h-full w-[1px] absolute left-3 top-16 bg-gradient-to-b from-zinc-800 to-transparent"
         />
         <!-- Install -->
         <Step :number="1" title="Install">
-          <Code class="mt-6 w-full" showCopy>
-            <code> npm install vite-plugin-useclassy --save-dev </code>
+          <Code class="mt-6 w-full text-zinc-500" showCopy>
+            <code class="font-mono text-sm leading-relaxed">
+              <div>
+                <span
+                  v-for="(t, i) in npmInstallTokens"
+                  :key="`npm-${i}`"
+                  :class="t.class"
+                >{{ t.text }}</span>
+              </div>
+            </code>
           </Code>
+        </Step>
+
+        <!-- Quick setup (same commands as intro; numbered checklist) -->
+        <Step
+          v-if="setupMode === 'quick'"
+          :number="2"
+          title="Quick setup"
+        >
+          <div class="mt-6 flex w-full flex-col -space-y-px">
+            <SegmentedControl
+              v-model="initFramework"
+              aria-label="Framework for init command"
+              :options="initFrameworkOptions"
+              class="w-full"
+            />
+            <Code class="w-full text-zinc-500" showCopy>
+              <code class="font-mono text-sm leading-relaxed">
+                <div>
+                  <span
+                    v-for="(t, i) in quickInitTokens"
+                    :key="`init-${i}`"
+                    :class="t.class"
+                  >{{ t.text }}</span>
+                </div>
+                <div
+                  v-if="initFramework === 'laravel'"
+                  class="mt-2"
+                >
+                  <span class="text-sky-300 pr-1.5">composer</span><span class="text-amber-400 pr-1.5">require</span><span class="text-emerald-400">useclassy/laravel</span>
+                </div>
+              </code>
+            </Code>
+          </div>
         </Step>
 
         <!-- Vite -->
         <Step
+          v-if="setupMode === 'manual'"
           :number="2"
           title="Vite"
-          description="Add the following to your Vite configuration, making sure UseClassy is listed as the first plugin."
+          description="Add useClassy before Tailwind or other CSS plugins so transforms run first."
         >
           <Code class="mt-6 w-full text-zinc-500" showCopy>
             <code>
@@ -81,55 +134,43 @@
 
         <!-- Tailwind CSS -->
         <Step
+          v-if="setupMode === 'manual'"
           :number="3"
           title="Tailwind"
-          description="UseClassy creates a ./.classy/output.classy.html file. Import this file into your Tailwind CSS configuration."
+          description="UseClassy writes .classy/output.classy.html (gitignored). Tailwind v4 skips gitignored files unless you @source them. The @source path is relative to your CSS file—often ./.classy/... at the project root, or ../.classy/... from src/."
         >
           <Code class="mt-6 w-full text-zinc-500" showCopy>
             <code>
-              <div>{</div>
-              <div>
-                <div class="ml-4">
-                  <div class="ml-4">@import "tailwindcss";</div>
-                  <div class="ml-4">...update to your file location</div>
-                  <div class="ml-4 text-white">
-                    @source ".classy/output.classy.html";
-                  </div>
-                  <div class="ml-4">...other config</div>
-                </div>
-              </div>
-              <div>}</div>
+              <div>@import "tailwindcss";</div>
+              <div class="text-white mt-2">@source "./.classy/output.classy.html";</div>
             </code>
           </Code>
 
-          <p class="mt-8">
-            For Tailwind 3, add the following to your Tailwind config.
-            <Code class="mt-4">
-              <code>
-                <div class="text-zinc-500">content: [</div>
-                <div class="ml-4 text-zinc-500">// ... other content paths</div>
-                <div class="ml-4">".classy/output.classy.html"</div>
-                <div class="text-zinc-500">]</div>
-              </code>
-            </Code>
-          </p></Step
-        >
+          <p class="mt-8 text-zinc-400 text-sm">
+            Tailwind v3: add
+            <code class="text-white">"./.classy/output.classy.html"</code>
+            to
+            <code class="text-white">content</code>
+            in tailwind.config.
+          </p>
+        </Step>
 
         <!-- Intellisense -->
         <Step
+          v-if="setupMode === 'manual'"
           :number="4"
-          title="Intellisense"
-          description="Add the following to your VSCode settings to enable IntelliSense for UseClassy."
+          title="IntelliSense"
+          description="VS Code: merge into .vscode/settings.json. Omit className lines for Vue-only projects."
         >
           <Code class="mt-6 w-full text-zinc-500" showCopy>
             <code>
               <div>{</div>
-              <div>
-                <div class="ml-4">"tailwindCSS.classAttributes": [</div>
-                <div class="ml-8">...other settings,</div>
-                <div class="ml-8 text-white">"class:[\\w:-]*",</div>
-                <div class="ml-4">]</div>
-              </div>
+              <div class="ml-4">"tailwindCSS.classAttributes": [</div>
+              <div class="ml-8">"class",</div>
+              <div class="ml-8 text-white">"class:[\\w:-]*",</div>
+              <div class="ml-8">"className",</div>
+              <div class="ml-8 text-white">"className:[\\w:-]*"</div>
+              <div class="ml-4">]</div>
               <div>}</div>
             </code>
           </Code>
@@ -160,6 +201,66 @@
 </template>
 
 <script setup lang="ts">
+import { computed, ref } from "vue";
+
+const setupMode = ref<"quick" | "manual">("quick");
+
+const setupModeOptions = [
+  { value: "quick", label: "Init CLI" },
+  { value: "manual", label: "Manual" },
+] as const;
+
+type InitFrameworkId = "vue" | "svelte" | "react" | "laravel";
+
+const initFramework = ref<InitFrameworkId>("vue");
+
+const initFrameworkOptions: { value: InitFrameworkId; label: string }[] = [
+  { value: "vue", label: "Vue" },
+  { value: "svelte", label: "Svelte" },
+  { value: "react", label: "React" },
+  { value: "laravel", label: "Laravel" },
+];
+
+type CliToken = { text: string; class: string };
+
+const npmInstallTokens: CliToken[] = [
+  { text: "npm", class: "text-sky-300" },
+  { text: " ", class: "text-zinc-600" },
+  { text: "install", class: "text-zinc-100" },
+  { text: " ", class: "text-zinc-600" },
+  { text: "vite-plugin-useclassy", class: "text-emerald-400" },
+  { text: " ", class: "text-zinc-600" },
+  { text: "--save-dev", class: "text-amber-400" },
+];
+
+const quickInitTokens = computed((): CliToken[] => {
+  const fw = initFramework.value;
+  const tokens: CliToken[] = [
+    { text: "npx", class: "text-sky-300" },
+    { text: " ", class: "text-zinc-600" },
+    { text: "vite-plugin-useclassy", class: "text-emerald-400" },
+    { text: " ", class: "text-zinc-600" },
+    { text: "init", class: "text-zinc-100" },
+  ];
+  if (fw === "react") {
+    tokens.push(
+      { text: " ", class: "text-zinc-600" },
+      { text: "--language", class: "text-amber-400" },
+      { text: " ", class: "text-zinc-600" },
+      { text: "react", class: "text-orange-300" },
+    );
+  }
+  else if (fw === "laravel") {
+    tokens.push(
+      { text: " ", class: "text-zinc-600" },
+      { text: "--language", class: "text-amber-400" },
+      { text: " ", class: "text-zinc-600" },
+      { text: "blade", class: "text-orange-300" },
+    );
+  }
+  return tokens;
+});
+
 useSeoMeta({
   title: "UseClassy",
   description:

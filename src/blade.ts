@@ -1,26 +1,34 @@
 /**
- * Blade file processing for UseClassy plugin
- *
- * Blade files (.blade.php) require special handling because they are not part of Vite's
- * normal module graph. Unlike Vue/React files which Vite automatically discovers and
- * processes, Blade files are server-side templates that need manual discovery and watching.
+ * Blade templates are outside Vite's module graph; we discover and watch them explicitly.
  */
 
 import fs from 'fs'
 import path from 'path'
 import {
-  extractClasses,
-  CLASS_REGEX,
-  CLASS_MODIFIER_REGEX,
-} from './core'
-import {
   shouldProcessFile,
   writeOutputFileDebounced,
   writeOutputFileDirect,
 } from './utils'
-import type { ViteServer } from './types'
+import type { ApplyFileClassesFn, ProcessCodeFn, ViteServer } from './types'
 
-// Laravel setup functions
+const BLADE_SKIP_DIR = new Set([
+  'node_modules',
+  'vendor',
+  '.git',
+  'dist',
+  'build',
+])
+const BLADE_GLOB_EXCLUDE = [...BLADE_SKIP_DIR].map(d => `**/${d}/**`)
+
+type FsWithGlob = typeof fs & {
+  globSync?: (
+    pattern: string,
+    options?: { cwd?: string, exclude?: string | string[] },
+  ) => string[]
+}
+
+const fsWithGlob = fs as FsWithGlob
+
 export function isLaravelProject(): boolean {
   try {
     return fs.existsSync(path.join(process.cwd(), 'artisan'))
@@ -50,81 +58,71 @@ export function setupLaravelServiceProvider(debug = false): boolean {
   return true
 }
 
-export function findBladeFiles(dir: string, files: string[] = []): string[] {
-  const items = fs.readdirSync(dir)
+export function findBladeFiles(dir: string, acc: string[] = []): string[] {
+  if (typeof fsWithGlob.globSync === 'function') {
+    const relative = fsWithGlob.globSync('**/*.blade.php', {
+      cwd: dir,
+      exclude: BLADE_GLOB_EXCLUDE,
+    })
+    return relative.map(p => path.join(dir, p))
+  }
 
-  for (const item of items) {
+  for (const item of fs.readdirSync(dir)) {
     const fullPath = path.join(dir, item)
     const stat = fs.statSync(fullPath)
 
     if (stat.isDirectory()) {
-      // Skip ignored directories
-      if (['node_modules', 'vendor', '.git', 'dist', 'build'].includes(item)) {
+      if (BLADE_SKIP_DIR.has(item))
         continue
-      }
-      findBladeFiles(fullPath, files)
+      findBladeFiles(fullPath, acc)
     }
     else if (item.endsWith('.blade.php')) {
-      files.push(fullPath)
+      acc.push(fullPath)
     }
   }
 
-  return files
+  return acc
+}
+
+function countModifierTokens(classes: Set<string>): number {
+  let n = 0
+  for (const c of classes) {
+    if (c.includes(':'))
+      n++
+  }
+  return n
 }
 
 export function scanBladeFiles(
   ignoredDirectories: string[],
   allClassesSet: Set<string>,
-  fileClassMap: Map<string, Set<string>>,
-  regenerateAllClasses: () => boolean,
-  processCode: (code: string, currentGlobalClasses: Set<string>) => {
-    transformedCode: string
-    classesChanged: boolean
-    fileSpecificClasses: Set<string>
-  },
+  applyFileClasses: ApplyFileClassesFn,
+  processCode: ProcessCodeFn,
   outputDir: string,
   outputFileName: string,
   debug: boolean,
-) {
+): void {
   if (debug) console.log('🎩 Scanning Blade files...')
 
   try {
-    const bladeFiles = findBladeFiles(process.cwd())
+    const cwd = process.cwd()
+    const bladeFiles = findBladeFiles(cwd)
+    const outputNorm = path.normalize(outputDir)
 
     if (debug) console.log(`🎩 Found ${bladeFiles.length} Blade files`)
 
     for (const file of bladeFiles) {
-      if (!shouldProcessFile(file, ignoredDirectories)) {
+      if (!shouldProcessFile(file, ignoredDirectories, outputNorm))
         continue
-      }
 
       try {
         const content = fs.readFileSync(file, 'utf-8')
-        const result = processCode(content, allClassesSet)
+        const result = processCode(content)
+        applyFileClasses(file, result.fileSpecificClasses)
 
-        // Only store modifier-derived classes (from class:modifier attributes)
-        if (result.classesChanged) {
-          // Store only the modifier-derived classes for this file
-          const modifierClasses = new Set<string>()
-
-          // Extract just the modifier classes from the processed result
-          extractClasses(
-            content,
-            new Set(), // We don't need generatedClassesSet here
-            modifierClasses, // This will contain only class:modifier derived classes
-            CLASS_REGEX,
-            CLASS_MODIFIER_REGEX,
-          )
-
-          fileClassMap.set(file, modifierClasses)
-          regenerateAllClasses()
-
-          // Don't write back to original files during scanning - only extract classes
-          // This prevents interference with hot reloading and file watchers
-
-          if (debug) {
-            console.log(`🎩 Processed ${path.relative(process.cwd(), file)}: found ${modifierClasses.size} UseClassy modifier classes`)
-          }
+        if (debug) {
+          const n = countModifierTokens(result.fileSpecificClasses)
+          console.log(`🎩 Processed ${path.relative(cwd, file)}: ${n} modifier class(es)`)
         }
       }
       catch (error) {
@@ -146,62 +144,40 @@ export function setupBladeFileWatching(
   server: ViteServer,
   ignoredDirectories: string[],
   allClassesSet: Set<string>,
-  fileClassMap: Map<string, Set<string>>,
-  regenerateAllClasses: () => boolean,
-  processCode: (code: string, currentGlobalClasses: Set<string>) => {
-    transformedCode: string
-    classesChanged: boolean
-    fileSpecificClasses: Set<string>
-  },
+  applyFileClasses: ApplyFileClassesFn,
+  processCode: ProcessCodeFn,
   outputDir: string,
   outputFileName: string,
-  isReact: boolean,
   debug: boolean,
-) {
+): void {
   if (debug) console.log('🎩 Setting up Blade file watching...')
 
-  const bladeFiles = findBladeFiles(process.cwd())
+  const cwd = process.cwd()
+  const outputNorm = path.normalize(outputDir)
 
-  bladeFiles.forEach((file) => {
-    if (shouldProcessFile(file, ignoredDirectories)) {
-      server.watcher.add(file)
-
-      if (debug) console.log(`🎩 Watching: ${path.relative(process.cwd(), file)}`)
-    }
-  })
+  for (const file of findBladeFiles(cwd)) {
+    if (!shouldProcessFile(file, ignoredDirectories, outputNorm))
+      continue
+    server.watcher.add(file)
+    if (debug) console.log(`🎩 Watching: ${path.relative(cwd, file)}`)
+  }
 
   server.watcher.on('change', (filePath) => {
-    if (filePath.endsWith('.blade.php')) {
-      if (debug) console.log(`🎩 Blade file changed: ${path.relative(process.cwd(), filePath)}`)
+    if (!filePath.endsWith('.blade.php'))
+      return
 
-      try {
-        const content = fs.readFileSync(filePath, 'utf-8')
-        const result = processCode(content, allClassesSet)
+    if (debug) console.log(`🎩 Blade file changed: ${path.relative(cwd, filePath)}`)
 
-        if (result.classesChanged) {
-          const modifierClasses = new Set<string>()
-
-          extractClasses(
-            content,
-            new Set(),
-            modifierClasses,
-            CLASS_REGEX,
-            CLASS_MODIFIER_REGEX,
-          )
-
-          fileClassMap.set(filePath, modifierClasses)
-          const globalChanged = regenerateAllClasses()
-
-          // Update output file when blade classes change
-          if (result.classesChanged || globalChanged) {
-            if (debug) console.log('🎩 Blade file classes changed, updating output file.')
-            writeOutputFileDebounced(allClassesSet, outputDir, outputFileName, isReact)
-          }
-        }
+    try {
+      const content = fs.readFileSync(filePath, 'utf-8')
+      const result = processCode(content)
+      if (applyFileClasses(filePath, result.fileSpecificClasses)) {
+        if (debug) console.log('🎩 Blade file classes changed, updating output file.')
+        writeOutputFileDebounced(allClassesSet, outputDir, outputFileName)
       }
-      catch (error) {
-        if (debug) console.error(`🎩 Error processing changed Blade file:`, error)
-      }
+    }
+    catch (error) {
+      if (debug) console.error(`🎩 Error processing changed Blade file:`, error)
     }
   })
 }

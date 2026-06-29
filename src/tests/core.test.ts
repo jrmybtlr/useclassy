@@ -1,4 +1,5 @@
-import { describe, it, expect, vi } from 'vitest'
+import crypto from 'crypto'
+import { describe, it, expect } from 'vitest'
 import {
   hashString,
   generateCacheKey,
@@ -10,11 +11,6 @@ import {
   REACT_CLASS_REGEX,
   REACT_CLASS_MODIFIER_REGEX,
 } from '../core'
-
-// Mock hashFunction
-vi.mock('../utils', () => ({
-  hashFunction: vi.fn(input => input.length.toString()),
-}))
 
 describe('core module', () => {
   describe('hashString', () => {
@@ -32,14 +28,25 @@ describe('core module', () => {
   })
 
   describe('generateCacheKey', () => {
-    it('should create a cache key from id and code', () => {
+    it('should create a stable SHA-256 hex cache key from id and code', () => {
       const id = 'file.tsx'
       const code = '<div>content</div>'
 
-      const result = generateCacheKey(id, code)
+      const expected = crypto
+        .createHash('sha256')
+        .update(id, 'utf8')
+        .update('\0', 'utf8')
+        .update(code, 'utf8')
+        .digest('hex')
 
-      expect(result).toBeDefined()
-      expect(result).toBe((id + code).length.toString())
+      expect(generateCacheKey(id, code)).toBe(expected)
+      expect(expected).toHaveLength(64)
+    })
+
+    it('should produce distinct keys for different inputs (no short-hash collisions)', () => {
+      const a = generateCacheKey('a', 'x')
+      const b = generateCacheKey('b', 'x')
+      expect(a).not.toBe(b)
     })
   })
 
@@ -439,6 +446,60 @@ describe('core module', () => {
       // Should handle empty modifiers without errors
       expect(classes.size).toBeGreaterThanOrEqual(0)
     })
+
+    it('should NOT match when "class" is part of a larger word', () => {
+      const code = '<div someclass:hover="text-blue-500">Content</div>'
+      const classes = new Set<string>()
+      const modifierClasses = new Set<string>()
+
+      extractClasses(
+        code,
+        classes,
+        modifierClasses,
+        CLASS_REGEX,
+        CLASS_MODIFIER_REGEX,
+      )
+
+      // Should not extract any modifier classes when class is part of a larger word
+      expect(classes.size).toBe(0)
+      expect(modifierClasses.size).toBe(0)
+    })
+
+    it('should NOT match standalone :class patterns in Vue', () => {
+      const code = '<div :class="{active: isActive}">Content</div>'
+      const classes = new Set<string>()
+      const modifierClasses = new Set<string>()
+
+      extractClasses(
+        code,
+        classes,
+        modifierClasses,
+        CLASS_REGEX,
+        CLASS_MODIFIER_REGEX,
+      )
+
+      // Should not match Vue's :class pattern
+      expect(classes.size).toBe(0)
+      expect(modifierClasses.size).toBe(0)
+    })
+
+    it('should NOT match React className when part of larger word', () => {
+      const code = '<div myClassName:hover="text-blue-500">Content</div>'
+      const classes = new Set<string>()
+      const modifierClasses = new Set<string>()
+
+      extractClasses(
+        code,
+        classes,
+        modifierClasses,
+        REACT_CLASS_REGEX,
+        REACT_CLASS_MODIFIER_REGEX,
+      )
+
+      // Should not extract any modifier classes when className is part of a larger word
+      expect(classes.size).toBe(0)
+      expect(modifierClasses.size).toBe(0)
+    })
   })
 
   describe('Performance optimizations', () => {
@@ -617,6 +678,64 @@ describe('core module', () => {
 
       expect(result).toContain('className=')
       expect(result).toContain('flex')
+    })
+
+    it('should not modify standalone Vue :class bindings', () => {
+      const code = '<div :class="{active: isActive}">Content</div>'
+
+      const result = mergeClassAttributes(code, 'class')
+
+      expect(result).toBe(code)
+    })
+
+    it('should not merge static class into a preceding Vue :class binding', () => {
+      const code = '<div :class="x" class="a">Content</div>'
+
+      const result = mergeClassAttributes(code, 'class')
+
+      expect(result).toBe(code)
+    })
+
+    it('should merge static class attributes while preserving a trailing :class binding', () => {
+      const code = '<div class="a" class="b" :class="x">Content</div>'
+
+      const result = mergeClassAttributes(code, 'class')
+
+      expect(result).toBe('<div class="a b" :class="x">Content</div>')
+    })
+  })
+
+  describe('Vue :class with class modifiers pipeline', () => {
+    it('should transform class modifiers without touching :class bindings', () => {
+      const code = `<button
+        class="min-w-0 flex-1"
+        class:hover="text-blue-500"
+        :class="active ? 'bg-white' : 'text-zinc-400'"
+      ></button>`
+      const classes = new Set<string>()
+      const modifierClasses = new Set<string>()
+
+      extractClasses(
+        code,
+        classes,
+        modifierClasses,
+        CLASS_REGEX,
+        CLASS_MODIFIER_REGEX,
+      )
+
+      const afterModifiers = transformClassModifiers(
+        code,
+        classes,
+        CLASS_MODIFIER_REGEX,
+        'class',
+      )
+      const result = mergeClassAttributes(afterModifiers, 'class')
+
+      expect(result).toContain('class="min-w-0 flex-1 hover:text-blue-500"')
+      expect(result).toContain(
+        ':class="active ? \'bg-white\' : \'text-zinc-400\'"',
+      )
+      expect(result).not.toContain('class:hover')
     })
   })
 })

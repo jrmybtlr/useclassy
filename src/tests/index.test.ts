@@ -1,5 +1,6 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest'
-import type { Plugin } from 'vite'
+import type { IncomingMessage, ServerResponse } from 'node:http'
+import type { Plugin, ViteDevServer } from 'vite'
 
 // Mock process.cwd
 vi.stubGlobal('process', {
@@ -30,7 +31,16 @@ vi.mock('path', () => ({
 
 // Mock utils module
 vi.doMock('../utils', () => ({
-  SUPPORTED_FILES: ['.vue', '.ts', '.tsx', '.js', '.jsx', '.html', '.blade.php'],
+  SUPPORTED_FILES: [
+    '.vue',
+    '.svelte',
+    '.ts',
+    '.tsx',
+    '.js',
+    '.jsx',
+    '.html',
+    '.blade.php',
+  ],
   loadIgnoredDirectories: vi.fn().mockReturnValue(['node_modules', 'dist']),
   writeGitignore: vi.fn(),
   writeOutputFileDebounced: vi.fn(),
@@ -38,7 +48,16 @@ vi.doMock('../utils', () => ({
   debounce: vi.fn(fn => fn),
   shouldProcessFile: vi.fn().mockImplementation((filePath: string) => {
     // Mock implementation that returns true for supported files
-    const supportedFiles = ['.vue', '.ts', '.tsx', '.js', '.jsx', '.html', '.blade.php']
+    const supportedFiles = [
+      '.vue',
+      '.svelte',
+      '.ts',
+      '.tsx',
+      '.js',
+      '.jsx',
+      '.html',
+      '.blade.php',
+    ]
     return supportedFiles.some(ext => filePath?.endsWith(ext))
       && !filePath.includes('node_modules')
       && !filePath.includes('virtual:')
@@ -48,11 +67,20 @@ vi.doMock('../utils', () => ({
 
 // Mock core module
 vi.doMock('../core', () => ({
-  SUPPORTED_FILES: ['.vue', '.ts', '.tsx', '.js', '.jsx', '.html', '.blade.php'],
-  CLASS_REGEX: /class="([^"]*)"(?![^>]*:class)/g,
-  CLASS_MODIFIER_REGEX: /class:([\w-:]+)="([^"]*)"/g,
-  REACT_CLASS_REGEX: /className=(?:"([^"]*)"|{([^}]*)})(?![^>]*:)/g,
-  REACT_CLASS_MODIFIER_REGEX: /(?:className|class):([\w-:]+)="([^"]*)"/g,
+  SUPPORTED_FILES: [
+    '.vue',
+    '.svelte',
+    '.ts',
+    '.tsx',
+    '.js',
+    '.jsx',
+    '.html',
+    '.blade.php',
+  ],
+  CLASS_REGEX: /(?<![:\w])class="([^"]*)"(?![^>]*:class)/g,
+  CLASS_MODIFIER_REGEX: /(?<![:\w])class:([\w-:]+)="([^"]*)"/g,
+  REACT_CLASS_REGEX: /(?<![:\w])className=(?:"([^"]*)"|{([^}]*)})(?![^>]*:)/g,
+  REACT_CLASS_MODIFIER_REGEX: /(?<![:\w])(?:className|class):([\w-:]+)="([^"]*)"/g,
   generateCacheKey: vi.fn(() => 'mock-cache-key'),
   extractClasses: vi.fn((_code, generatedClassesSet, modifierDerivedClassesSet) => {
     // Mock the behavior of extractClasses
@@ -499,7 +527,7 @@ describe('useClassy plugin', () => {
       }
 
       if (plugin.configureServer && typeof plugin.configureServer === 'function') {
-        plugin.configureServer(mockServer as any)
+        plugin.configureServer(mockServer as unknown as ViteDevServer)
 
         // Get the add handler
         const addCall = mockServer.watcher.on.mock.calls.find(call => call[0] === 'add')
@@ -533,7 +561,7 @@ describe('useClassy plugin', () => {
       }
 
       if (plugin.configureServer && typeof plugin.configureServer === 'function') {
-        plugin.configureServer(mockServer as any)
+        plugin.configureServer(mockServer as unknown as ViteDevServer)
 
         // Get the unlink handler
         const unlinkCall = mockServer.watcher.on.mock.calls.find(call => call[0] === 'unlink')
@@ -569,7 +597,7 @@ describe('useClassy plugin', () => {
       }
 
       if (plugin.configureServer && typeof plugin.configureServer === 'function') {
-        plugin.configureServer(mockServer as any)
+        plugin.configureServer(mockServer as unknown as ViteDevServer)
 
         // Should register middleware
         expect(mockServer.middlewares.use).toHaveBeenCalledWith(
@@ -600,7 +628,7 @@ describe('useClassy plugin', () => {
       }
 
       if (plugin.configureServer && typeof plugin.configureServer === 'function') {
-        plugin.configureServer(mockServer as any)
+        plugin.configureServer(mockServer as unknown as ViteDevServer)
 
         // Get the middleware handler
         const middlewareCall = mockServer.middlewares.use.mock.calls.find(
@@ -609,11 +637,11 @@ describe('useClassy plugin', () => {
         if (middlewareCall && middlewareCall[1]) {
           const middlewareHandler = middlewareCall[1]
 
-          const mockReq = {} as any
+          const mockReq = {} as unknown as IncomingMessage
           const mockRes = {
             statusCode: 0,
             end: vi.fn(),
-          } as any
+          } as unknown as ServerResponse
 
           // Should not throw when called
           expect(() => middlewareHandler(mockReq, mockRes)).not.toThrow()
@@ -648,7 +676,7 @@ describe('useClassy plugin', () => {
       }
 
       if (plugin.configureServer && typeof plugin.configureServer === 'function') {
-        plugin.configureServer(mockServer as any)
+        plugin.configureServer(mockServer as unknown as ViteDevServer)
 
         // Should setup HTTP middleware but not custom WebSocket handlers
         expect(mockServer.middlewares.use).toHaveBeenCalled()
@@ -678,7 +706,7 @@ describe('useClassy plugin', () => {
       }
 
       if (plugin.configureServer && typeof plugin.configureServer === 'function') {
-        plugin.configureServer(mockServer as any)
+        plugin.configureServer(mockServer as unknown as ViteDevServer)
 
         // Get the connection handler
         const connectionCall = mockServer.ws.on.mock.calls.find(call => call[0] === 'connection')
@@ -720,7 +748,7 @@ describe('useClassy plugin', () => {
       }
 
       if (plugin.configureServer && typeof plugin.configureServer === 'function') {
-        plugin.configureServer(mockServer as any)
+        plugin.configureServer(mockServer as unknown as ViteDevServer)
 
         // Get the connection handler
         const connectionCall = mockServer.ws.on.mock.calls.find(call => call[0] === 'connection')
@@ -773,7 +801,7 @@ describe('useClassy plugin', () => {
       }
 
       if (plugin.configureServer && typeof plugin.configureServer === 'function') {
-        plugin.configureServer(mockServer as any)
+        plugin.configureServer(mockServer as unknown as ViteDevServer)
 
         // Get the connection handler
         const connectionCall = mockServer.ws.on.mock.calls.find(call => call[0] === 'connection')
@@ -825,7 +853,7 @@ describe('useClassy plugin', () => {
       }
 
       if (plugin.configureServer && typeof plugin.configureServer === 'function') {
-        plugin.configureServer(mockServer as any)
+        plugin.configureServer(mockServer as unknown as ViteDevServer)
 
         // Should register listening event handler
         expect(mockServer.httpServer?.once).toHaveBeenCalledWith('listening', expect.any(Function))

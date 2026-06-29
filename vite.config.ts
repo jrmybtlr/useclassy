@@ -8,6 +8,7 @@ export default defineConfig({
       entry: {
         index: resolve(__dirname, 'src/index.ts'),
         react: resolve(__dirname, 'src/react.ts'),
+        cli: resolve(__dirname, 'src/cli.ts'),
       },
       formats: ['es', 'cjs'],
       fileName: (format, entryName) =>
@@ -24,7 +25,7 @@ export default defineConfig({
   plugins: [
     dts({
       include: ['src/**/*.ts'],
-      exclude: ['**/*.test.ts'],
+      exclude: ['**/*.test.ts', 'src/cli.ts', 'src/init-setup.ts'],
       copyDtsFiles: true,
     }),
   ],

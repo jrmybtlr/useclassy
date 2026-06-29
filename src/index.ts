@@ -1,4 +1,5 @@
 import type { PluginOption } from 'vite'
+import path from 'path'
 
 import {
   CLASS_REGEX,
@@ -25,7 +26,7 @@ import {
   setupLaravelServiceProvider,
 } from './blade'
 
-import type { ClassyOptions, ViteServer } from './types'
+import type { ClassyOptions, ProcessCodeResult, ViteServer } from './types'
 
 /**
  * UseClassy Vite plugin
@@ -61,42 +62,75 @@ export default function useClassy(options: ClassyOptions = {}): PluginOption {
   let initialScanComplete = false
   let lastWrittenClassCount = -1
 
-  // Simple caching
   const transformCache: Map<string, string> = new Map()
   const fileClassMap: Map<string, Set<string>> = new Map()
+  const classRefCounts: Map<string, number> = new Map()
 
-  function regenerateAllClasses(): boolean {
-    const oldSize = allClassesSet.size
-    allClassesSet.clear()
+  /** Ref-counted merge of per-file classes into the global set; returns whether membership changed. */
+  function applyFileClasses(id: string, newClasses: Set<string>): boolean {
+    const oldClasses = fileClassMap.get(id) ?? new Set<string>()
+    let changed = false
 
-    // Regenerate from all tracked files
-    for (const classes of fileClassMap.values()) {
-      classes.forEach(className => allClassesSet.add(className))
+    for (const c of oldClasses) {
+      if (!newClasses.has(c)) {
+        const prev = classRefCounts.get(c) ?? 0
+        const next = prev - 1
+        if (next <= 0) {
+          classRefCounts.delete(c)
+          allClassesSet.delete(c)
+          changed = true
+        }
+        else {
+          classRefCounts.set(c, next)
+        }
+      }
     }
 
-    return oldSize !== allClassesSet.size
+    for (const c of newClasses) {
+      if (!oldClasses.has(c)) {
+        const prev = classRefCounts.get(c) ?? 0
+        const next = prev + 1
+        classRefCounts.set(c, next)
+        if (prev === 0) {
+          allClassesSet.add(c)
+          changed = true
+        }
+      }
+    }
+
+    fileClassMap.set(id, new Set(newClasses))
+    return changed
   }
 
-  // Options
   const outputDir = options.outputDir || '.classy'
+  const outputDirForFilter = path.normalize(outputDir)
   const outputFileName = options.outputFileName || 'output.classy.html'
   const isReact = options.language === 'react'
   const isBlade = options.language === 'blade'
   const debug = options.debug || false
 
-  // Framework regex (Blade uses same syntax as Vue - both use 'class' attribute)
   const classRegex = isReact ? REACT_CLASS_REGEX : CLASS_REGEX
   const classModifierRegex = isReact
     ? REACT_CLASS_MODIFIER_REGEX
     : CLASS_MODIFIER_REGEX
   const classAttrName = isReact ? 'className' : 'class'
 
-  // Class sets
   const generatedClassesSet: Set<string> = new Set()
   const modifierDerivedClassesSet: Set<string> = new Set()
 
-  // Ensure .gitignore * is in .classy/ directory
   writeGitignore(outputDir)
+
+  function runBladeScan(): void {
+    scanBladeFiles(
+      ignoredDirectories,
+      allClassesSet,
+      applyFileClasses,
+      processCode,
+      outputDir,
+      outputFileName,
+      debug,
+    )
+  }
 
   return {
     name: 'useClassy',
@@ -106,7 +140,6 @@ export default function useClassy(options: ClassyOptions = {}): PluginOption {
       isBuild = config.command === 'build'
       ignoredDirectories = loadIgnoredDirectories()
 
-      // Setup Laravel service provider if in blade mode
       if (isBlade && !isBuild) {
         setupLaravelServiceProvider(debug)
       }
@@ -123,31 +156,16 @@ export default function useClassy(options: ClassyOptions = {}): PluginOption {
 
       setupOutputEndpoint(server)
 
-      // Only scan and watch Blade files if explicitly using blade language
       if (isBlade) {
-        // Scan Blade files in dev mode too
-        scanBladeFiles(
-          ignoredDirectories,
-          allClassesSet,
-          fileClassMap,
-          regenerateAllClasses,
-          processCode,
-          outputDir,
-          outputFileName,
-          debug,
-        )
-
-        // Watch Blade files for changes in dev mode
+        runBladeScan()
         setupBladeFileWatching(
           server,
           ignoredDirectories,
           allClassesSet,
-          fileClassMap,
-          regenerateAllClasses,
+          applyFileClasses,
           processCode,
           outputDir,
           outputFileName,
-          isReact,
           debug,
         )
       }
@@ -166,7 +184,8 @@ export default function useClassy(options: ClassyOptions = {}): PluginOption {
     },
 
     transform(code: string, id: string) {
-      if (!shouldProcessFile(id, ignoredDirectories)) return null
+      if (!shouldProcessFile(id, ignoredDirectories, outputDirForFilter))
+        return null
 
       this.addWatchFile(id)
       const cacheKey = generateCacheKey(id, code)
@@ -182,13 +201,11 @@ export default function useClassy(options: ClassyOptions = {}): PluginOption {
       if (debug) console.log('🎩 Cache key:', cacheKey)
 
       let transformedCode: string
-      let directClassesChanged: boolean
       let fileSpecificClasses: Set<string>
 
       try {
-        const result = processCode(code, allClassesSet)
+        const result = processCode(code)
         transformedCode = result.transformedCode
-        directClassesChanged = result.classesChanged
         fileSpecificClasses = result.fileSpecificClasses
       }
       catch (error) {
@@ -196,22 +213,14 @@ export default function useClassy(options: ClassyOptions = {}): PluginOption {
         return null // Return original code without transformation
       }
 
-      // Update file classes and regenerate global set
-      fileClassMap.set(id, new Set(fileSpecificClasses))
       transformCache.set(cacheKey, transformedCode)
 
-      const globalClassesChanged = regenerateAllClasses()
-      const classesChanged = directClassesChanged || globalClassesChanged
+      const classesChanged = applyFileClasses(id, fileSpecificClasses)
 
       if (!isBuild && classesChanged) {
         if (debug)
           console.log('🎩 Classes changed, writing output file.')
-        writeOutputFileDebounced(
-          allClassesSet,
-          outputDir,
-          outputFileName,
-          isReact,
-        )
+        writeOutputFileDebounced(allClassesSet, outputDir, outputFileName)
       }
 
       if (!initialScanComplete) {
@@ -228,39 +237,28 @@ export default function useClassy(options: ClassyOptions = {}): PluginOption {
     buildStart() {
       if (debug) console.log('🎩 Build starting, resetting state.')
       allClassesSet = new Set()
+      classRefCounts.clear()
       transformCache.clear()
       fileClassMap.clear()
       lastWrittenClassCount = -1
       initialScanComplete = false
 
-      // Only scan Blade files during build if explicitly using blade language
-      if (isBlade) {
-        // Scan Blade files that aren't part of the module graph
-        scanBladeFiles(
-          ignoredDirectories,
-          allClassesSet,
-          fileClassMap,
-          regenerateAllClasses,
-          processCode,
-          outputDir,
-          outputFileName,
-          debug,
-        )
-      }
+      if (isBlade)
+        runBladeScan()
     },
 
     buildEnd() {
       if (!isBuild) return
 
-      if (allClassesSet.size > 0) {
-        if (debug)
-          console.log('🎩 Build ended, writing final output file.')
-        writeOutputFileDirect(allClassesSet, outputDir, outputFileName)
-      }
-      else {
+      if (allClassesSet.size === 0) {
         if (debug)
           console.log('🎩 Build ended, no classes found to write.')
+        return
       }
+
+      if (debug)
+        console.log('🎩 Build ended, writing final output file.')
+      writeOutputFileDirect(allClassesSet, outputDir, outputFileName)
     },
   }
 
@@ -280,15 +278,7 @@ export default function useClassy(options: ClassyOptions = {}): PluginOption {
     )
   }
 
-  function processCode(
-    code: string,
-    currentGlobalClasses: Set<string>,
-  ): {
-      transformedCode: string
-      classesChanged: boolean
-      fileSpecificClasses: Set<string>
-    } {
-    let classesChanged = false
+  function processCode(code: string): ProcessCodeResult {
     generatedClassesSet.clear()
     modifierDerivedClassesSet.clear()
 
@@ -300,15 +290,6 @@ export default function useClassy(options: ClassyOptions = {}): PluginOption {
       classModifierRegex,
     )
 
-    // Check which of the *modifier-derived* classes need to be added to the global set
-    modifierDerivedClassesSet.forEach((className) => {
-      if (!currentGlobalClasses.has(className)) {
-        currentGlobalClasses.add(className)
-        classesChanged = true
-      }
-    })
-
-    // Transform the code (replace class:mod with actual classes)
     const transformedCodeWithModifiers = transformClassModifiers(
       code,
       generatedClassesSet,
@@ -316,30 +297,30 @@ export default function useClassy(options: ClassyOptions = {}): PluginOption {
       classAttrName,
     )
 
-    // Merge multiple class attributes into one
     const finalTransformedCode = mergeClassAttributes(
       transformedCodeWithModifiers,
       classAttrName,
     )
 
-    if (debug && classesChanged) {
-      console.log(
-        `🎩 Global class set size changed to ${currentGlobalClasses.size}`,
-      )
-    }
-
-    // Return the final code, whether global classes changed,
-    // and the set of ALL classes extracted specifically from this file
     return {
       transformedCode: finalTransformedCode,
-      classesChanged,
       fileSpecificClasses: generatedClassesSet,
     }
   }
 }
 
+// Tailwind integration helpers (paths match plugin defaults unless overridden)
+export {
+  USECLASSY_DEFAULT_OUTPUT_DIR,
+  USECLASSY_DEFAULT_OUTPUT_FILE,
+  getUseClassyManifestPath,
+  getUseClassyTailwindSourceDirective,
+  getUseClassyTailwindSourceLineForRootStylesheet,
+  getUseClassyTailwindV3ContentEntry,
+} from './tailwind'
+export type { UseClassyTailwindPathsOptions } from './tailwind'
+
 // Export React-specific utilities
-// React hooks are not fully tested yet
 export { classy, useClassy as useClassyHook } from './react'
 export { writeGitignore } from './utils'
 export type { ClassyOptions } from './types.d.ts'

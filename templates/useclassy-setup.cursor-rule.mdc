@@ -1,0 +1,15 @@
+---
+description: Wire up vite-plugin-useclassy with Vite, Tailwind, and VS Code Tailwind IntelliSense.
+globs: vite.config.*,tailwind.config.*,**/*.css,.vscode/settings.json
+---
+
+When adding or fixing UseClassy in this project:
+
+1. Install `vite-plugin-useclassy` as a dev dependency (use this repo’s package manager).
+2. In `vite.config.*`, import `useClassy` from `vite-plugin-useclassy` and add `useClassy({ language: 'vue' | 'react' | 'blade' })` to `plugins` **before** `@tailwindcss/vite` or other CSS plugins.
+3. **Tailwind v4** (CSS uses `@import "tailwindcss"`): In that stylesheet, add an `@source` line pointing at the generated manifest. Default manifest path is `.classy/output.classy.html` from the project root; the `@source` path must be **relative to the CSS file**. In JavaScript configs you can compute the line with `getUseClassyTailwindSourceDirective(cssAbsolutePath, projectRoot)` from `vite-plugin-useclassy`.
+4. **Tailwind v3**: Add `./.classy/output.classy.html` to `content` in `tailwind.config.*` (or use `getUseClassyTailwindV3ContentEntry()` from the package for the default path).
+5. **VS Code**: Merge `tailwindCSS.classAttributes` to include `class:[\\w:-]*` and, for React, `className:[\\w:-]*`.
+6. Run dev once so `.classy/output.classy.html` is generated.
+
+Prefer `npx vite-plugin-useclassy init` (after installing the package) instead of hand-editing when possible.

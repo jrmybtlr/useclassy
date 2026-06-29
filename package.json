@@ -1,6 +1,6 @@
 {
   "name": "vite-plugin-useclassy",
-  "version": "2.6.0",
+  "version": "3.0.0",
   "description": "UseClassy automatically appends class attributes to your components and lets you separate media queries, hover states, and other styles.",
   "scripts": {
     "dev": "pnpm -r dev",
@@ -36,8 +36,12 @@
     }
   ],
   "files": [
-    "dist"
+    "dist",
+    "templates"
   ],
+  "bin": {
+    "vite-plugin-useclassy": "./dist/cli.js"
+  },
   "main": "dist/index.js",
   "type": "module",
   "types": "dist/index.d.ts",
@@ -51,6 +55,11 @@
       "types": "./dist/react.d.ts",
       "import": "./dist/react.js",
       "require": "./dist/react.cjs"
+    },
+    "./tailwind": {
+      "types": "./dist/tailwind.d.ts",
+      "import": "./dist/tailwind.js",
+      "require": "./dist/tailwind.cjs"
     }
   },
   "repository": {
@@ -58,33 +67,30 @@
     "url": "git+https://github.com/jrmybtlr/useclassy.git"
   },
   "devDependencies": {
-    "@eslint/js": "^9.30.0",
+    "@eslint/js": "^9.39.4",
     "@stylistic/eslint-plugin": "^4.4.1",
-    "@types/react": "^18.3.23",
-    "@typescript-eslint/eslint-plugin": "^8.35.0",
-    "@typescript-eslint/parser": "^8.35.0",
+    "@types/react": "^19.2.14",
+    "@typescript-eslint/eslint-plugin": "^8.58.1",
+    "@typescript-eslint/parser": "^8.58.1",
     "@vitest/coverage-v8": "^3.2.4",
     "@vitest/ui": "^3.2.4",
     "changelogen": "^0.5.7",
-    "eslint": "^9.30.0",
-    "globals": "^16.2.0",
+    "eslint": "^9.39.4",
+    "globals": "^16.5.0",
     "jsdom": "^26.1.0",
-    "typescript": "^5.8.3",
-    "typescript-eslint": "^8.35.0",
-    "vite": "^7.0.0",
+    "typescript": "^5.9.3",
+    "typescript-eslint": "^8.58.1",
+    "vite": "^7.3.2",
     "vite-plugin-dts": "^3.9.1",
-    "vite-plugin-inspect": "^11.3.0",
+    "vite-plugin-inspect": "^11.3.3",
     "vitest": "^3.2.4"
   },
   "peerDependencies": {
-    "react": "^16.8.0 || ^17.0.0 || ^18.0.0",
+    "react": "^18.0.0 || ^19.0.0",
     "vite": "^5.0.0 || ^6.0.0 || ^7.0.0"
   },
   "resolutions": {
     "debug": "4.3.4",
     "supports-color": "8.1.1"
-  },
-  "dependencies": {
-    "arktype": "^2.1.20"
   }
 }

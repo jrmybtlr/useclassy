@@ -1,5 +1,5 @@
 @import "tailwindcss";
-@source "./../../.classy/output.classy.html";
+@source "../../.classy/output.classy.html";
 @plugin "tailwindcss-motion";
 
 body {
@@ -19,7 +19,7 @@ body {
 }
 
 code {
-  @apply block text-sm/[1.9em] font-mono px-4 py-3;
+  @apply block text-sm/[1.9em] font-mono px-5 py-4;
 }
 
 /* A better container */

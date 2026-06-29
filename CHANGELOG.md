@@ -1,3 +1,29 @@
+## v3.0.0
+
+### ⚠️ Breaking changes
+
+- **peer:** `react` is now `^18.0.0 || ^19.0.0`. React 16 and 17 are no longer supported for `vite-plugin-useclassy/react` (`classy` / `useClassy`).
+
+### 🚀 Enhancements
+
+- **cli:** Add `npx vite-plugin-useclassy init` to patch Vite, Tailwind (v3/v4), and editor settings (`--language vue|react|blade`, `--dry-run`).
+- **tailwind:** Export `vite-plugin-useclassy/tailwind` helpers for manifest paths and Tailwind content/source configuration.
+- **blade:** Refactor Blade file handling for more reliable class extraction and processing.
+- **demo:** Refresh Vue demo site and add segmented control example.
+
+### 🩹 Fixes
+
+- **core:** Add negative lookbehind to class regexes so Vue `:class` bindings and `class` / `className` substrings inside larger words (e.g. `someclass:hover`, `myClassName:hover`) are not transformed.
+- **core:** Apply the same lookbehind protection to dynamic regexes in `mergeClassAttributes`, preventing corruption when a static `class` attribute follows `:class`.
+
+### 📖 Docs
+
+- Expand README with quick-setup (`init`), React version requirements, and Tailwind integration notes.
+
+### 📝 Notes
+
+- React `classy` / `useClassy` helpers have limited automated test coverage (peer dependency); manual verification recommended when changing `src/react.ts`.
+
 ## v2.6.0
 
 [compare changes](https://github.com/jrmybtlr/useclassy/compare/v2.5.0...v2.6.0)

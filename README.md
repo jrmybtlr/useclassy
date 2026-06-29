@@ -24,6 +24,27 @@ yarn add vite-plugin-useclassy -D
 pnpm add vite-plugin-useclassy -D
 ```
 
+When using the React helpers (`vite-plugin-useclassy/react`), install **React 18 or 19** (`react` satisfies `^18.0.0 || ^19.0.0`). The Vite plugin alone does not require React for Vue or Blade projects.
+
+## Quick setup (recommended)
+
+After installing the package, run the init helper from your **app root** (where `package.json` and `vite.config.*` live). It patches Vite, Tailwind (v3 or v4), and VS Code settings when it can do so safely.
+
+```bash
+npx vite-plugin-useclassy init
+```
+
+Options:
+
+```bash
+# React: include className:* IntelliSense patterns
+npx vite-plugin-useclassy init --language react
+```
+
+Add **`--dry-run`** to any init command to print the planned file changes without modifying your repo (for example `npx vite-plugin-useclassy init --language react --dry-run`).
+
+If detection fails or your config is non-standard, use the manual steps below.
+
 ## Vite Configuration
 
 Add `useClassy` to your Vite plugins. It's recommended that you place it before Tailwind or other CSS processing plugins.
@@ -129,37 +150,96 @@ These transformed classes are merged with any existing `class` attributes.
 
 ## Tailwind JIT Integration
 
-Add the `output.classy.html` as a source file in your tailwind config.
+UseClassy writes discovered classes to **`.classy/output.classy.html`** by default (configurable via `outputDir` / `outputFileName`). Tailwind must scan that file so utilities like `hover:…` exist in CSS.
 
-For Tailwind 4
+### Why `@source` / `content` is required
+
+The plugin adds `.classy/` to **`.gitignore`**. **Tailwind CSS v4** does not scan gitignored paths during automatic detection, so it will miss the manifest unless you register it explicitly. Use `@source` in your CSS (v4) or add the file to `content` (v3). See Tailwind’s docs: [Detecting classes in source files](https://tailwindcss.com/docs/detecting-classes-in-source-files).
+
+### Tailwind v4
+
+`@source` paths are **relative to the stylesheet file**, not necessarily the project root. If your entry CSS lives in `src/`, the line may look like `../.classy/output.classy.html` instead of `./.classy/...`.
 
 ```css
-/* your-main-css-file.css */
+/* Example when the stylesheet is next to package.json */
 @import "tailwindcss";
 @source "./.classy/output.classy.html";
 ```
 
-For Tailwind 3 you need to add the following to your Tailwind config.
+### Tailwind v3
 
-```json
-  "content": [
-    // ... other content paths
-    "./.classy/output.classy.html"
-  ]
+Add the manifest to `content` in `tailwind.config.*`:
+
+```js
+export default {
+  content: [
+    // ...existing paths
+    "./.classy/output.classy.html",
+  ],
+};
 ```
+
+### Path helpers (optional)
+
+The package exports stable defaults and helpers so docs, init, and your own scripts stay aligned:
+
+```ts
+import {
+  getUseClassyTailwindSourceDirective,
+  getUseClassyTailwindSourceLineForRootStylesheet,
+  getUseClassyTailwindV3ContentEntry,
+} from "vite-plugin-useclassy";
+// or: import { ... } from "vite-plugin-useclassy/tailwind";
+
+// v4: correct @source for a given CSS file path
+const line = getUseClassyTailwindSourceDirective(
+  "/path/to/project/src/app.css",
+  "/path/to/project",
+);
+// line → @source "../.classy/output.classy.html";
+
+// v4 shorthand when the CSS file sits beside package.json:
+getUseClassyTailwindSourceLineForRootStylesheet();
+// → @source "./.classy/output.classy.html";
+
+// v3 content array entry (default output paths):
+getUseClassyTailwindV3ContentEntry();
+// → "./.classy/output.classy.html"
+```
+
+If you customize `outputDir` or `outputFileName` in `useClassy({ ... })`, pass the same options into these helpers.
 
 ## Tailwind IntelliSense
 
-Add the following to your editor settings to enable IntelliSense for UseClassy.
+Add the following to your editor settings to enable IntelliSense for UseClassy variant attributes.
 
 ```json
 {
   "tailwindCSS.classAttributes": [
-    ...other settings,
-    "class:[\\w:-]*"
+    "class",
+    "class:[\\w:-]*",
+    "className",
+    "className:[\\w:-]*"
   ]
 }
 ```
+
+For Vue-only projects you can omit the `className` entries. Running `npx vite-plugin-useclassy init` merges these into `.vscode/settings.json` when possible.
+
+## AI-assisted setup
+
+Use this prompt in your editor agent when you want a one-shot manual setup (for example if `init` cannot patch your repo):
+
+**Prompt — “Set up UseClassy in this repo”**
+
+1. Install dev dependency: `vite-plugin-useclassy` (use the repo’s package manager: npm, pnpm, or yarn).
+2. Open `vite.config.*`. Add `import useClassy from 'vite-plugin-useclassy'`. In `plugins`, insert `useClassy({ language: '<vue|react|blade>' })` **before** `@tailwindcss/vite` or other CSS pipeline plugins so it runs early.
+3. **Tailwind v4** (project uses `@import "tailwindcss"` and typically `@tailwindcss/vite`): In the main CSS entry that imports Tailwind, add an `@source` line pointing at the generated manifest. Default manifest path is `.classy/output.classy.html` from the project root; the `@source` path must be **relative to that CSS file**. If `useClassy` uses custom `outputDir` / `outputFileName`, use those instead.
+4. **Tailwind v3** (`tailwind.config.*`): Add `".classy/output.classy.html"` (or `./.classy/output.classy.html` as appropriate) to the `content` array without removing existing entries.
+5. **VS Code**: In `.vscode/settings.json` (merge, do not wipe), set or extend `tailwindCSS.classAttributes` to include `"class:[\\w:-]*"`. For React, also add `"className:[\\w:-]*"`.
+6. Run `dev` once so `.classy/output.classy.html` is generated; confirm Tailwind includes a class that only appears on a `class:hover` or `className:hover` attribute.
+
+A **Cursor rule template** you can copy into an app repo lives at [`templates/useclassy-setup.cursor-rule.mdc`](templates/useclassy-setup.cursor-rule.mdc).
 
 ## Debugging
 

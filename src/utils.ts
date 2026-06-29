@@ -28,18 +28,6 @@ export function debounce<T extends (
 }
 
 /**
- * Simple hash function for string values
- */
-export function hashFunction(str: string): number {
-  let hash = 0
-  for (let i = 0; i < str.length; i++) {
-    hash = (hash << 5) - hash + str.charCodeAt(i)
-    hash = hash & hash
-  }
-  return hash
-}
-
-/**
  * Load directories to ignore from .gitignore file
  */
 export function loadIgnoredDirectories(): string[] {
@@ -112,7 +100,6 @@ let debouncedWrite: (() => void) | null = null
 let lastClassesSet: Set<string> | null = null
 let lastOutputDir: string | null = null
 let lastOutputFileName: string | null = null
-let lastIsReact: boolean | null = null
 
 /**
  * Write the output file with all collected classes (Internal implementation)
@@ -178,21 +165,14 @@ function scheduleWriteOutputFile(
   allClassesSet: Set<string>,
   outputDir: string,
   outputFileName: string,
-  isReact: boolean,
 ): void {
   lastClassesSet = allClassesSet
   lastOutputDir = outputDir
   lastOutputFileName = outputFileName
-  lastIsReact = isReact
 
   if (!debouncedWrite) {
     debouncedWrite = debounce(() => {
-      if (
-        lastClassesSet
-        && lastOutputDir
-        && lastOutputFileName !== null
-        && lastIsReact !== null
-      ) {
+      if (lastClassesSet && lastOutputDir && lastOutputFileName !== null) {
         _writeOutputFile(lastClassesSet, lastOutputDir, lastOutputFileName)
       }
     }, WRITE_DEBOUNCE_MS)
@@ -211,6 +191,7 @@ export const writeOutputFileDirect = _writeOutputFile
 export function shouldProcessFile(
   filePath: string,
   ignoredDirectories: string[],
+  outputDir: string,
 ): boolean {
   if (isInIgnoredDirectory(filePath, ignoredDirectories)) {
     return false
@@ -218,13 +199,11 @@ export function shouldProcessFile(
   if (!SUPPORTED_FILES.some(ext => filePath?.endsWith(ext))) {
     return false
   }
-  const outputDirNormalized = lastOutputDir
-    ? path.normalize(lastOutputDir)
-    : null
+  const outputDirNormalized = path.normalize(outputDir)
   if (
     filePath.includes('node_modules')
     || filePath.includes('\0')
-    || (outputDirNormalized && filePath.includes(outputDirNormalized))
+    || (outputDir && filePath.includes(outputDirNormalized))
   ) {
     return false
   }
