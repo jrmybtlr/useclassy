@@ -16,6 +16,9 @@ export default tseslint.config(
         tsconfigRootDir: import.meta.dirname,
       },
     },
+  },
+  {
+    files: ['src/**/*.{ts,tsx}'],
     plugins: {
       'react-hooks': reactHooks,
       'react-refresh': reactRefresh,

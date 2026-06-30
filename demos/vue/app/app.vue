@@ -13,8 +13,8 @@
           <div
             class="text-[140px] rotate-0 transition-transform duration-300 motion-preset-blur-up motion-delay-500 z-10"
             class:md="text-[170px]"
-            class:group-hover="-rotate-6 -translate-y-8"
-            class:hover="rotate-12 -translate-y-4"
+            class:group-hover="-rotate-6 -translate-y-12"
+            class:hover="rotate-12 -translate-y-16"
           >
             🎩
           </div>

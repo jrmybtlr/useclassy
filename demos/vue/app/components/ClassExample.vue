@@ -40,7 +40,7 @@
     <Code class="motion-preset-blur-up motion-delay-800">
       <code>
         <span class="text-blue-400 text-sm"
-          >{{ format === "vue" ? "class" : "className" }}="</span
+          >{{ format === "react" ? "className" : "class" }}="</span
         >
         <span class="text-zinc-300">
           <template v-for="(value, key) in examples" :key="key">
@@ -73,7 +73,7 @@ interface Props {
 }
 
 defineProps<Props>();
-const formatOptions = ["vue", "react"] as const;
+const formatOptions = ["vue", "react", "blade"] as const;
 const hoveredSection = ref<string | null>(null);
 const format = ref<(typeof formatOptions)[number]>("vue");
 
