@@ -10,7 +10,7 @@
     "release:minor": "changelogen --release --minor && pnpm publish",
     "release:patch": "changelogen --release --patch && pnpm publish",
     "build": "vite build",
-    "build:website": "pnpm i --no-frozen-lockfile && cd demos/vue && pnpm run build",
+    "build:website": "pnpm install --no-frozen-lockfile && pnpm --filter useclassy-vue run build",
     "prepublishOnly": "pnpm run build"
   },
   "keywords": [

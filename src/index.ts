@@ -61,7 +61,6 @@ export default function useClassy(options: ClassyOptions = {}): PluginOption {
   let allClassesSet: Set<string> = new Set()
   let isBuild = false
   let initialScanComplete = false
-  let lastWrittenClassCount = -1
 
   const transformCache: Map<string, string> = new Map()
   const fileClassMap: Map<string, Set<string>> = new Map()
@@ -151,12 +150,12 @@ export default function useClassy(options: ClassyOptions = {}): PluginOption {
       }
       else if (typeof ignored === 'function') {
         const originalIgnored = ignored
-        config.server.watch.ignored = (watchPath, stats) => {
+        config.server.watch.ignored = (watchPath: string) => {
           const normalized = watchPath.replace(/\\/g, '/')
           if (normalized.includes(`/${outputDir}/`) || normalized.endsWith(`/${outputDir}`)) {
             return true
           }
-          return originalIgnored(watchPath, stats)
+          return originalIgnored(watchPath)
         }
       }
       else if (typeof ignored === 'string') {
@@ -204,9 +203,7 @@ export default function useClassy(options: ClassyOptions = {}): PluginOption {
       server.httpServer?.once('listening', () => {
         if (initialScanComplete && allClassesSet.size > 0) {
           if (debug) console.log('🎩 Initial write on server ready.')
-          if (writeOutputFileDirect(allClassesSet, outputDir, outputFileName)) {
-            lastWrittenClassCount = allClassesSet.size
-          }
+          writeOutputFileDirect(allClassesSet, outputDir, outputFileName)
         }
       })
     },
@@ -268,7 +265,6 @@ export default function useClassy(options: ClassyOptions = {}): PluginOption {
       classRefCounts.clear()
       transformCache.clear()
       fileClassMap.clear()
-      lastWrittenClassCount = -1
       initialScanComplete = false
       resetOutputFileCache()
 
@@ -300,7 +296,6 @@ export default function useClassy(options: ClassyOptions = {}): PluginOption {
             '🎩 Manual output generation requested via HTTP endpoint.',
           )
         writeOutputFileDirect(allClassesSet, outputDir, outputFileName)
-        lastWrittenClassCount = allClassesSet.size
         res.statusCode = 200
         res.end(`Output file generated (${allClassesSet.size} classes)`)
       },
