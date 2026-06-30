@@ -1,6 +1,30 @@
 import fs from 'fs'
 import path from 'path'
 import { SUPPORTED_FILES } from './core'
+import type { ApplyFileClassesFn, ProcessCodeFn } from './types'
+
+const PROJECT_SKIP_DIR = new Set([
+  'node_modules',
+  '.git',
+  'dist',
+  'build',
+  '.output',
+  '.nuxt',
+  '.nitro',
+  '.cache',
+  '.classy',
+  '.data',
+  '.wrangler',
+])
+
+type FsWithGlob = typeof fs & {
+  globSync?: (
+    pattern: string,
+    options?: { cwd?: string, exclude?: string | string[] },
+  ) => string[]
+}
+
+const fsWithGlob = fs as FsWithGlob
 
 /**
  * Simple debounce function
@@ -30,9 +54,9 @@ export function debounce<T extends (
 /**
  * Load directories to ignore from .gitignore file
  */
-export function loadIgnoredDirectories(): string[] {
+export function loadIgnoredDirectories(projectRoot = process.cwd()): string[] {
   try {
-    const gitignorePath = path.join(process.cwd(), '.gitignore')
+    const gitignorePath = path.join(projectRoot, '.gitignore')
     if (!fs.existsSync(gitignorePath)) {
       return ['node_modules', 'dist']
     }
@@ -61,8 +85,8 @@ export function loadIgnoredDirectories(): string[] {
 /**
  * Add output directory to .gitignore
  */
-export function writeGitignore(outputDir: string): void {
-  const gitignorePath = path.join(process.cwd(), '.gitignore')
+export function writeGitignore(outputDir: string, projectRoot = process.cwd()): void {
+  const gitignorePath = path.join(projectRoot, '.gitignore')
   const gitignoreEntry = `\n# Generated Classy files\n${outputDir}/\n`
 
   try {
@@ -87,9 +111,10 @@ export function writeGitignore(outputDir: string): void {
 export function isInIgnoredDirectory(
   filePath: string,
   ignoredDirectories: string[],
+  projectRoot = process.cwd(),
 ): boolean {
   if (!ignoredDirectories.length) return false
-  const relativePath = path.relative(process.cwd(), filePath)
+  const relativePath = path.relative(projectRoot, filePath)
   return ignoredDirectories.some(
     dir => relativePath.startsWith(dir + '/') || relativePath === dir,
   )
@@ -100,6 +125,7 @@ let debouncedWrite: (() => void) | null = null
 let lastClassesSet: Set<string> | null = null
 let lastOutputDir: string | null = null
 let lastOutputFileName: string | null = null
+let lastProjectRoot: string | null = null
 let lastWrittenContent: string | null = null
 
 /** Reset cached output state (e.g. at the start of a dev/build session). */
@@ -128,13 +154,14 @@ function _writeOutputFile(
   allClassesSet: Set<string>,
   outputDir: string,
   outputFileName: string,
+  projectRoot = process.cwd(),
 ): boolean {
   try {
     const allClasses = Array.from(allClassesSet)
       .filter(cls => cls && cls.includes(':'))
       .sort()
 
-    const filePath = path.join(process.cwd(), outputDir, outputFileName)
+    const filePath = path.join(projectRoot, outputDir, outputFileName)
     if (allClasses.length === 0 && fs.existsSync(filePath)) {
       console.log('🎩 No modified classes detected, skipping write.')
       return false
@@ -145,7 +172,7 @@ function _writeOutputFile(
       return false
     }
 
-    const dirPath = path.join(process.cwd(), outputDir)
+    const dirPath = path.join(projectRoot, outputDir)
     if (!fs.existsSync(dirPath)) {
       fs.mkdirSync(dirPath, { recursive: true })
     }
@@ -158,7 +185,7 @@ function _writeOutputFile(
       )
     }
 
-    writeGitignore(outputDir)
+    writeGitignore(outputDir, projectRoot)
 
     const tempFilePath = path.join(dirPath, `.${outputFileName}.tmp`)
     fs.writeFileSync(tempFilePath, fileContent, { encoding: 'utf-8' })
@@ -179,15 +206,27 @@ function scheduleWriteOutputFile(
   allClassesSet: Set<string>,
   outputDir: string,
   outputFileName: string,
+  projectRoot = process.cwd(),
 ): void {
   lastClassesSet = allClassesSet
   lastOutputDir = outputDir
   lastOutputFileName = outputFileName
+  lastProjectRoot = projectRoot
 
   if (!debouncedWrite) {
     debouncedWrite = debounce(() => {
-      if (lastClassesSet && lastOutputDir && lastOutputFileName !== null) {
-        _writeOutputFile(lastClassesSet, lastOutputDir, lastOutputFileName)
+      if (
+        lastClassesSet
+        && lastOutputDir
+        && lastOutputFileName !== null
+        && lastProjectRoot !== null
+      ) {
+        _writeOutputFile(
+          lastClassesSet,
+          lastOutputDir,
+          lastOutputFileName,
+          lastProjectRoot,
+        )
       }
     }, WRITE_DEBOUNCE_MS)
   }
@@ -206,8 +245,9 @@ export function shouldProcessFile(
   filePath: string,
   ignoredDirectories: string[],
   outputDir: string,
+  projectRoot = process.cwd(),
 ): boolean {
-  if (isInIgnoredDirectory(filePath, ignoredDirectories)) {
+  if (isInIgnoredDirectory(filePath, ignoredDirectories, projectRoot)) {
     return false
   }
   if (!SUPPORTED_FILES.some(ext => filePath?.endsWith(ext))) {
@@ -225,4 +265,92 @@ export function shouldProcessFile(
     return false
   }
   return true
+}
+
+function findProjectFiles(root: string): string[] {
+  const exclude = [...PROJECT_SKIP_DIR].map(dir => `**/${dir}/**`)
+  const files = new Set<string>()
+
+  if (typeof fsWithGlob.globSync === 'function') {
+    for (const ext of SUPPORTED_FILES) {
+      const matches = fsWithGlob.globSync(`**/*${ext}`, {
+        cwd: root,
+        exclude,
+      })
+      for (const relativePath of matches) {
+        files.add(path.join(root, relativePath))
+      }
+    }
+    return [...files]
+  }
+
+  function walk(dir: string): void {
+    for (const item of fs.readdirSync(dir)) {
+      const fullPath = path.join(dir, item)
+      const stat = fs.statSync(fullPath)
+
+      if (stat.isDirectory()) {
+        if (PROJECT_SKIP_DIR.has(item))
+          continue
+        walk(fullPath)
+        continue
+      }
+
+      if (SUPPORTED_FILES.some(ext => item.endsWith(ext))) {
+        files.add(fullPath)
+      }
+    }
+  }
+
+  walk(root)
+  return [...files]
+}
+
+/**
+ * Scan project files on disk so Tailwind can read the manifest before Vite transforms run.
+ */
+export function scanProjectFiles(
+  projectRoot: string,
+  ignoredDirectories: string[],
+  outputDir: string,
+  applyFileClasses: ApplyFileClassesFn,
+  processCode: ProcessCodeFn,
+  allClassesSet: Set<string>,
+  outputFileName: string,
+  manifestRoot: string,
+  debug: boolean,
+): void {
+  if (debug) console.log('🎩 Scanning project files for build...')
+
+  try {
+    const projectFiles = findProjectFiles(projectRoot)
+    const outputNorm = path.normalize(outputDir)
+
+    if (debug) console.log(`🎩 Found ${projectFiles.length} project file(s)`)
+
+    for (const file of projectFiles) {
+      if (!shouldProcessFile(file, ignoredDirectories, outputNorm, projectRoot))
+        continue
+
+      try {
+        const content = fs.readFileSync(file, 'utf-8')
+        const result = processCode(content)
+        applyFileClasses(file, result.fileSpecificClasses)
+      }
+      catch (error) {
+        if (debug) console.error(`🎩 Error reading ${file}:`, error)
+      }
+    }
+
+    if (debug) console.log(`🎩 Total classes found: ${allClassesSet.size}`)
+    writeOutputFileDirect(
+      allClassesSet,
+      outputDir,
+      outputFileName,
+      manifestRoot,
+    )
+  }
+  catch (error) {
+    console.error('🎩 Error scanning project files:', error)
+  }
 }

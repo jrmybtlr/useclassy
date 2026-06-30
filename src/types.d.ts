@@ -27,6 +27,19 @@ export interface ClassyOptions {
   outputDir?: string
 
   /**
+   * Project root where the manifest directory is written.
+   * Defaults to Vite's root. Set this when Vite's root is a subdirectory
+   * (for example Nuxt `srcDir: "app/"`) so `.classy/` lives next to `package.json`.
+   */
+  manifestRoot?: string
+
+  /**
+   * Inject a Tailwind v4 `@source` directive into stylesheets that import Tailwind.
+   * @default true
+   */
+  injectTailwindSource?: boolean
+
+  /**
    * Filename for the generated class file
    * @default "output.classy.html"
    */

@@ -1,5 +1,4 @@
 @import "tailwindcss";
-@source "../../.classy/output.classy.html";
 @plugin "tailwindcss-motion";
 
 body {

@@ -19,6 +19,7 @@ import {
   writeOutputFileDirect,
   writeGitignore,
   resetOutputFileCache,
+  scanProjectFiles,
 } from './utils'
 
 import {
@@ -28,6 +29,10 @@ import {
 } from './blade'
 
 import type { ClassyOptions, ProcessCodeResult, ViteServer } from './types'
+import {
+  getUseClassyManifestPath,
+  getUseClassyTailwindSourceDirective,
+} from './tailwind'
 
 /**
  * UseClassy Vite plugin
@@ -61,6 +66,8 @@ export default function useClassy(options: ClassyOptions = {}): PluginOption {
   let allClassesSet: Set<string> = new Set()
   let isBuild = false
   let initialScanComplete = false
+  let projectRoot = process.cwd()
+  let manifestRoot = process.cwd()
 
   const transformCache: Map<string, string> = new Map()
   const fileClassMap: Map<string, Set<string>> = new Map()
@@ -108,6 +115,7 @@ export default function useClassy(options: ClassyOptions = {}): PluginOption {
   const isReact = options.language === 'react'
   const isBlade = options.language === 'blade'
   const debug = options.debug || false
+  const injectTailwindSource = options.injectTailwindSource !== false
 
   const classRegex = isReact ? REACT_CLASS_REGEX : CLASS_REGEX
   const classModifierRegex = isReact
@@ -118,7 +126,19 @@ export default function useClassy(options: ClassyOptions = {}): PluginOption {
   const generatedClassesSet: Set<string> = new Set()
   const modifierDerivedClassesSet: Set<string> = new Set()
 
-  writeGitignore(outputDir)
+  function runProjectScan(): void {
+    scanProjectFiles(
+      projectRoot,
+      ignoredDirectories,
+      outputDir,
+      applyFileClasses,
+      processCode,
+      allClassesSet,
+      outputFileName,
+      manifestRoot,
+      debug,
+    )
+  }
 
   function runBladeScan(): void {
     scanBladeFiles(
@@ -168,7 +188,12 @@ export default function useClassy(options: ClassyOptions = {}): PluginOption {
 
     configResolved(config) {
       isBuild = config.command === 'build'
-      ignoredDirectories = loadIgnoredDirectories()
+      projectRoot = config.root
+      manifestRoot = options.manifestRoot
+        ? path.resolve(options.manifestRoot)
+        : config.root
+      ignoredDirectories = loadIgnoredDirectories(manifestRoot)
+      writeGitignore(outputDir, manifestRoot)
 
       if (isBlade && !isBuild) {
         setupLaravelServiceProvider(debug)
@@ -203,13 +228,23 @@ export default function useClassy(options: ClassyOptions = {}): PluginOption {
       server.httpServer?.once('listening', () => {
         if (initialScanComplete && allClassesSet.size > 0) {
           if (debug) console.log('🎩 Initial write on server ready.')
-          writeOutputFileDirect(allClassesSet, outputDir, outputFileName)
+          writeOutputFileDirect(
+            allClassesSet,
+            outputDir,
+            outputFileName,
+            manifestRoot,
+          )
         }
       })
     },
 
     transform(code: string, id: string) {
-      if (!shouldProcessFile(id, ignoredDirectories, outputDirForFilter))
+      const tailwindSource = injectTailwindSourceIfNeeded(code, id)
+      if (tailwindSource !== null) {
+        return { code: tailwindSource, map: null }
+      }
+
+      if (!shouldProcessFile(id, ignoredDirectories, outputDirForFilter, projectRoot))
         return null
 
       this.addWatchFile(id)
@@ -242,10 +277,15 @@ export default function useClassy(options: ClassyOptions = {}): PluginOption {
 
       const classesChanged = applyFileClasses(id, fileSpecificClasses)
 
-      if (!isBuild && classesChanged) {
+      if (classesChanged) {
         if (debug)
           console.log('🎩 Classes changed, writing output file.')
-        writeOutputFileDebounced(allClassesSet, outputDir, outputFileName)
+        writeOutputFileDebounced(
+          allClassesSet,
+          outputDir,
+          outputFileName,
+          manifestRoot,
+        )
       }
 
       if (!initialScanComplete) {
@@ -268,8 +308,15 @@ export default function useClassy(options: ClassyOptions = {}): PluginOption {
       initialScanComplete = false
       resetOutputFileCache()
 
-      if (isBlade)
+      if (isBuild) {
+        if (isBlade)
+          runBladeScan()
+        else
+          runProjectScan()
+      }
+      else if (isBlade) {
         runBladeScan()
+      }
     },
 
     buildEnd() {
@@ -283,8 +330,41 @@ export default function useClassy(options: ClassyOptions = {}): PluginOption {
 
       if (debug)
         console.log('🎩 Build ended, writing final output file.')
-      writeOutputFileDirect(allClassesSet, outputDir, outputFileName)
+      writeOutputFileDirect(
+        allClassesSet,
+        outputDir,
+        outputFileName,
+        manifestRoot,
+      )
     },
+  }
+
+  function injectTailwindSourceIfNeeded(code: string, id: string): string | null {
+    if (!injectTailwindSource || !id.endsWith('.css'))
+      return null
+    if (!/@import\s+["']tailwindcss["']/.test(code))
+      return null
+
+    const manifestPath = getUseClassyManifestPath({
+      outputDir,
+      outputFileName,
+    })
+    if (code.includes(manifestPath) || code.includes(outputFileName))
+      return null
+
+    const directive = getUseClassyTailwindSourceDirective(
+      id,
+      manifestRoot,
+      { outputDir, outputFileName },
+    )
+
+    if (debug)
+      console.log('🎩 Injecting Tailwind @source into:', id)
+
+    return code.replace(
+      /@import\s+["']tailwindcss["'];?\s*\n/,
+      match => `${match}${directive}\n`,
+    )
   }
 
   function setupOutputEndpoint(server: ViteServer) {
@@ -295,7 +375,12 @@ export default function useClassy(options: ClassyOptions = {}): PluginOption {
           console.log(
             '🎩 Manual output generation requested via HTTP endpoint.',
           )
-        writeOutputFileDirect(allClassesSet, outputDir, outputFileName)
+        writeOutputFileDirect(
+          allClassesSet,
+          outputDir,
+          outputFileName,
+          manifestRoot,
+        )
         res.statusCode = 200
         res.end(`Output file generated (${allClassesSet.size} classes)`)
       },

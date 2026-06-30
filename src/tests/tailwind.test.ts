@@ -44,4 +44,11 @@ describe('tailwind path helpers', () => {
     const line = getUseClassyTailwindSourceDirective(css, root)
     expect(line).toBe('@source "../.classy/output.classy.html";')
   })
+
+  it('getUseClassyTailwindSourceDirective supports Nuxt app/ vite root', () => {
+    const manifestRoot = path.join(path.sep, 'proj')
+    const css = path.join(manifestRoot, 'app', 'assets', 'main.css')
+    const line = getUseClassyTailwindSourceDirective(css, manifestRoot)
+    expect(line).toBe('@source "../../.classy/output.classy.html";')
+  })
 })

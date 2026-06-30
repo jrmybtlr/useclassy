@@ -26,6 +26,7 @@ vi.mock('path', () => ({
     dirname: vi.fn(p => p.split('/').slice(0, -1).join('/')),
     normalize: vi.fn(p => p),
     relative: vi.fn(() => 'not-in-ignored-dir'),
+    resolve: vi.fn((...args) => args.filter(Boolean).join('/')),
   },
 }))
 
@@ -439,6 +440,33 @@ describe('useClassy plugin', () => {
 
       // Test that the hook exists
       expect(plugin.configResolved).toBeDefined()
+    })
+
+    it('should inject Tailwind @source into stylesheets that import Tailwind', async () => {
+      const plugin = useClassy({
+        manifestRoot: '/project',
+      }) as Plugin
+
+      if (plugin.configResolved) {
+        await plugin.configResolved({
+          command: 'build',
+          root: '/project/app',
+        } as never)
+      }
+
+      const transform = plugin.transform as (
+        code: string,
+        id: string,
+      ) => { code: string } | null
+
+      const css = '@import "tailwindcss";\nbody { color: red; }\n'
+      const result = transform(
+        css,
+        '/project/app/assets/main.css',
+      )
+
+      expect(result?.code).toMatch(/@import "tailwindcss";\n@source "/)
+      expect(result?.code).toContain('body { color: red; }')
     })
   })
 
