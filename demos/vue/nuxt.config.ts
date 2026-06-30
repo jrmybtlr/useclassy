@@ -9,13 +9,15 @@ export default defineNuxtConfig({
     enabled: true,
   },
 
-  future: {
-    compatibilityVersion: 4,
-  },
-
   css: ['~/assets/main.css'],
 
   vite: {
     plugins: [useClassy({ debug: true }), tailwindcss()],
+    server: {
+      hmr: {
+        port: 24679,
+        clientPort: 24679,
+      },
+    },
   },
 })
