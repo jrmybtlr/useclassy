@@ -137,7 +137,7 @@
           v-if="setupMode === 'manual'"
           :number="3"
           title="Tailwind"
-          description="UseClassy writes .classy/output.classy.html (gitignored). Tailwind v4 skips gitignored files unless you @source them. The @source path is relative to your CSS file—often ./.classy/... at the project root, or ../.classy/... from src/."
+          description="Add the UseClassy output to Tailwind's @source directive in your CSS"
         >
           <Code class="mt-6 w-full text-zinc-500" showCopy>
             <code>
@@ -145,14 +145,6 @@
               <div class="text-white mt-2">@source "./.classy/output.classy.html";</div>
             </code>
           </Code>
-
-          <p class="mt-8 text-zinc-400 text-sm">
-            Tailwind v3: add
-            <code class="text-white">"./.classy/output.classy.html"</code>
-            to
-            <code class="text-white">content</code>
-            in tailwind.config.
-          </p>
         </Step>
 
         <!-- Intellisense -->
