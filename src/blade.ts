@@ -164,7 +164,7 @@ export function setupBladeFileWatching(
   const outputNorm = path.normalize(outputDir)
 
   for (const file of findBladeFiles(projectRoot)) {
-    if (!shouldProcessFile(file, ignoredDirectories, outputNorm))
+    if (!shouldProcessFile(file, ignoredDirectories, outputNorm, projectRoot))
       continue
     server.watcher.add(file)
     if (debug) console.log(`🎩 Watching: ${path.relative(projectRoot, file)}`)
