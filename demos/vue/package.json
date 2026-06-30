@@ -11,15 +11,14 @@
     "deploy": "pnpm build && npx nuxthub deploy"
   },
   "dependencies": {
-    "@nuxt/fonts": "^0.11.4",
-    "@nuxt/ui": "^3.2.0",
+    "@nuxt/fonts": "^0.14.0",
     "vite-plugin-useclassy": "workspace:*",
     "vue": "latest"
   },
   "devDependencies": {
-    "@nuxthub/core": "0.9.0",
+    "@nuxthub/core": "^0.10.7",
     "@tailwindcss/vite": "4.1.12",
-    "nuxt": "^3.21.8",
+    "nuxt": "^4.4.8",
     "tailwindcss": "4.1.4",
     "tailwindcss-motion": "^1.1.1",
     "wrangler": "^4.59.1"

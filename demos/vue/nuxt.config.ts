@@ -9,13 +9,14 @@ export default defineNuxtConfig({
     enabled: true,
   },
 
-  future: {
-    compatibilityVersion: 4,
-  },
-
   css: ['~/assets/main.css'],
 
   vite: {
     plugins: [useClassy({ debug: true }), tailwindcss()],
+    server: {
+      ws: {
+        port: 24679,
+      },
+    },
   },
 })

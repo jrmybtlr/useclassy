@@ -18,6 +18,7 @@ import {
   writeOutputFileDebounced,
   writeOutputFileDirect,
   writeGitignore,
+  resetOutputFileCache,
 } from './utils'
 
 import {
@@ -132,9 +133,39 @@ export default function useClassy(options: ClassyOptions = {}): PluginOption {
     )
   }
 
+  const outputWatchIgnore = `**/${outputDir.replace(/\\/g, '/')}/**`
+
   return {
     name: 'useClassy',
     enforce: 'pre',
+
+    config(config) {
+      config.server ??= {}
+      config.server.watch ??= {}
+
+      const ignored = config.server.watch.ignored
+      if (Array.isArray(ignored)) {
+        if (!ignored.includes(outputWatchIgnore)) {
+          config.server.watch.ignored = [...ignored, outputWatchIgnore]
+        }
+      }
+      else if (typeof ignored === 'function') {
+        const originalIgnored = ignored
+        config.server.watch.ignored = (watchPath, stats) => {
+          const normalized = watchPath.replace(/\\/g, '/')
+          if (normalized.includes(`/${outputDir}/`) || normalized.endsWith(`/${outputDir}`)) {
+            return true
+          }
+          return originalIgnored(watchPath, stats)
+        }
+      }
+      else if (typeof ignored === 'string') {
+        config.server.watch.ignored = [ignored, outputWatchIgnore]
+      }
+      else {
+        config.server.watch.ignored = [outputWatchIgnore]
+      }
+    },
 
     configResolved(config) {
       isBuild = config.command === 'build'
@@ -171,14 +202,11 @@ export default function useClassy(options: ClassyOptions = {}): PluginOption {
       }
 
       server.httpServer?.once('listening', () => {
-        if (
-          initialScanComplete
-          && allClassesSet.size > 0
-          && lastWrittenClassCount !== allClassesSet.size
-        ) {
+        if (initialScanComplete && allClassesSet.size > 0) {
           if (debug) console.log('🎩 Initial write on server ready.')
-          writeOutputFileDirect(allClassesSet, outputDir, outputFileName)
-          lastWrittenClassCount = allClassesSet.size
+          if (writeOutputFileDirect(allClassesSet, outputDir, outputFileName)) {
+            lastWrittenClassCount = allClassesSet.size
+          }
         }
       })
     },
@@ -242,6 +270,7 @@ export default function useClassy(options: ClassyOptions = {}): PluginOption {
       fileClassMap.clear()
       lastWrittenClassCount = -1
       initialScanComplete = false
+      resetOutputFileCache()
 
       if (isBlade)
         runBladeScan()
