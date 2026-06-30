@@ -17,14 +17,11 @@ const MAX_MODIFIER_DEPTH = 4
 /** Base (Vue) class attribute regexes */
 export const CLASS_REGEX = /(?<![:\w])class="([^"]*)"(?![^>]*:class)/g
 export const CLASS_MODIFIER_REGEX = /(?<![:\w])class:([\w-:]+)="([^"]*)"/g
-export const MULTIPLE_CLASS_REGEX = /(?<![:\w])class="[^"]*"(\s*class="[^"]*")*/g
 
 /** React `className` / `class` regexes */
 export const REACT_CLASS_REGEX = /(?<![:\w])className=(?:"([^"]*)"|{([^}]*)})(?![^>]*:)/g
 export const REACT_CLASS_MODIFIER_REGEX
   = /(?<![:\w])(?:className|class):([\w-:]+)="([^"]*)"/g
-export const REACT_MULTIPLE_CLASS_REGEX
-  = /(?<![:\w])(?:className|class)=(?:"[^"]*"|{[^}]*})(?:\s*(?:className|class)=(?:"[^"]*"|{[^}]*}))*/g
 
 /**
  * Generates a hash string from the input string
@@ -46,27 +43,28 @@ export function generateCacheKey(id: string, code: string): string {
 }
 
 /**
- * Extracts classes from the code, separating base classes and modifier-derived classes.
+ * Splits a whitespace-delimited string and invokes `callback` for each non-empty token.
+ * Uses character comparisons instead of regex for performance in hot paths.
  */
-function processClassString(classStr: string, allFileClasses: Set<string>): void {
+function tokenize(str: string, callback: (token: string) => void): void {
   let start = 0
-  const len = classStr.length
-
+  const len = str.length
   for (let i = 0; i <= len; i++) {
-    const char = classStr[i]
-    if (char === ' ' || char === '\t' || char === '\n' || i === len) {
+    const ch = str[i]
+    if (ch === ' ' || ch === '\t' || ch === '\n' || ch === '\r' || i === len) {
       if (i > start) {
-        const cls = classStr.substring(start, i)
-        if (cls) {
-          allFileClasses.add(cls)
-        }
-      }
-      while (i < len && /\s/.test(classStr[i + 1])) {
-        i++
+        callback(str.substring(start, i))
       }
       start = i + 1
     }
   }
+}
+
+/**
+ * Extracts classes from the code, separating base classes and modifier-derived classes.
+ */
+function processClassString(classStr: string, allFileClasses: Set<string>): void {
+  tokenize(classStr, cls => allFileClasses.add(cls))
 }
 
 /**
@@ -109,39 +107,25 @@ export function extractClasses(
     const classes = modifierMatch[2]
 
     if (modifiers && classes) {
-      let start = 0
-      const len = classes.length
+      const modifierParts = modifiers.includes(':') ? modifiers.split(':') : null
 
-      for (let i = 0; i <= len; i++) {
-        const char = classes[i]
-        if (char === ' ' || char === '\t' || char === '\n' || i === len) {
-          if (i > start) {
-            const cls = classes.substring(start, i)
-            if (cls) {
-              const modifiedClass = `${modifiers}:${cls}`
-              allFileClasses.add(modifiedClass)
-              modifierDerivedClasses.add(modifiedClass)
+      tokenize(classes, (cls) => {
+        const modifiedClass = `${modifiers}:${cls}`
+        allFileClasses.add(modifiedClass)
+        modifierDerivedClasses.add(modifiedClass)
 
-              if (modifiers.includes(':')) {
-                const modifierParts = modifiers.split(':')
-                const maxDepth = Math.min(modifierParts.length, MAX_MODIFIER_DEPTH)
-                for (let j = 0; j < maxDepth; j++) {
-                  const part = modifierParts[j]
-                  if (part) {
-                    const partialModifiedClass = `${part}:${cls}`
-                    allFileClasses.add(partialModifiedClass)
-                    modifierDerivedClasses.add(partialModifiedClass)
-                  }
-                }
-              }
+        if (modifierParts) {
+          const maxDepth = Math.min(modifierParts.length, MAX_MODIFIER_DEPTH)
+          for (let j = 0; j < maxDepth; j++) {
+            const part = modifierParts[j]
+            if (part) {
+              const partialModifiedClass = `${part}:${cls}`
+              allFileClasses.add(partialModifiedClass)
+              modifierDerivedClasses.add(partialModifiedClass)
             }
           }
-          while (i < len && /\s/.test(classes[i + 1])) {
-            i++
-          }
-          start = i + 1
         }
-      }
+      })
     }
   }
 }
@@ -170,28 +154,15 @@ export function transformClassModifiers(
     const modifierParts = modifiers.split(':')
     const modifiedClassesArr: string[] = []
 
-    let start = 0
-    const len = classes.length
-    for (let i = 0; i <= len; i++) {
-      const char = classes[i]
-      if (char === ' ' || char === '\t' || char === '\n' || i === len) {
-        if (i > start) {
-          const value = classes.substring(start, i).trim()
-          if (value) {
-            modifiedClassesArr.push(`${modifiers}:${value}`)
-            if (modifierParts.length > 1) {
-              for (const part of modifierParts) {
-                if (part)
-                  modifiedClassesArr.push(`${part}:${value}`)
-              }
-            }
-          }
+    tokenize(classes, (value) => {
+      modifiedClassesArr.push(`${modifiers}:${value}`)
+      if (modifierParts.length > 1) {
+        for (const part of modifierParts) {
+          if (part)
+            modifiedClassesArr.push(`${part}:${value}`)
         }
-        while (i < len && /\s/.test(classes[i + 1] ?? ''))
-          i++
-        start = i + 1
       }
-    }
+    })
 
     for (const cls of modifiedClassesArr) {
       if (isTrackedGeneratedClass(cls))

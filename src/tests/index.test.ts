@@ -31,25 +31,13 @@ vi.mock('path', () => ({
 }))
 
 // Mock utils module
-vi.doMock('../utils', () => ({
-  SUPPORTED_FILES: [
-    '.vue',
-    '.svelte',
-    '.ts',
-    '.tsx',
-    '.js',
-    '.jsx',
-    '.html',
-    '.blade.php',
-  ],
-  loadIgnoredDirectories: vi.fn().mockReturnValue(['node_modules', 'dist']),
-  writeGitignore: vi.fn(),
-  writeOutputFileDebounced: vi.fn(),
-  writeOutputFileDirect: vi.fn(),
-  debounce: vi.fn(fn => fn),
-  shouldProcessFile: vi.fn().mockImplementation((filePath: string) => {
-    // Mock implementation that returns true for supported files
-    const supportedFiles = [
+vi.doMock('../utils', () => {
+  const writeOutputFileDirect = vi.fn()
+  const writeOutputFileDebounced = vi.fn()
+  const resetCache = vi.fn()
+
+  return {
+    SUPPORTED_FILES: [
       '.vue',
       '.svelte',
       '.ts',
@@ -58,13 +46,37 @@ vi.doMock('../utils', () => ({
       '.jsx',
       '.html',
       '.blade.php',
-    ]
-    return supportedFiles.some(ext => filePath?.endsWith(ext))
-      && !filePath.includes('node_modules')
-      && !filePath.includes('virtual:')
-      && !filePath.includes('runtime')
-  }),
-}))
+    ],
+    loadIgnoredDirectories: vi.fn().mockReturnValue(['node_modules', 'dist']),
+    writeGitignore: vi.fn(),
+    writeOutputFileDebounced,
+    writeOutputFileDirect,
+    resetOutputFileCache: resetCache,
+    debounce: vi.fn(fn => fn),
+    createOutputFileWriter: vi.fn(() => ({
+      writeDirect: writeOutputFileDirect,
+      writeDebounced: writeOutputFileDebounced,
+      resetCache,
+    })),
+    shouldProcessFile: vi.fn().mockImplementation((filePath: string) => {
+      // Mock implementation that returns true for supported files
+      const supportedFiles = [
+        '.vue',
+        '.svelte',
+        '.ts',
+        '.tsx',
+        '.js',
+        '.jsx',
+        '.html',
+        '.blade.php',
+      ]
+      return supportedFiles.some(ext => filePath?.endsWith(ext))
+        && !filePath.includes('node_modules')
+        && !filePath.includes('virtual:')
+        && !filePath.includes('runtime')
+    }),
+  }
+})
 
 // Mock core module
 vi.doMock('../core', () => ({

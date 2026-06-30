@@ -47,6 +47,7 @@ vi.mock('../utils', () => ({
   shouldProcessFile: vi.fn(),
   writeOutputFileDebounced: vi.fn(),
   writeOutputFileDirect: vi.fn(),
+  BASE_SKIP_DIRS: new Set(['node_modules', '.git', 'dist', 'build']),
 }))
 
 // Import after mocking

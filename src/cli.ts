@@ -1,8 +1,6 @@
 #!/usr/bin/env node
-import { runInitSetup } from './init-setup'
+import { runInitSetup, INIT_LANGUAGES } from './init-setup'
 import type { InitLanguage } from './init-setup'
-
-const INIT_LANGUAGES = ['vue', 'react', 'blade'] as const
 
 function isInitLanguage(value: string): value is InitLanguage {
   return (INIT_LANGUAGES as readonly string[]).includes(value)

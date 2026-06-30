@@ -15,11 +15,9 @@ import {
 import {
   loadIgnoredDirectories,
   shouldProcessFile,
-  writeOutputFileDebounced,
-  writeOutputFileDirect,
   writeGitignore,
-  resetOutputFileCache,
   scanProjectFiles,
+  createOutputFileWriter,
 } from './utils'
 
 import {
@@ -41,7 +39,6 @@ import {
  * @param options.language - The framework language to use (e.g., "vue" or "react")
  * @param options.outputDir - The directory to output the generated class file
  * @param options.outputFileName - The filename for the generated class file
- * @param options.includePatterns - Array of glob patterns for files to include in processing
  * @param options.debug - Enable debug logging
  * @example
  * // vite.config.js
@@ -53,7 +50,6 @@ import {
  *       language: 'react',
  *       outputDir: '.classy',
  *       outputFileName: 'output.classy.html',
- *       includePatterns: [],
  *       debug: true
  *     })
  *   ]
@@ -68,6 +64,9 @@ export default function useClassy(options: ClassyOptions = {}): PluginOption {
   let initialScanComplete = false
   let projectRoot = process.cwd()
   let manifestRoot = process.cwd()
+
+  // Per-instance write state — avoids shared module-level cache collisions.
+  const { writeDirect, writeDebounced, resetCache } = createOutputFileWriter()
 
   const transformCache: Map<string, string> = new Map()
   const fileClassMap: Map<string, Set<string>> = new Map()
@@ -123,9 +122,6 @@ export default function useClassy(options: ClassyOptions = {}): PluginOption {
     : CLASS_MODIFIER_REGEX
   const classAttrName = isReact ? 'className' : 'class'
 
-  const generatedClassesSet: Set<string> = new Set()
-  const modifierDerivedClassesSet: Set<string> = new Set()
-
   function runProjectScan(): void {
     scanProjectFiles(
       projectRoot,
@@ -149,6 +145,8 @@ export default function useClassy(options: ClassyOptions = {}): PluginOption {
       outputDir,
       outputFileName,
       debug,
+      manifestRoot,
+      writeDirect,
     )
   }
 
@@ -222,13 +220,15 @@ export default function useClassy(options: ClassyOptions = {}): PluginOption {
           outputDir,
           outputFileName,
           debug,
+          manifestRoot,
+          writeDebounced,
         )
       }
 
       server.httpServer?.once('listening', () => {
         if (initialScanComplete && allClassesSet.size > 0) {
           if (debug) console.log('🎩 Initial write on server ready.')
-          writeOutputFileDirect(
+          writeDirect(
             allClassesSet,
             outputDir,
             outputFileName,
@@ -280,7 +280,7 @@ export default function useClassy(options: ClassyOptions = {}): PluginOption {
       if (classesChanged) {
         if (debug)
           console.log('🎩 Classes changed, writing output file.')
-        writeOutputFileDebounced(
+        writeDebounced(
           allClassesSet,
           outputDir,
           outputFileName,
@@ -306,7 +306,7 @@ export default function useClassy(options: ClassyOptions = {}): PluginOption {
       transformCache.clear()
       fileClassMap.clear()
       initialScanComplete = false
-      resetOutputFileCache()
+      resetCache()
 
       if (isBuild) {
         if (isBlade)
@@ -330,7 +330,7 @@ export default function useClassy(options: ClassyOptions = {}): PluginOption {
 
       if (debug)
         console.log('🎩 Build ended, writing final output file.')
-      writeOutputFileDirect(
+      writeDirect(
         allClassesSet,
         outputDir,
         outputFileName,
@@ -375,7 +375,7 @@ export default function useClassy(options: ClassyOptions = {}): PluginOption {
           console.log(
             '🎩 Manual output generation requested via HTTP endpoint.',
           )
-        writeOutputFileDirect(
+        writeDirect(
           allClassesSet,
           outputDir,
           outputFileName,
@@ -388,8 +388,8 @@ export default function useClassy(options: ClassyOptions = {}): PluginOption {
   }
 
   function processCode(code: string): ProcessCodeResult {
-    generatedClassesSet.clear()
-    modifierDerivedClassesSet.clear()
+    const generatedClassesSet = new Set<string>()
+    const modifierDerivedClassesSet = new Set<string>()
 
     extractClasses(
       code,

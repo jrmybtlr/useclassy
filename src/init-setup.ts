@@ -8,7 +8,8 @@ import {
 
 export type TailwindFlavor = 'v4' | 'v3' | 'unknown'
 
-export type InitLanguage = 'vue' | 'react' | 'blade'
+export const INIT_LANGUAGES = ['vue', 'react', 'blade'] as const
+export type InitLanguage = typeof INIT_LANGUAGES[number]
 
 const VITE_CONFIG_NAMES = [
   'vite.config.ts',
