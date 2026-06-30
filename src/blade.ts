@@ -82,6 +82,15 @@ function countModifierTokens(classes: Set<string>): number {
   return n
 }
 
+/**
+ * Scan all Blade template files under `projectRoot` and extract class names.
+ *
+ * `writeDirect` defaults to the module-level writer (backed by `createOutputFileWriter`).
+ * When called from the Vite plugin (`index.ts`) it receives the plugin instance's own
+ * writer so that multiple concurrent plugin instances never share write state.
+ * The default is only used when this function is called outside the plugin context
+ * (e.g. standalone scripts or direct test calls).
+ */
 export function scanBladeFiles(
   ignoredDirectories: string[],
   allClassesSet: Set<string>,
@@ -130,6 +139,14 @@ export function scanBladeFiles(
   }
 }
 
+/**
+ * Watch Blade template files under `projectRoot` for changes.
+ *
+ * `writeDebounced` defaults to the module-level writer (backed by `createOutputFileWriter`).
+ * When called from the Vite plugin (`index.ts`) it receives the plugin instance's own
+ * writer so that multiple concurrent plugin instances never share write state.
+ * The default is only used when this function is called outside the plugin context.
+ */
 export function setupBladeFileWatching(
   server: ViteServer,
   ignoredDirectories: string[],

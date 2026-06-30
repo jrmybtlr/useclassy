@@ -17,6 +17,8 @@ function classStringFromArg(arg: ClassyArg): string {
   }
 
   if (Array.isArray(arg)) {
+    // `ClassyArg` arrays only contain string | Record<string,boolean> items (no nested arrays),
+    // so this recursion is bounded to one level deep.
     return arg.map(item => classStringFromArg(item)).filter(Boolean).join(' ')
   }
 

@@ -45,6 +45,7 @@ export function generateCacheKey(id: string, code: string): string {
 /**
  * Splits a whitespace-delimited string and invokes `callback` for each non-empty token.
  * Uses character comparisons instead of regex for performance in hot paths.
+ * Recognises space, tab, newline (\n), and carriage-return (\r) as delimiters.
  */
 function tokenize(str: string, callback: (token: string) => void): void {
   let start = 0
