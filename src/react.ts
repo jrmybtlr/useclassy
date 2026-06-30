@@ -1,4 +1,4 @@
-import { useMemo, type DependencyList } from 'react'
+import { useMemo } from 'react'
 
 type ClassyArg =
   | string
@@ -17,10 +17,9 @@ function classStringFromArg(arg: ClassyArg): string {
   }
 
   if (Array.isArray(arg)) {
-    return arg
-      .map(item => (typeof item === 'string' ? item : ''))
-      .filter(Boolean)
-      .join(' ')
+    // `ClassyArg` arrays only contain string | Record<string,boolean> items (no nested arrays),
+    // so this recursion is bounded to one level deep.
+    return arg.map(item => classStringFromArg(item)).filter(Boolean).join(' ')
   }
 
   return ''
@@ -34,13 +33,10 @@ function joinClassyArgs(parts: ClassyArg[]): string {
  * Memoized class string builder for React (same rules as `classy`).
  */
 export function useClassy(...args: ClassyArg[]): string {
-  const deps: DependencyList = useMemo(
-    () =>
-      args.map(arg => (typeof arg === 'object' ? JSON.stringify(arg) : arg)),
-    [JSON.stringify(args)],
-  )
-
-  return useMemo(() => joinClassyArgs(args), deps)
+  // JSON.stringify provides value-based memoization; args is intentionally omitted
+  // from the dependency array because it changes reference on every render.
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  return useMemo(() => joinClassyArgs(args), [JSON.stringify(args)])
 }
 
 /** Combine class names (strings, conditional maps, or nested arrays). */

@@ -46,18 +46,6 @@ export interface ClassyOptions {
   outputFileName?: string
 
   /**
-   * Files to watch for changes
-   * @default [".vue", ".tsx", ".jsx", ".html", ".blade.php"]
-   */
-  files?: string[]
-
-  /**
-   * Auto-inject imports for classy functions
-   * @default false
-   */
-  autoImport?: boolean
-
-  /**
    * Debug mode
    * @default false
    */

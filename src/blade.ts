@@ -8,24 +8,13 @@ import {
   shouldProcessFile,
   writeOutputFileDebounced,
   writeOutputFileDirect,
+  BASE_SKIP_DIRS,
+  type FsWithGlob,
 } from './utils'
 import type { ApplyFileClassesFn, ProcessCodeFn, ViteServer } from './types'
 
-const BLADE_SKIP_DIR = new Set([
-  'node_modules',
-  'vendor',
-  '.git',
-  'dist',
-  'build',
-])
+const BLADE_SKIP_DIR = new Set([...BASE_SKIP_DIRS, 'vendor'])
 const BLADE_GLOB_EXCLUDE = [...BLADE_SKIP_DIR].map(d => `**/${d}/**`)
-
-type FsWithGlob = typeof fs & {
-  globSync?: (
-    pattern: string,
-    options?: { cwd?: string, exclude?: string | string[] },
-  ) => string[]
-}
 
 const fsWithGlob = fs as FsWithGlob
 
@@ -93,6 +82,15 @@ function countModifierTokens(classes: Set<string>): number {
   return n
 }
 
+/**
+ * Scan all Blade template files under `projectRoot` and extract class names.
+ *
+ * `writeDirect` defaults to the module-level writer (backed by `createOutputFileWriter`).
+ * When called from the Vite plugin (`index.ts`) it receives the plugin instance's own
+ * writer so that multiple concurrent plugin instances never share write state.
+ * The default is only used when this function is called outside the plugin context
+ * (e.g. standalone scripts or direct test calls).
+ */
 export function scanBladeFiles(
   ignoredDirectories: string[],
   allClassesSet: Set<string>,
@@ -101,12 +99,13 @@ export function scanBladeFiles(
   outputDir: string,
   outputFileName: string,
   debug: boolean,
+  projectRoot = process.cwd(),
+  writeDirect: typeof writeOutputFileDirect = writeOutputFileDirect,
 ): void {
   if (debug) console.log('🎩 Scanning Blade files...')
 
   try {
-    const cwd = process.cwd()
-    const bladeFiles = findBladeFiles(cwd)
+    const bladeFiles = findBladeFiles(projectRoot)
     const outputNorm = path.normalize(outputDir)
 
     if (debug) console.log(`🎩 Found ${bladeFiles.length} Blade files`)
@@ -122,7 +121,7 @@ export function scanBladeFiles(
 
         if (debug) {
           const n = countModifierTokens(result.fileSpecificClasses)
-          console.log(`🎩 Processed ${path.relative(cwd, file)}: ${n} modifier class(es)`)
+          console.log(`🎩 Processed ${path.relative(projectRoot, file)}: ${n} modifier class(es)`)
         }
       }
       catch (error) {
@@ -132,7 +131,7 @@ export function scanBladeFiles(
 
     if (allClassesSet.size > 0) {
       if (debug) console.log(`🎩 Total classes found: ${allClassesSet.size}`)
-      writeOutputFileDirect(allClassesSet, outputDir, outputFileName)
+      writeDirect(allClassesSet, outputDir, outputFileName, projectRoot)
     }
   }
   catch (error) {
@@ -140,6 +139,14 @@ export function scanBladeFiles(
   }
 }
 
+/**
+ * Watch Blade template files under `projectRoot` for changes.
+ *
+ * `writeDebounced` defaults to the module-level writer (backed by `createOutputFileWriter`).
+ * When called from the Vite plugin (`index.ts`) it receives the plugin instance's own
+ * writer so that multiple concurrent plugin instances never share write state.
+ * The default is only used when this function is called outside the plugin context.
+ */
 export function setupBladeFileWatching(
   server: ViteServer,
   ignoredDirectories: string[],
@@ -149,31 +156,32 @@ export function setupBladeFileWatching(
   outputDir: string,
   outputFileName: string,
   debug: boolean,
+  projectRoot = process.cwd(),
+  writeDebounced: typeof writeOutputFileDebounced = writeOutputFileDebounced,
 ): void {
   if (debug) console.log('🎩 Setting up Blade file watching...')
 
-  const cwd = process.cwd()
   const outputNorm = path.normalize(outputDir)
 
-  for (const file of findBladeFiles(cwd)) {
-    if (!shouldProcessFile(file, ignoredDirectories, outputNorm))
+  for (const file of findBladeFiles(projectRoot)) {
+    if (!shouldProcessFile(file, ignoredDirectories, outputNorm, projectRoot))
       continue
     server.watcher.add(file)
-    if (debug) console.log(`🎩 Watching: ${path.relative(cwd, file)}`)
+    if (debug) console.log(`🎩 Watching: ${path.relative(projectRoot, file)}`)
   }
 
   server.watcher.on('change', (filePath) => {
     if (!filePath.endsWith('.blade.php'))
       return
 
-    if (debug) console.log(`🎩 Blade file changed: ${path.relative(cwd, filePath)}`)
+    if (debug) console.log(`🎩 Blade file changed: ${path.relative(projectRoot, filePath)}`)
 
     try {
       const content = fs.readFileSync(filePath, 'utf-8')
       const result = processCode(content)
       if (applyFileClasses(filePath, result.fileSpecificClasses)) {
         if (debug) console.log('🎩 Blade file classes changed, updating output file.')
-        writeOutputFileDebounced(allClassesSet, outputDir, outputFileName)
+        writeDebounced(allClassesSet, outputDir, outputFileName)
       }
     }
     catch (error) {
