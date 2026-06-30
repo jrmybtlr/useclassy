@@ -5,7 +5,7 @@ alwaysApply: true
 ---
 # File Processing Logic
 
-The UseClassy plugin carefully manages which files it processes through the `shouldProcessFile` function in [src/useClassy.ts](mdc:src/useClassy.ts).
+The UseClassy plugin carefully manages which files it processes through the `shouldProcessFile` function in [src/utils.ts](mdc:src/utils.ts).
 
 ## File Filtering Rules
 

@@ -1,54 +1,45 @@
-import fs from 'fs'
-import path from 'path'
-import { SUPPORTED_FILES } from './core'
-import type { ApplyFileClassesFn, ProcessCodeFn } from './types'
+import fs from "fs";
+import path from "path";
+import { SUPPORTED_FILES } from "./core";
+import { globFiles } from "./fs-glob";
+import type { ApplyFileClassesFn, ProcessCodeFn } from "./types";
 
 const PROJECT_SKIP_DIR = new Set([
-  'node_modules',
-  '.git',
-  'dist',
-  'build',
-  '.output',
-  '.nuxt',
-  '.nitro',
-  '.cache',
-  '.classy',
-  '.data',
-  '.wrangler',
-])
-
-type FsWithGlob = typeof fs & {
-  globSync?: (
-    pattern: string,
-    options?: { cwd?: string, exclude?: string | string[] },
-  ) => string[]
-}
-
-const fsWithGlob = fs as FsWithGlob
+  "node_modules",
+  ".git",
+  "dist",
+  "build",
+  ".output",
+  ".nuxt",
+  ".nitro",
+  ".cache",
+  ".classy",
+  ".data",
+  ".wrangler",
+]);
 
 /**
  * Simple debounce function
  * @param func The function to debounce
  * @param wait The debounce delay in milliseconds
  */
-export function debounce<T extends (
-  ...args: unknown[]) => unknown>(
+export function debounce<T extends (...args: unknown[]) => unknown>(
   func: T,
   wait: number,
 ): (...args: Parameters<T>) => void {
-  let timeout: NodeJS.Timeout | null = null
+  let timeout: NodeJS.Timeout | null = null;
 
   return function executedFunction(...args: Parameters<T>) {
     const later = () => {
-      timeout = null
-      func(...args)
-    }
+      timeout = null;
+      func(...args);
+    };
 
     if (timeout) {
-      clearTimeout(timeout)
+      clearTimeout(timeout);
     }
-    timeout = setTimeout(later, wait)
-  }
+    timeout = setTimeout(later, wait);
+  };
 }
 
 /**
@@ -56,29 +47,21 @@ export function debounce<T extends (
  */
 export function loadIgnoredDirectories(projectRoot = process.cwd()): string[] {
   try {
-    const gitignorePath = path.join(projectRoot, '.gitignore')
+    const gitignorePath = path.join(projectRoot, ".gitignore");
     if (!fs.existsSync(gitignorePath)) {
-      return ['node_modules', 'dist']
+      return ["node_modules", "dist"];
     }
 
-    const gitignoreContent = fs.readFileSync(gitignorePath, 'utf-8')
+    const gitignoreContent = fs.readFileSync(gitignorePath, "utf-8");
     return gitignoreContent
-      .split('\n')
-      .map(line => line.trim())
+      .split("\n")
+      .map((line) => line.trim())
       .filter(
-        line =>
-          line
-          && !line.startsWith('#')
-          && !line.includes('*')
-          && !line.startsWith('!'),
-      )
-  }
-  catch (error) {
-    console.warn(
-      'Could not load .gitignore file. Using default ignore patterns.',
-      error,
-    )
-    return ['node_modules', 'dist']
+        (line) => line && !line.startsWith("#") && !line.includes("*") && !line.startsWith("!"),
+      );
+  } catch (error) {
+    console.warn("Could not load .gitignore file. Using default ignore patterns.", error);
+    return ["node_modules", "dist"];
   }
 }
 
@@ -86,22 +69,20 @@ export function loadIgnoredDirectories(projectRoot = process.cwd()): string[] {
  * Add output directory to .gitignore
  */
 export function writeGitignore(outputDir: string, projectRoot = process.cwd()): void {
-  const gitignorePath = path.join(projectRoot, '.gitignore')
-  const gitignoreEntry = `\n# Generated Classy files\n${outputDir}/\n`
+  const gitignorePath = path.join(projectRoot, ".gitignore");
+  const gitignoreEntry = `\n# Generated Classy files\n${outputDir}/\n`;
 
   try {
     if (fs.existsSync(gitignorePath)) {
-      const currentContent = fs.readFileSync(gitignorePath, 'utf-8')
+      const currentContent = fs.readFileSync(gitignorePath, "utf-8");
       if (!currentContent.includes(`${outputDir}/`)) {
-        fs.appendFileSync(gitignorePath, gitignoreEntry)
+        fs.appendFileSync(gitignorePath, gitignoreEntry);
       }
+    } else {
+      fs.writeFileSync(gitignorePath, gitignoreEntry.trim());
     }
-    else {
-      fs.writeFileSync(gitignorePath, gitignoreEntry.trim())
-    }
-  }
-  catch (error) {
-    console.warn('Failed to update .gitignore file:', error)
+  } catch (error) {
+    console.warn("Failed to update .gitignore file:", error);
   }
 }
 
@@ -113,130 +94,132 @@ export function isInIgnoredDirectory(
   ignoredDirectories: string[],
   projectRoot = process.cwd(),
 ): boolean {
-  if (!ignoredDirectories.length) return false
-  const relativePath = path.relative(projectRoot, filePath)
+  if (!ignoredDirectories.length) return false;
+  const relativePath = path.relative(projectRoot, filePath);
   return ignoredDirectories.some(
-    dir => relativePath.startsWith(dir + '/') || relativePath === dir,
-  )
+    (dir) => relativePath.startsWith(dir + "/") || relativePath === dir,
+  );
 }
 
-const WRITE_DEBOUNCE_MS = 200
-let debouncedWrite: (() => void) | null = null
-let lastClassesSet: Set<string> | null = null
-let lastOutputDir: string | null = null
-let lastOutputFileName: string | null = null
-let lastProjectRoot: string | null = null
-let lastWrittenContent: string | null = null
+const WRITE_DEBOUNCE_MS = 200;
 
-/** Reset cached output state (e.g. at the start of a dev/build session). */
-export function resetOutputFileCache(): void {
-  lastWrittenContent = null
+export interface OutputWriter {
+  writeDebounced: (
+    allClassesSet: Set<string>,
+    outputDir: string,
+    outputFileName: string,
+    projectRoot?: string,
+  ) => void;
+  writeDirect: (
+    allClassesSet: Set<string>,
+    outputDir: string,
+    outputFileName: string,
+    projectRoot?: string,
+  ) => boolean;
+  resetCache: () => void;
+}
+
+/** Per-plugin output writer with isolated debounce state. */
+export function createOutputWriter(): OutputWriter {
+  let debouncedWrite: (() => void) | null = null;
+  let lastClassesSet: Set<string> | null = null;
+  let lastOutputDir: string | null = null;
+  let lastOutputFileName: string | null = null;
+  let lastProjectRoot: string | null = null;
+  let lastWrittenContent: string | null = null;
+
+  function resetCache(): void {
+    lastWrittenContent = null;
+  }
+
+  function writeDirect(
+    allClassesSet: Set<string>,
+    outputDir: string,
+    outputFileName: string,
+    projectRoot = process.cwd(),
+  ): boolean {
+    try {
+      const allClasses = Array.from(allClassesSet)
+        .filter((cls) => cls && cls.includes(":"))
+        .sort();
+
+      const filePath = path.join(projectRoot, outputDir, outputFileName);
+      if (allClasses.length === 0 && fs.existsSync(filePath)) {
+        console.log("🎩 No modified classes detected, skipping write.");
+        return false;
+      }
+
+      const fileContent = buildOutputFileContent(allClasses);
+      if (fileContent === lastWrittenContent && fs.existsSync(filePath)) {
+        return false;
+      }
+
+      const dirPath = path.join(projectRoot, outputDir);
+      if (!fs.existsSync(dirPath)) {
+        fs.mkdirSync(dirPath, { recursive: true });
+      }
+
+      const classyGitignorePath = path.join(dirPath, ".gitignore");
+      if (!fs.existsSync(classyGitignorePath)) {
+        fs.writeFileSync(classyGitignorePath, "# Ignore all files in this directory\n*");
+      }
+
+      writeGitignore(outputDir, projectRoot);
+
+      const tempFilePath = path.join(dirPath, `.${outputFileName}.tmp`);
+      fs.writeFileSync(tempFilePath, fileContent, { encoding: "utf-8" });
+      fs.renameSync(tempFilePath, filePath);
+      lastWrittenContent = fileContent;
+      return true;
+    } catch (error) {
+      console.error("🎩 Error writing output file:", error);
+      return false;
+    }
+  }
+
+  function writeDebounced(
+    allClassesSet: Set<string>,
+    outputDir: string,
+    outputFileName: string,
+    projectRoot = process.cwd(),
+  ): void {
+    lastClassesSet = allClassesSet;
+    lastOutputDir = outputDir;
+    lastOutputFileName = outputFileName;
+    lastProjectRoot = projectRoot;
+
+    if (!debouncedWrite) {
+      debouncedWrite = debounce(() => {
+        if (
+          lastClassesSet &&
+          lastOutputDir &&
+          lastOutputFileName !== null &&
+          lastProjectRoot !== null
+        ) {
+          writeDirect(lastClassesSet, lastOutputDir, lastOutputFileName, lastProjectRoot);
+        }
+      }, WRITE_DEBOUNCE_MS);
+    }
+
+    debouncedWrite();
+  }
+
+  return { writeDebounced, writeDirect, resetCache };
 }
 
 function buildOutputFileContent(allClasses: string[]): string {
-  let fileContent = '<!-- Auto-generated by useClassy -->\n'
+  let fileContent = "<!-- Auto-generated by useClassy -->\n";
 
   for (const cls of allClasses) {
-    fileContent += `<div class="${cls}" style="display: none;"/>\n`
+    fileContent += `<div class="${cls}" style="display: none;"/>\n`;
   }
 
   if (allClasses.length > 0) {
-    fileContent = fileContent.slice(0, -1) + '\n'
+    fileContent = fileContent.slice(0, -1) + "\n";
   }
 
-  return fileContent
+  return fileContent;
 }
-
-/**
- * Write the output file with all collected classes (Internal implementation)
- */
-function _writeOutputFile(
-  allClassesSet: Set<string>,
-  outputDir: string,
-  outputFileName: string,
-  projectRoot = process.cwd(),
-): boolean {
-  try {
-    const allClasses = Array.from(allClassesSet)
-      .filter(cls => cls && cls.includes(':'))
-      .sort()
-
-    const filePath = path.join(projectRoot, outputDir, outputFileName)
-    if (allClasses.length === 0 && fs.existsSync(filePath)) {
-      console.log('🎩 No modified classes detected, skipping write.')
-      return false
-    }
-
-    const fileContent = buildOutputFileContent(allClasses)
-    if (fileContent === lastWrittenContent && fs.existsSync(filePath)) {
-      return false
-    }
-
-    const dirPath = path.join(projectRoot, outputDir)
-    if (!fs.existsSync(dirPath)) {
-      fs.mkdirSync(dirPath, { recursive: true })
-    }
-
-    const classyGitignorePath = path.join(dirPath, '.gitignore')
-    if (!fs.existsSync(classyGitignorePath)) {
-      fs.writeFileSync(
-        classyGitignorePath,
-        '# Ignore all files in this directory\n*',
-      )
-    }
-
-    writeGitignore(outputDir, projectRoot)
-
-    const tempFilePath = path.join(dirPath, `.${outputFileName}.tmp`)
-    fs.writeFileSync(tempFilePath, fileContent, { encoding: 'utf-8' })
-    fs.renameSync(tempFilePath, filePath)
-    lastWrittenContent = fileContent
-    return true
-  }
-  catch (error) {
-    console.error('🎩 Error writing output file:', error)
-    return false
-  }
-}
-
-/**
- * Schedules a debounced write operation.
- */
-function scheduleWriteOutputFile(
-  allClassesSet: Set<string>,
-  outputDir: string,
-  outputFileName: string,
-  projectRoot = process.cwd(),
-): void {
-  lastClassesSet = allClassesSet
-  lastOutputDir = outputDir
-  lastOutputFileName = outputFileName
-  lastProjectRoot = projectRoot
-
-  if (!debouncedWrite) {
-    debouncedWrite = debounce(() => {
-      if (
-        lastClassesSet
-        && lastOutputDir
-        && lastOutputFileName !== null
-        && lastProjectRoot !== null
-      ) {
-        _writeOutputFile(
-          lastClassesSet,
-          lastOutputDir,
-          lastOutputFileName,
-          lastProjectRoot,
-        )
-      }
-    }, WRITE_DEBOUNCE_MS)
-  }
-
-  debouncedWrite()
-}
-
-// Export the debounced and direct functions
-export const writeOutputFileDebounced = scheduleWriteOutputFile
-export const writeOutputFileDirect = _writeOutputFile
 
 /**
  * Determine if a file should be processed
@@ -248,62 +231,33 @@ export function shouldProcessFile(
   projectRoot = process.cwd(),
 ): boolean {
   if (isInIgnoredDirectory(filePath, ignoredDirectories, projectRoot)) {
-    return false
+    return false;
   }
-  if (!SUPPORTED_FILES.some(ext => filePath?.endsWith(ext))) {
-    return false
+  if (!SUPPORTED_FILES.some((ext) => filePath?.endsWith(ext))) {
+    return false;
   }
-  const outputDirNormalized = path.normalize(outputDir)
+  const outputDirNormalized = path.normalize(outputDir);
   if (
-    filePath.includes('node_modules')
-    || filePath.includes('\0')
-    || (outputDir && filePath.includes(outputDirNormalized))
+    filePath.includes("node_modules") ||
+    filePath.includes("\0") ||
+    (outputDir && filePath.includes(outputDirNormalized))
   ) {
-    return false
+    return false;
   }
-  if (filePath.includes('virtual:') || filePath.includes('runtime')) {
-    return false
+  if (filePath.includes("virtual:") || filePath.includes("runtime")) {
+    return false;
   }
-  return true
+  return true;
 }
 
 function findProjectFiles(root: string): string[] {
-  const exclude = [...PROJECT_SKIP_DIR].map(dir => `**/${dir}/**`)
-  const files = new Set<string>()
-
-  if (typeof fsWithGlob.globSync === 'function') {
-    for (const ext of SUPPORTED_FILES) {
-      const matches = fsWithGlob.globSync(`**/*${ext}`, {
-        cwd: root,
-        exclude,
-      })
-      for (const relativePath of matches) {
-        files.add(path.join(root, relativePath))
-      }
-    }
-    return [...files]
-  }
-
-  function walk(dir: string): void {
-    for (const item of fs.readdirSync(dir)) {
-      const fullPath = path.join(dir, item)
-      const stat = fs.statSync(fullPath)
-
-      if (stat.isDirectory()) {
-        if (PROJECT_SKIP_DIR.has(item))
-          continue
-        walk(fullPath)
-        continue
-      }
-
-      if (SUPPORTED_FILES.some(ext => item.endsWith(ext))) {
-        files.add(fullPath)
-      }
+  const files = new Set<string>();
+  for (const ext of SUPPORTED_FILES) {
+    for (const file of globFiles(root, `**/*${ext}`, PROJECT_SKIP_DIR)) {
+      files.add(file);
     }
   }
-
-  walk(root)
-  return [...files]
+  return [...files];
 }
 
 /**
@@ -318,39 +272,32 @@ export function scanProjectFiles(
   allClassesSet: Set<string>,
   outputFileName: string,
   manifestRoot: string,
+  outputWriter: OutputWriter,
   debug: boolean,
 ): void {
-  if (debug) console.log('🎩 Scanning project files for build...')
+  if (debug) console.log("🎩 Scanning project files for build...");
 
   try {
-    const projectFiles = findProjectFiles(projectRoot)
-    const outputNorm = path.normalize(outputDir)
+    const projectFiles = findProjectFiles(projectRoot);
+    const outputNorm = path.normalize(outputDir);
 
-    if (debug) console.log(`🎩 Found ${projectFiles.length} project file(s)`)
+    if (debug) console.log(`🎩 Found ${projectFiles.length} project file(s)`);
 
     for (const file of projectFiles) {
-      if (!shouldProcessFile(file, ignoredDirectories, outputNorm, projectRoot))
-        continue
+      if (!shouldProcessFile(file, ignoredDirectories, outputNorm, projectRoot)) continue;
 
       try {
-        const content = fs.readFileSync(file, 'utf-8')
-        const result = processCode(content)
-        applyFileClasses(file, result.fileSpecificClasses)
-      }
-      catch (error) {
-        if (debug) console.error(`🎩 Error reading ${file}:`, error)
+        const content = fs.readFileSync(file, "utf-8");
+        const result = processCode(content);
+        applyFileClasses(file, result.fileSpecificClasses);
+      } catch (error) {
+        if (debug) console.error(`🎩 Error reading ${file}:`, error);
       }
     }
 
-    if (debug) console.log(`🎩 Total classes found: ${allClassesSet.size}`)
-    writeOutputFileDirect(
-      allClassesSet,
-      outputDir,
-      outputFileName,
-      manifestRoot,
-    )
-  }
-  catch (error) {
-    console.error('🎩 Error scanning project files:', error)
+    if (debug) console.log(`🎩 Total classes found: ${allClassesSet.size}`);
+    outputWriter.writeDirect(allClassesSet, outputDir, outputFileName, manifestRoot);
+  } catch (error) {
+    console.error("🎩 Error scanning project files:", error);
   }
 }

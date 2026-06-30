@@ -5,7 +5,7 @@ alwaysApply: true
 ---
 # UseClassy Vite Plugin Guide
 
-The UseClassy Vite plugin transforms class modifier attributes into Tailwind JIT-compatible class names. The main implementation is in [src/useClassy.ts](mdc:src/useClassy.ts).
+The UseClassy Vite plugin transforms class modifier attributes into Tailwind JIT-compatible class names. The main implementation is in [src/index.ts](mdc:src/index.ts) with transforms in [src/core.ts](mdc:src/core.ts).
 
 ## Core Functionality
 

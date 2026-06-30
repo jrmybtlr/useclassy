@@ -5,7 +5,7 @@ alwaysApply: true
 ---
 # Development Principles
 
-The UseClassy plugin follows strict development principles to maintain high performance, type safety, and minimal complexity. The core implementation in [src/useClassy.ts](mdc:src/useClassy.ts) demonstrates these principles.
+The UseClassy plugin follows strict development principles to maintain high performance, type safety, and minimal complexity. The core implementation lives in [src/index.ts](mdc:src/index.ts), [src/core.ts](mdc:src/core.ts), and [src/utils.ts](mdc:src/utils.ts).
 
 ## Performance First
 
@@ -38,7 +38,7 @@ The UseClassy plugin follows strict development principles to maintain high perf
 ## Minimal Surface Area
 
 1. **Code Organization**
-   - Single primary file for core logic
+   - Focused modules (`index`, `core`, `utils`, `blade`, `tailwind`)
    - Functions are small and focused
    - Clear separation of concerns
    - Minimal internal state

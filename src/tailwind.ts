@@ -1,37 +1,35 @@
-import path from 'path'
+import path from "path";
 
 /** Default `outputDir` for UseClassy (matches plugin defaults). */
-export const USECLASSY_DEFAULT_OUTPUT_DIR = '.classy'
+export const USECLASSY_DEFAULT_OUTPUT_DIR = ".classy";
 
 /** Default `outputFileName` for UseClassy (matches plugin defaults). */
-export const USECLASSY_DEFAULT_OUTPUT_FILE = 'output.classy.html'
+export const USECLASSY_DEFAULT_OUTPUT_FILE = "output.classy.html";
 
 export interface UseClassyTailwindPathsOptions {
-  outputDir?: string
-  outputFileName?: string
+  outputDir?: string;
+  outputFileName?: string;
 }
 
 function resolvedOutputDir(options?: UseClassyTailwindPathsOptions): string {
-  return options?.outputDir ?? USECLASSY_DEFAULT_OUTPUT_DIR
+  return options?.outputDir ?? USECLASSY_DEFAULT_OUTPUT_DIR;
 }
 
 function resolvedOutputFile(options?: UseClassyTailwindPathsOptions): string {
-  return options?.outputFileName ?? USECLASSY_DEFAULT_OUTPUT_FILE
+  return options?.outputFileName ?? USECLASSY_DEFAULT_OUTPUT_FILE;
 }
 
 function toPosixPath(segment: string): string {
-  return segment.replace(/\\/g, '/')
+  return segment.replace(/\\/g, "/");
 }
 
 /**
  * POSIX-style path from project root to the generated class manifest, e.g. `.classy/output.classy.html`.
  */
-export function getUseClassyManifestPath(
-  options?: UseClassyTailwindPathsOptions,
-): string {
-  const dir = toPosixPath(resolvedOutputDir(options))
-  const file = toPosixPath(resolvedOutputFile(options))
-  return `${dir}/${file}`
+export function getUseClassyManifestPath(options?: UseClassyTailwindPathsOptions): string {
+  const dir = toPosixPath(resolvedOutputDir(options));
+  const file = toPosixPath(resolvedOutputFile(options));
+  return `${dir}/${file}`;
 }
 
 /**
@@ -40,7 +38,7 @@ export function getUseClassyManifestPath(
 export function getUseClassyTailwindV3ContentEntry(
   options?: UseClassyTailwindPathsOptions,
 ): string {
-  return `./${getUseClassyManifestPath(options)}`
+  return `./${getUseClassyManifestPath(options)}`;
 }
 
 /**
@@ -50,7 +48,7 @@ export function getUseClassyTailwindV3ContentEntry(
 export function getUseClassyTailwindSourceLineForRootStylesheet(
   options?: UseClassyTailwindPathsOptions,
 ): string {
-  return `@source "./${getUseClassyManifestPath(options)}";`
+  return `@source "./${getUseClassyManifestPath(options)}";`;
 }
 
 /**
@@ -65,12 +63,9 @@ export function getUseClassyTailwindSourceDirective(
     projectRoot,
     resolvedOutputDir(options),
     resolvedOutputFile(options),
-  )
-  const rel = path.relative(
-    path.dirname(path.resolve(stylesheetAbsolutePath)),
-    manifestAbs,
-  )
-  const posix = rel.split(path.sep).join('/')
-  const normalized = posix.startsWith('.') ? posix : `./${posix}`
-  return `@source "${normalized}";`
+  );
+  const rel = path.relative(path.dirname(path.resolve(stylesheetAbsolutePath)), manifestAbs);
+  const posix = rel.split(path.sep).join("/");
+  const normalized = posix.startsWith(".") ? posix : `./${posix}`;
+  return `@source "${normalized}";`;
 }

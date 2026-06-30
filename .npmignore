@@ -12,8 +12,9 @@ tests/
 *.log
 
 # Configuration files
-.eslintrc*
-.prettierrc*
+.oxlintrc*
+oxfmt.config.*
+oxlint.config.*
 tsconfig*.json
 vite.config.ts
 vitest.config.js
