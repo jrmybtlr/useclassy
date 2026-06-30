@@ -24,6 +24,9 @@
     "react",
     "next"
   ],
+  "engines": {
+    "node": ">=22"
+  },
   "license": "MIT",
   "homepage": "https://github.com/jrmybtlr/useclassy#readme",
   "bugs": "https://github.com/jrmybtlr/useclassy/issues",
