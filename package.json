@@ -11,7 +11,7 @@
     "release:patch": "changelogen --release --patch && pnpm publish",
     "build": "vite build",
     "build:website": "pnpm install --no-frozen-lockfile && pnpm --filter useclassy-vue run build && node scripts/prepare-cloudflare-deploy.mjs",
-    "deploy:website": "node scripts/prepare-cloudflare-deploy.mjs && pnpm exec wrangler deploy",
+    "deploy:website": "pnpm exec wrangler deploy --config demos/vue/.output/server/wrangler.json",
     "prepublishOnly": "pnpm run build"
   },
   "keywords": [

@@ -13,22 +13,19 @@ if (!existsSync(sourceConfig)) {
 }
 
 const config = JSON.parse(readFileSync(sourceConfig, 'utf8'))
-const outputRelative = relative(repoRoot, outputDir)
+const configDir = dirname(sourceConfig)
 
-function rewritePath(value) {
+function resolveFromConfig(value) {
   if (typeof value !== 'string') return value
-  if (value.startsWith('./')) {
-    return join(outputRelative, value.slice(2)).replaceAll('\\', '/')
-  }
-  return value
+  return relative(repoRoot, resolve(configDir, value)).replaceAll('\\', '/')
 }
 
 if (typeof config.main === 'string') {
-  config.main = rewritePath(config.main)
+  config.main = resolveFromConfig(config.main)
 }
 
 if (config.assets?.directory) {
-  config.assets.directory = rewritePath(config.assets.directory)
+  config.assets.directory = resolveFromConfig(config.assets.directory)
 }
 
 writeFileSync(rootConfig, `${JSON.stringify(config, null, 2)}\n`)
