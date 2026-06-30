@@ -19,10 +19,10 @@
   "devDependencies": {
     "@nuxthub/core": "0.9.0",
     "@tailwindcss/vite": "4.1.12",
-    "nuxt": "^3.17.5",
+    "nuxt": "^3.21.8",
     "tailwindcss": "4.1.4",
     "tailwindcss-motion": "^1.1.1",
-    "wrangler": "^4.22.0"
+    "wrangler": "^4.59.1"
   },
   "packageManager": "pnpm@9.14.4+sha512.c8180b3fbe4e4bca02c94234717896b5529740a6cbadf19fa78254270403ea2f27d4e1d46a08a0f56c89b63dc8ebfd3ee53326da720273794e6200fcf0d184ab"
 }
