@@ -13,11 +13,5 @@ export default defineNuxtConfig({
 
   vite: {
     plugins: [useClassy({ debug: true }), tailwindcss()],
-    server: {
-      hmr: {
-        port: 24679,
-        clientPort: 24679,
-      },
-    },
   },
 })

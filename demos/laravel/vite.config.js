@@ -4,12 +4,6 @@ import useClassy from '../../src/index.ts'
 import tailwindcss from '@tailwindcss/vite'
 
 export default defineConfig({
-  server: {
-    hmr: {
-      port: 24682,
-      clientPort: 24682,
-    },
-  },
   plugins: [
     useClassy({
       language: 'blade',

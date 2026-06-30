@@ -12,10 +12,6 @@ export default defineConfig({
   ],
   server: {
     port: 3001,
-    hmr: {
-      port: 24681,
-      clientPort: 24681,
-    },
   },
   resolve: {
     alias: {
