@@ -6,6 +6,7 @@
 
 ### 🚀 Enhancements
 
+- **peer:** `vite` is now `^5.0.0 || ^6.0.0 || ^7.0.0 || ^8.0.0`. Vite 8 is officially supported.
 - **cli:** Add `npx vite-plugin-useclassy init` to patch Vite, Tailwind (v3/v4), and editor settings (`--language vue|react|blade`, `--dry-run`).
 - **tailwind:** Export `vite-plugin-useclassy/tailwind` helpers for manifest paths and Tailwind content/source configuration.
 - **blade:** Refactor Blade file handling for more reliable class extraction and processing.
