@@ -131,7 +131,7 @@ export function scanBladeFiles(
 
     if (allClassesSet.size > 0) {
       if (debug) console.log(`🎩 Total classes found: ${allClassesSet.size}`)
-      writeDirect(allClassesSet, outputDir, outputFileName)
+      writeDirect(allClassesSet, outputDir, outputFileName, projectRoot)
     }
   }
   catch (error) {
