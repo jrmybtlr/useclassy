@@ -48,6 +48,9 @@ importers:
       react:
         specifier: ^18.0.0 || ^19.0.0
         version: 19.2.7
+      wrangler:
+        specifier: ^4.59.1
+        version: 4.105.0(@cloudflare/workers-types@4.20260630.1)
     devDependencies:
       '@eslint/js':
         specifier: ^9.39.4
