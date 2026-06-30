@@ -9,7 +9,7 @@
     "preview": "nuxt preview",
     "postinstall": "nuxt prepare",
     "deploy": "pnpm build && npx nuxthub deploy",
-    "deploy:cf": "wrangler --cwd .output deploy",
+    "deploy:cf": "wrangler --cwd .output deploy"
   },
   "dependencies": {
     "@nuxt/fonts": "^0.14.0",
