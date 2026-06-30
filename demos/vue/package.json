@@ -12,7 +12,6 @@
   },
   "dependencies": {
     "@nuxt/fonts": "^0.14.0",
-    "vite-plugin-useclassy": "workspace:*",
     "vue": "latest"
   },
   "devDependencies": {
