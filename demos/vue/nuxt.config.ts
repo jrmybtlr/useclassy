@@ -6,8 +6,16 @@ import tailwindcss from '@tailwindcss/vite'
 const rootDir = path.dirname(fileURLToPath(import.meta.url))
 
 export default defineNuxtConfig({
+  modules: ['@nuxt/fonts'],
 
-  modules: ['@nuxt/fonts', '@nuxthub/core'],
+  compatibilityDate: '2025-01-01',
+
+  nitro: {
+    preset: 'cloudflare_module',
+    cloudflare: {
+      deployConfig: true,
+    },
+  },
 
   devtools: {
     enabled: true,

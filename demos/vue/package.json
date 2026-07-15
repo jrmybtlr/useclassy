@@ -8,15 +8,13 @@
     "generate": "nuxt generate",
     "preview": "nuxt preview",
     "postinstall": "nuxt prepare",
-    "deploy": "pnpm build && npx nuxthub deploy",
-    "deploy:cf": "wrangler --cwd .output deploy"
+    "deploy": "pnpm build && wrangler deploy --config .output/server/wrangler.json"
   },
   "dependencies": {
     "@nuxt/fonts": "^0.14.0",
     "vue": "latest"
   },
   "devDependencies": {
-    "@nuxthub/core": "^0.10.7",
     "@tailwindcss/vite": "4.1.12",
     "nuxt": "^4.4.8",
     "tailwindcss": "4.1.4",

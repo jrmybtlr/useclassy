@@ -1,6 +1,9 @@
-name: Deploy to NuxtHub
+name: Deploy website to Cloudflare
+
 on:
   push:
+    branches:
+      - main
     paths:
       # Nuxt site and its local plugin dependency
       - 'demos/vue/**'
@@ -11,15 +14,14 @@ on:
       - 'pnpm-workspace.yaml'
       - 'scripts/prepare-cloudflare-deploy.mjs'
       # Always re-run when the workflow itself changes
-      - '.github/workflows/nuxthub.yml'
+      - '.github/workflows/deploy-website.yml'
 
 jobs:
   deploy:
-    name: "Deploy to NuxtHub"
+    name: Deploy to Cloudflare
     runs-on: ubuntu-latest
     permissions:
       contents: read
-      id-token: write
 
     steps:
       - uses: actions/checkout@v4
@@ -38,10 +40,12 @@ jobs:
       - name: Install dependencies
         run: pnpm install
 
-      - name: Ensure NuxtHub module is installed
-        run: pnpx nuxthub@latest ensure
+      - name: Build website
+        run: pnpm --filter useclassy-vue run build
 
-      - name: Build & Deploy to NuxtHub
-        uses: nuxt-hub/action@v2
+      - name: Deploy to Cloudflare Workers
+        uses: cloudflare/wrangler-action@v3
         with:
-          project-key: useclassy-com-9ggt
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          command: deploy --config demos/vue/.output/server/wrangler.json
