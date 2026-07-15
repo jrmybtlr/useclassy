@@ -35,7 +35,7 @@ vi.mock('path', () => ({
 
 // Mock utils module
 vi.doMock('../utils', () => {
-  const writeOutputFileDirect = vi.fn()
+  const writeOutputFileDirect = vi.fn(() => true)
   const writeOutputFileDebounced = vi.fn()
   const resetCache = vi.fn()
 
@@ -56,11 +56,24 @@ vi.doMock('../utils', () => {
     writeOutputFileDirect,
     resetOutputFileCache: resetCache,
     debounce: vi.fn(fn => fn),
-    createOutputFileWriter: vi.fn(() => ({
-      writeDirect: writeOutputFileDirect,
-      writeDebounced: writeOutputFileDebounced,
-      resetCache,
-    })),
+    createOutputFileWriter: vi.fn((options?: { onWrote?: () => void }) => {
+      const writeDirect = vi.fn((...args: unknown[]) => {
+        const wrote = writeOutputFileDirect(...args)
+        if (wrote)
+          options?.onWrote?.()
+        return wrote
+      })
+      // Debounce is a no-op in this suite — route through writeDirect so onWrote
+      // only fires when the underlying write reports success.
+      const writeDebounced = vi.fn((...args: unknown[]) => {
+        writeDirect(...args)
+      })
+      return {
+        writeDirect,
+        writeDebounced,
+        resetCache,
+      }
+    }),
     scanProjectFiles: vi.fn(),
     shouldProcessFile: vi.fn().mockImplementation((filePath: string) => {
       // Mock implementation that returns true for supported files
@@ -438,7 +451,10 @@ describe('useClassy plugin', () => {
     })
 
     it('should scan project files on buildStart in build mode', async () => {
-      const logSpy = vi.spyOn(console, 'log').mockImplementation(() => {})
+      // `vi.doMock('../utils')` is not applied to the static index import (ESM
+      // hoisting), so spy the real module that the plugin actually closes over.
+      const utils = await vi.importActual<typeof import('../utils')>('../utils')
+      const spy = vi.spyOn(utils, 'scanProjectFiles').mockImplementation(() => {})
       const plugin = useClassy({ debug: true }) as Plugin
 
       if (plugin.configResolved) {
@@ -452,14 +468,13 @@ describe('useClassy plugin', () => {
         await plugin.buildStart.call({} as never)
       }
 
-      expect(logSpy).toHaveBeenCalledWith(
-        expect.stringContaining('Scanning project files'),
-      )
-      logSpy.mockRestore()
+      expect(spy).toHaveBeenCalled()
+      spy.mockRestore()
     })
 
     it('should scan project files on buildStart in dev mode', async () => {
-      const logSpy = vi.spyOn(console, 'log').mockImplementation(() => {})
+      const utils = await vi.importActual<typeof import('../utils')>('../utils')
+      const spy = vi.spyOn(utils, 'scanProjectFiles').mockImplementation(() => {})
       const plugin = useClassy({ debug: true }) as Plugin
 
       if (plugin.configResolved) {
@@ -473,10 +488,64 @@ describe('useClassy plugin', () => {
         await plugin.buildStart.call({} as never)
       }
 
-      expect(logSpy).toHaveBeenCalledWith(
-        expect.stringContaining('Scanning project files'),
+      expect(spy).toHaveBeenCalled()
+      spy.mockRestore()
+    })
+
+    it('should only handleHotUpdate for the manifest file itself', async () => {
+      const plugin = useClassy({ debug: true }) as Plugin
+      const invalidateModule = vi.fn()
+      const cssModule = { url: '/src/style.css', id: '/src/style.css' }
+      const mockServer = {
+        moduleGraph: {
+          idToModuleMap: new Map([['/src/style.css', cssModule]]),
+          invalidateModule,
+        },
+      }
+
+      if (plugin.configResolved) {
+        await plugin.configResolved({
+          command: 'serve',
+          root: '/mock/cwd',
+        } as never)
+      }
+
+      const handleHotUpdate = plugin.handleHotUpdate as (ctx: {
+        file: string
+        server: typeof mockServer
+        timestamp: number
+      }) => unknown
+
+      expect(
+        handleHotUpdate({
+          file: '/mock/cwd/.classy/.gitignore',
+          server: mockServer,
+          timestamp: 1,
+        }),
+      ).toBeUndefined()
+      expect(invalidateModule).not.toHaveBeenCalled()
+
+      expect(
+        handleHotUpdate({
+          file: '/mock/cwd/.classy/.output.classy.html.tmp',
+          server: mockServer,
+          timestamp: 2,
+        }),
+      ).toBeUndefined()
+      expect(invalidateModule).not.toHaveBeenCalled()
+
+      const result = handleHotUpdate({
+        file: '/mock/cwd/.classy/output.classy.html',
+        server: mockServer,
+        timestamp: 3,
+      })
+      expect(result).toEqual([cssModule])
+      expect(invalidateModule).toHaveBeenCalledWith(
+        cssModule,
+        undefined,
+        3,
+        true,
       )
-      logSpy.mockRestore()
     })
 
     it('should invalidate CSS modules when the manifest is rewritten in Dev', async () => {

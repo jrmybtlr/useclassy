@@ -197,13 +197,13 @@ export default function useClassy(options: ClassyOptions = {}): PluginOption {
   // Watch the output directory so Tailwind/Vite see manifest mtime changes.
   // Intercept those events in `handleHotUpdate` — returning CSS modules prevents
   // Vite's default full-page reload for `.html` files.
-  function isManifestWatchPath(watchPath: string): boolean {
+  function isManifestFile(watchPath: string): boolean {
     const normalized = watchPath.replace(/\\/g, '/')
-    const marker = `/${outputDir.replace(/\\/g, '/')}`
+    const manifestName = outputFileName.replace(/\\/g, '/')
+    // Only the final manifest — ignore `.gitignore`, temp `*.tmp`, etc.
     return (
-      normalized.includes(`${marker}/`)
-      || normalized.endsWith(marker)
-      || normalized === outputDir.replace(/\\/g, '/')
+      normalized.endsWith(`/${manifestName}`)
+      || normalized === manifestName
     )
   }
 
@@ -267,7 +267,7 @@ export default function useClassy(options: ClassyOptions = {}): PluginOption {
     },
 
     handleHotUpdate({ file, server, timestamp }) {
-      if (!isManifestWatchPath(file))
+      if (!isManifestFile(file))
         return
 
       const cssModules: import('vite').ModuleNode[] = []
