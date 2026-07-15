@@ -1,5 +1,17 @@
 name: Deploy to NuxtHub
-on: push
+on:
+  push:
+    paths:
+      # Nuxt site and its local plugin dependency
+      - 'demos/vue/**'
+      - 'src/**'
+      # Workspace install / build inputs used by the deploy job
+      - 'package.json'
+      - 'pnpm-lock.yaml'
+      - 'pnpm-workspace.yaml'
+      - 'scripts/prepare-cloudflare-deploy.mjs'
+      # Always re-run when the workflow itself changes
+      - '.github/workflows/nuxthub.yml'
 
 jobs:
   deploy:
