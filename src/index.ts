@@ -82,7 +82,7 @@ export default function useClassy(options: ClassyOptions = {}): PluginOption {
    * `@tailwindcss/vite` sees the newer mtime via `requiresBuild()`.
    */
   function invalidateTailwindCssModules(): void {
-    if (!viteServer || isBuild)
+    if (!viteServer?.moduleGraph || isBuild)
       return
 
     const updates: Array<{

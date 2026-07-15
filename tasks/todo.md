@@ -17,13 +17,14 @@ left a manifest behind.
 - [x] Allowlist the manifest in `.classy/.gitignore` so Oxide can read `@source`
 - [x] Use function-based Vite watch ignore for `.classy/` (avoid HTML full reload)
 - [x] Tests for early scan + CSS invalidation + gitignore allowlist
-- [ ] Commit, push, open PR
+- [x] Commit, push, open PR (#37)
 
 ## Verification
 
-- Fresh `vite build` with empty `.classy/` includes `md:h-40` in CSS (reproduced)
+- Fresh `vite build` with empty `.classy/` includes variant classes in CSS (reproduced on react demo: `md:text-7xl`)
 - Published 3.1.0 still fails first build; local fix succeeds
-- Unit tests: 178 passed
+- Unit tests: 179 passed
+- CI checks green on PR head
 
 ## Review (post-implementation)
 
