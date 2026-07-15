@@ -64,9 +64,60 @@ export default function useClassy(options: ClassyOptions = {}): PluginOption {
   let initialScanComplete = false
   let projectRoot = process.cwd()
   let manifestRoot = process.cwd()
+  let viteServer: ViteServer | null = null
+
+  const outputDir = options.outputDir || '.classy'
+  const outputDirForFilter = path.normalize(outputDir)
+  const outputFileName = options.outputFileName || 'output.classy.html'
+  const isReact = options.language === 'react'
+  const isBlade = options.language === 'blade'
+  const debug = options.debug || false
+  const injectTailwindSource = options.injectTailwindSource !== false
+
+  /**
+   * After the class manifest changes on disk, force Tailwind CSS modules to
+   * recompile so `@source` picks up newly discovered variants during HMR.
+   * Avoid emitting a FS `change` for the `.html` manifest — Vite treats that as
+   * a full page reload. Invalidating CSS modules is enough: on regenerate,
+   * `@tailwindcss/vite` sees the newer mtime via `requiresBuild()`.
+   */
+  function invalidateTailwindCssModules(): void {
+    if (!viteServer || isBuild)
+      return
+
+    const updates: Array<{
+      type: 'css-update'
+      path: string
+      acceptedPath: string
+      timestamp: number
+    }> = []
+    const timestamp = Date.now()
+
+    for (const [id, mod] of viteServer.moduleGraph.idToModuleMap) {
+      if (!id || !id.includes('.css'))
+        continue
+
+      viteServer.moduleGraph.invalidateModule(mod)
+      const url = mod.url || id
+      updates.push({
+        type: 'css-update',
+        path: url,
+        acceptedPath: url,
+        timestamp,
+      })
+    }
+
+    if (updates.length > 0) {
+      viteServer.ws.send({ type: 'update', updates })
+      if (debug)
+        console.log(`🎩 Invalidated ${updates.length} CSS module(s) after manifest write.`)
+    }
+  }
 
   // Per-instance write state — avoids shared module-level cache collisions.
-  const { writeDirect, writeDebounced, resetCache } = createOutputFileWriter()
+  const { writeDirect, writeDebounced, resetCache } = createOutputFileWriter({
+    onWrote: invalidateTailwindCssModules,
+  })
 
   const transformCache: Map<string, string> = new Map()
   const fileClassMap: Map<string, Set<string>> = new Map()
@@ -108,14 +159,6 @@ export default function useClassy(options: ClassyOptions = {}): PluginOption {
     return changed
   }
 
-  const outputDir = options.outputDir || '.classy'
-  const outputDirForFilter = path.normalize(outputDir)
-  const outputFileName = options.outputFileName || 'output.classy.html'
-  const isReact = options.language === 'react'
-  const isBlade = options.language === 'blade'
-  const debug = options.debug || false
-  const injectTailwindSource = options.injectTailwindSource !== false
-
   const classRegex = isReact ? REACT_CLASS_REGEX : CLASS_REGEX
   const classModifierRegex = isReact
     ? REACT_CLASS_MODIFIER_REGEX
@@ -133,6 +176,7 @@ export default function useClassy(options: ClassyOptions = {}): PluginOption {
       outputFileName,
       manifestRoot,
       debug,
+      writeDirect,
     )
   }
 
@@ -150,39 +194,22 @@ export default function useClassy(options: ClassyOptions = {}): PluginOption {
     )
   }
 
-  const outputWatchIgnore = `**/${outputDir.replace(/\\/g, '/')}/**`
+  // Watch the output directory so Tailwind/Vite see manifest mtime changes.
+  // Intercept those events in `handleHotUpdate` — returning CSS modules prevents
+  // Vite's default full-page reload for `.html` files.
+  function isManifestWatchPath(watchPath: string): boolean {
+    const normalized = watchPath.replace(/\\/g, '/')
+    const marker = `/${outputDir.replace(/\\/g, '/')}`
+    return (
+      normalized.includes(`${marker}/`)
+      || normalized.endsWith(marker)
+      || normalized === outputDir.replace(/\\/g, '/')
+    )
+  }
 
   return {
     name: 'useClassy',
     enforce: 'pre',
-
-    config(config) {
-      config.server ??= {}
-      config.server.watch ??= {}
-
-      const ignored = config.server.watch.ignored
-      if (Array.isArray(ignored)) {
-        if (!ignored.includes(outputWatchIgnore)) {
-          config.server.watch.ignored = [...ignored, outputWatchIgnore]
-        }
-      }
-      else if (typeof ignored === 'function') {
-        const originalIgnored = ignored
-        config.server.watch.ignored = (watchPath: string) => {
-          const normalized = watchPath.replace(/\\/g, '/')
-          if (normalized.includes(`/${outputDir}/`) || normalized.endsWith(`/${outputDir}`)) {
-            return true
-          }
-          return originalIgnored(watchPath)
-        }
-      }
-      else if (typeof ignored === 'string') {
-        config.server.watch.ignored = [ignored, outputWatchIgnore]
-      }
-      else {
-        config.server.watch.ignored = [outputWatchIgnore]
-      }
-    },
 
     configResolved(config) {
       isBuild = config.command === 'build'
@@ -205,6 +232,7 @@ export default function useClassy(options: ClassyOptions = {}): PluginOption {
     configureServer(server: ViteServer) {
       if (isBuild) return
 
+      viteServer = server
       if (debug) console.log('🎩 Configuring dev server...')
 
       setupOutputEndpoint(server)
@@ -236,6 +264,25 @@ export default function useClassy(options: ClassyOptions = {}): PluginOption {
           )
         }
       })
+    },
+
+    handleHotUpdate({ file, server, timestamp }) {
+      if (!isManifestWatchPath(file))
+        return
+
+      const cssModules: import('vite').ModuleNode[] = []
+      for (const [id, mod] of server.moduleGraph.idToModuleMap) {
+        if (!id || !id.includes('.css'))
+          continue
+        server.moduleGraph.invalidateModule(mod, undefined, timestamp, true)
+        cssModules.push(mod)
+      }
+
+      if (debug)
+        console.log(`🎩 Manifest changed — updating ${cssModules.length} CSS module(s).`)
+
+      // Returning CSS modules prevents Vite's default full reload for `.html`.
+      return cssModules
     },
 
     transform(code: string, id: string) {
@@ -308,15 +355,15 @@ export default function useClassy(options: ClassyOptions = {}): PluginOption {
       initialScanComplete = false
       resetCache()
 
-      if (isBuild) {
-        if (isBlade)
-          runBladeScan()
-        else
-          runProjectScan()
-      }
-      else if (isBlade) {
+      // Scan before any CSS transform so Tailwind's `@source` can see variants
+      // on the first pass (fixes cold builds and the first `vite` / HMR session).
+      if (isBlade)
         runBladeScan()
-      }
+      else
+        runProjectScan()
+
+      if (allClassesSet.size > 0)
+        initialScanComplete = true
     },
 
     buildEnd() {

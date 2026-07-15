@@ -16,6 +16,9 @@ vi.mock('fs', () => ({
     mkdirSync: vi.fn(),
     readFileSync: vi.fn().mockReturnValue(''),
     appendFileSync: vi.fn(),
+    renameSync: vi.fn(),
+    readdirSync: vi.fn().mockReturnValue([]),
+    statSync: vi.fn(),
   },
 }))
 
@@ -58,6 +61,7 @@ vi.doMock('../utils', () => {
       writeDebounced: writeOutputFileDebounced,
       resetCache,
     })),
+    scanProjectFiles: vi.fn(),
     shouldProcessFile: vi.fn().mockImplementation((filePath: string) => {
       // Mock implementation that returns true for supported files
       const supportedFiles = [
@@ -431,6 +435,106 @@ describe('useClassy plugin', () => {
 
       // Test that the hook exists
       expect(plugin.buildStart).toBeDefined()
+    })
+
+    it('should scan project files on buildStart in build mode', async () => {
+      const logSpy = vi.spyOn(console, 'log').mockImplementation(() => {})
+      const plugin = useClassy({ debug: true }) as Plugin
+
+      if (plugin.configResolved) {
+        await plugin.configResolved({
+          command: 'build',
+          root: '/mock/cwd',
+        } as never)
+      }
+
+      if (typeof plugin.buildStart === 'function') {
+        await plugin.buildStart.call({} as never)
+      }
+
+      expect(logSpy).toHaveBeenCalledWith(
+        expect.stringContaining('Scanning project files'),
+      )
+      logSpy.mockRestore()
+    })
+
+    it('should scan project files on buildStart in dev mode', async () => {
+      const logSpy = vi.spyOn(console, 'log').mockImplementation(() => {})
+      const plugin = useClassy({ debug: true }) as Plugin
+
+      if (plugin.configResolved) {
+        await plugin.configResolved({
+          command: 'serve',
+          root: '/mock/cwd',
+        } as never)
+      }
+
+      if (typeof plugin.buildStart === 'function') {
+        await plugin.buildStart.call({} as never)
+      }
+
+      expect(logSpy).toHaveBeenCalledWith(
+        expect.stringContaining('Scanning project files'),
+      )
+      logSpy.mockRestore()
+    })
+
+    it('should invalidate CSS modules when the manifest is rewritten in Dev', async () => {
+      vi.useFakeTimers()
+      const fs = await import('fs')
+      ;(fs.default.existsSync as unknown as ReturnType<typeof vi.fn>).mockReturnValue(false)
+
+      const plugin = useClassy({ debug: true }) as Plugin
+      const cssModule = { url: '/src/style.css', id: '/src/style.css' }
+      const invalidateModule = vi.fn()
+      const wsSend = vi.fn()
+      const mockServer = {
+        watcher: { on: vi.fn(), emit: vi.fn() },
+        middlewares: { use: vi.fn() },
+        ws: { send: wsSend, on: vi.fn() },
+        httpServer: { once: vi.fn() },
+        transformRequest: vi.fn(),
+        moduleGraph: {
+          idToModuleMap: new Map([['/src/style.css', cssModule]]),
+          invalidateModule,
+        },
+      }
+
+      if (plugin.configResolved) {
+        await plugin.configResolved({
+          command: 'serve',
+          root: '/mock/cwd',
+        } as never)
+      }
+      if (plugin.configureServer) {
+        plugin.configureServer(mockServer as unknown as Parameters<typeof plugin.configureServer>[0])
+      }
+
+      const transform = plugin.transform as (
+        code: string,
+        id: string,
+      ) => { code: string } | null
+
+      const mockContext = { addWatchFile: vi.fn() }
+      transform.call(
+        mockContext,
+        '<div class="base" class:hover="text-red-500">x</div>',
+        'Component.vue',
+      )
+
+      await vi.advanceTimersByTimeAsync(250)
+
+      expect(invalidateModule).toHaveBeenCalledWith(cssModule)
+      expect(wsSend).toHaveBeenCalledWith({
+        type: 'update',
+        updates: [
+          expect.objectContaining({
+            type: 'css-update',
+            path: '/src/style.css',
+          }),
+        ],
+      })
+      vi.useRealTimers()
     })
 
     it('should handle buildEnd hook in build mode', () => {

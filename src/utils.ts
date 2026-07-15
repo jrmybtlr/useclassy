@@ -135,12 +135,17 @@ function buildOutputFileContent(allClasses: string[]): string {
   return `${lines.join('\n')}\n`
 }
 
+export type OutputFileWriterOptions = {
+  /** Called after the manifest file is successfully written (content changed on disk). */
+  onWrote?: () => void
+}
+
 /**
  * Creates a self-contained, per-plugin-instance output file writer.
  * Each call returns independent `writeDirect`, `writeDebounced`, and `resetCache` functions
  * so that multiple plugin instances running in the same process do not share state.
  */
-export function createOutputFileWriter() {
+export function createOutputFileWriter(options: OutputFileWriterOptions = {}) {
   let debouncedFn: (() => void) | null = null
   let lastClassesSet: Set<string> | null = null
   let lastOutputDir: string | null = null
@@ -182,11 +187,23 @@ export function createOutputFileWriter() {
       }
 
       const classyGitignorePath = path.join(dirPath, '.gitignore')
+      const classyGitignoreContents = [
+        '# Ignore generated files in this directory',
+        '*',
+        '!.gitignore',
+        `!${outputFileName}`,
+        '',
+      ].join('\n')
       if (!fs.existsSync(classyGitignorePath)) {
-        fs.writeFileSync(
-          classyGitignorePath,
-          '# Ignore all files in this directory\n*',
-        )
+        // Keep the directory gitignored, but allow the manifest itself so
+        // Tailwind's Oxide scanner (which respects gitignore) can read `@source`.
+        fs.writeFileSync(classyGitignorePath, classyGitignoreContents)
+      }
+      else {
+        const existing = fs.readFileSync(classyGitignorePath, 'utf-8')
+        if (!existing.includes(`!${outputFileName}`)) {
+          fs.writeFileSync(classyGitignorePath, classyGitignoreContents)
+        }
       }
 
       writeGitignore(outputDir, projectRoot)
@@ -195,6 +212,7 @@ export function createOutputFileWriter() {
       fs.writeFileSync(tempFilePath, fileContent, { encoding: 'utf-8' })
       fs.renameSync(tempFilePath, filePath)
       lastWrittenContent = fileContent
+      options.onWrote?.()
       return true
     }
     catch (error) {
@@ -312,6 +330,10 @@ function findProjectFiles(root: string): string[] {
 
 /**
  * Scan project files on disk so Tailwind can read the manifest before Vite transforms run.
+ * Invoked from `buildStart` in both build and dev so `@source` sees variants on the first CSS pass.
+ *
+ * `writeFile` defaults to the module-level writer; the plugin passes its instance writer so
+ * `onWrote` (CSS invalidation) runs for early scans too.
  */
 export function scanProjectFiles(
   projectRoot: string,
@@ -323,6 +345,7 @@ export function scanProjectFiles(
   outputFileName: string,
   manifestRoot: string,
   debug: boolean,
+  writeFile: typeof writeOutputFileDirect = writeOutputFileDirect,
 ): void {
   if (debug) console.log('🎩 Scanning project files for build...')
 
@@ -347,7 +370,7 @@ export function scanProjectFiles(
     }
 
     if (debug) console.log(`🎩 Total classes found: ${allClassesSet.size}`)
-    writeOutputFileDirect(
+    writeFile(
       allClassesSet,
       outputDir,
       outputFileName,
