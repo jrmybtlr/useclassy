@@ -1,3 +1,28 @@
+## v3.0.1
+
+[compare changes](https://github.com/jrmybtlr/useclassy/compare/v3.1.0...v3.0.1)
+
+### 🩹 Fixes
+
+- All src gaps, redundancies, and performance issues ([e6dab2f](https://github.com/jrmybtlr/useclassy/commit/e6dab2f))
+- Pass projectRoot to writeDirect in scanBladeFiles ([131026b](https://github.com/jrmybtlr/useclassy/commit/131026b))
+- Write Tailwind class manifest before CSS scan ([0f0ad54](https://github.com/jrmybtlr/useclassy/commit/0f0ad54))
+- Address PR review on manifest HMR and tests ([43c940d](https://github.com/jrmybtlr/useclassy/commit/43c940d))
+- Improve Tailwind CSS module invalidation logic ([44a03ea](https://github.com/jrmybtlr/useclassy/commit/44a03ea))
+
+### 📖 Documentation
+
+- Address code review feedback with clarifying comments ([c079249](https://github.com/jrmybtlr/useclassy/commit/c079249))
+
+### 🏡 Chore
+
+- Upgrade vite-plugin-dts to unblock library build ([6666af7](https://github.com/jrmybtlr/useclassy/commit/6666af7))
+
+### ❤️ Contributors
+
+- Jeremy Butler <jeremy.butler@laravel.com>
+- Cursor Agent ([@cursoragent](http://github.com/cursoragent))
+
 ## v3.0.0
 
 ### ⚠️ Breaking changes
