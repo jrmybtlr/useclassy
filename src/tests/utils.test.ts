@@ -7,6 +7,7 @@ import {
   writeGitignore,
   isInIgnoredDirectory,
   writeOutputFileDirect,
+  createOutputFileWriter,
   shouldProcessFile,
 } from '../utils'
 
@@ -310,7 +311,7 @@ describe('utils module', () => {
       // Check if .gitignore was written in the .classy directory
       expect(fs.writeFileSync).toHaveBeenCalledWith(
         '/mock/cwd/.classy/.gitignore',
-        expect.stringContaining('Ignore all files'),
+        expect.stringContaining('!output.html'),
       )
 
       // The function should write the output file (at least the .classy/.gitignore and temp file)
@@ -319,6 +320,29 @@ describe('utils module', () => {
         '/mock/cwd/.classy/.output.html.tmp',
         '/mock/cwd/.classy/output.html',
       )
+    })
+
+    it('should invoke onWrote after a successful write', () => {
+      const onWrote = vi.fn();
+      (fs.existsSync as Mock).mockReturnValue(false)
+      const { writeDirect } = createOutputFileWriter({ onWrote })
+
+      writeDirect(new Set(['hover:bg-blue-500']), '.classy', 'output.html')
+
+      expect(onWrote).toHaveBeenCalledTimes(1)
+    })
+
+    it('should not invoke onWrote when write is skipped', () => {
+      const onWrote = vi.fn();
+      (fs.existsSync as Mock).mockImplementation((p: string) => {
+        if (String(p).includes('output.html')) return true
+        return false
+      })
+      const { writeDirect } = createOutputFileWriter({ onWrote })
+
+      writeDirect(new Set(), '.classy', 'output.html')
+
+      expect(onWrote).not.toHaveBeenCalled()
     })
 
     it('should skip write if no classes and file exists', () => {

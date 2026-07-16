@@ -1,6 +1,6 @@
 {
   "name": "vite-plugin-useclassy",
-  "version": "3.0.0",
+  "version": "3.0.1",
   "description": "UseClassy automatically appends class attributes to your components and lets you separate media queries, hover states, and other styles.",
   "scripts": {
     "dev": "pnpm -r dev",
@@ -88,7 +88,7 @@
     "typescript": "^5.9.3",
     "typescript-eslint": "^8.62.1",
     "vite": "^8.1.0",
-    "vite-plugin-dts": "^3.9.1",
+    "vite-plugin-dts": "^4.5.4",
     "vite-plugin-inspect": "^11.4.1",
     "vitest": "^3.2.6"
   },

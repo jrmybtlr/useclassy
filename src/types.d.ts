@@ -70,6 +70,7 @@ export interface ViteServer extends ViteDevServer {
   watcher: {
     on: (event: string, callback: (filePath: string) => void) => void
     add: (file: string) => void
+    emit: (event: string, ...args: unknown[]) => boolean
   }
   middlewares: {
     use: (path: string, handler: (req: import('http').IncomingMessage, res: import('http').ServerResponse) => void) => void
@@ -77,6 +78,8 @@ export interface ViteServer extends ViteDevServer {
   httpServer: {
     once: (event: string, callback: () => void) => void
   } | null
+  moduleGraph: ViteDevServer['moduleGraph']
+  ws: ViteDevServer['ws']
 }
 
 // Type for React component props that can use class variants
