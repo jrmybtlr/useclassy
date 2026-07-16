@@ -1,6 +1,6 @@
-## v3.0.1
+## v3.1.1
 
-[compare changes](https://github.com/jrmybtlr/useclassy/compare/v3.1.0...v3.0.1)
+[compare changes](https://github.com/jrmybtlr/useclassy/compare/v3.1.0...v3.1.1)
 
 ### 🩹 Fixes
 
