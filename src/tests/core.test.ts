@@ -716,6 +716,28 @@ describe('core module', () => {
       )
     })
 
+    it('should merge class attributes when another attribute value contains >', () => {
+      const code
+        = '<div class="base" title="a>b" class="hover:text-blue-500">Content</div>'
+
+      const result = mergeClassAttributes(code, 'class')
+
+      expect(result).toBe(
+        '<div class="base hover:text-blue-500" title="a>b">Content</div>',
+      )
+    })
+
+    it('should merge class attributes when a JSX expression contains >', () => {
+      const code
+        = '<div className="base" title={foo > bar ? "x" : "y"} className="text-lg">Content</div>'
+
+      const result = mergeClassAttributes(code, 'className')
+
+      expect(result).toBe(
+        '<div className="base text-lg" title={foo > bar ? "x" : "y"}>Content</div>',
+      )
+    })
+
     it('should merge class attributes separated by Svelte class directives', () => {
       const code = `<div
         class="base"

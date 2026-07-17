@@ -264,63 +264,185 @@ function collectMergedClassValue(
 }
 
 /**
+ * Index of the `>` that closes a start tag, ignoring `>` inside quotes or `{...}`.
+ * `from` is the index immediately after the tag name.
+ */
+function findStartTagClose(code: string, from: number): number | null {
+  let quote: '"' | "'" | '`' | null = null
+  let braceDepth = 0
+
+  for (let i = from; i < code.length; i++) {
+    const ch = code.charAt(i)
+
+    if (quote !== null) {
+      if (ch === '\\' && i + 1 < code.length) {
+        i++
+        continue
+      }
+      if (ch === quote)
+        quote = null
+      continue
+    }
+
+    if (braceDepth > 0) {
+      if (ch === '"' || ch === "'" || ch === '`') {
+        quote = ch
+        continue
+      }
+      if (ch === '{') {
+        braceDepth++
+        continue
+      }
+      if (ch === '}') {
+        braceDepth--
+        continue
+      }
+      continue
+    }
+
+    if (ch === '"' || ch === "'") {
+      quote = ch
+      continue
+    }
+    if (ch === '{') {
+      braceDepth = 1
+      continue
+    }
+    if (ch === '>')
+      return i
+  }
+
+  return null
+}
+
+function mergeAttrsInStartTag(
+  attrs: string,
+  attrName: string,
+  classAttrRegex: RegExp,
+): string | null {
+  classAttrRegex.lastIndex = 0
+  const matches: ClassAttrMatch[] = []
+  let singleAttrMatch: RegExpExecArray | null
+  while ((singleAttrMatch = classAttrRegex.exec(attrs)) !== null) {
+    matches.push({
+      index: singleAttrMatch.index,
+      length: singleAttrMatch[0].length,
+      staticClass: singleAttrMatch[1],
+      jsx: singleAttrMatch[2],
+    })
+  }
+
+  if (matches.length < 2)
+    return null
+
+  const merged = collectMergedClassValue(matches, attrName)
+  let nextAttrs = attrs
+
+  // Remove trailing class attrs first so earlier indices stay valid.
+  for (let i = matches.length - 1; i >= 1; i--) {
+    const match = matches[i]!
+    let start = match.index
+    const stop = match.index + match.length
+    while (start > 0 && /\s/.test(nextAttrs.charAt(start - 1)))
+      start--
+    nextAttrs = nextAttrs.slice(0, start) + nextAttrs.slice(stop)
+  }
+
+  const first = matches[0]!
+  if (merged) {
+    return (
+      nextAttrs.slice(0, first.index)
+      + merged
+      + nextAttrs.slice(first.index + first.length)
+    )
+  }
+
+  let start = first.index
+  const stop = first.index + first.length
+  while (start > 0 && /\s/.test(nextAttrs.charAt(start - 1)))
+    start--
+  nextAttrs = nextAttrs.slice(0, start) + nextAttrs.slice(stop)
+  if (process.env.NODE_ENV !== 'test') {
+    console.warn('No classes found in class attribute:', attrs)
+  }
+  return nextAttrs
+}
+
+/**
  * Collapses repeated `class` / `className` attributes within a start tag,
  * preserving intervening attrs (Vue `:class`, Svelte `class:name`, etc.).
  */
 export function mergeClassAttributes(code: string, attrName: string): string {
   const classAttrRegex = getClassAttrRegex(attrName)
+  const tagNameRe = /^[A-Za-z][\w.:-]*/
+  let result = ''
+  let cursor = 0
 
-  return code.replace(
-    // Include `svelte:element`-style namespaced tags (`:` in the name).
-    /<([A-Za-z][\w.:-]*)(\s[^>]*?)(\s*\/?>)/g,
-    (full, tagName: string, attrs: string, end: string) => {
-      classAttrRegex.lastIndex = 0
-      const matches: ClassAttrMatch[] = []
-      let singleAttrMatch: RegExpExecArray | null
-      while ((singleAttrMatch = classAttrRegex.exec(attrs)) !== null) {
-        matches.push({
-          index: singleAttrMatch.index,
-          length: singleAttrMatch[0].length,
-          staticClass: singleAttrMatch[1],
-          jsx: singleAttrMatch[2],
-        })
+  while (cursor < code.length) {
+    const lt = code.indexOf('<', cursor)
+    if (lt === -1) {
+      result += code.slice(cursor)
+      break
+    }
+
+    result += code.slice(cursor, lt)
+
+    const next = code.charAt(lt + 1)
+    // Skip closing tags, comments, and processing instructions.
+    if (next === '/' || next === '!' || next === '?' || next === '') {
+      const gt = code.indexOf('>', lt + 1)
+      if (gt === -1) {
+        result += code.slice(lt)
+        break
       }
+      result += code.slice(lt, gt + 1)
+      cursor = gt + 1
+      continue
+    }
 
-      if (matches.length < 2)
-        return full
+    const nameMatch = tagNameRe.exec(code.slice(lt + 1))
+    if (!nameMatch) {
+      result += '<'
+      cursor = lt + 1
+      continue
+    }
 
-      const merged = collectMergedClassValue(matches, attrName)
-      let nextAttrs = attrs
+    const tagName = nameMatch[0]
+    const afterName = lt + 1 + tagName.length
 
-      // Remove trailing class attrs first so earlier indices stay valid.
-      for (let i = matches.length - 1; i >= 1; i--) {
-        const match = matches[i]!
-        let start = match.index
-        const stop = match.index + match.length
-        while (start > 0 && /\s/.test(nextAttrs.charAt(start - 1)))
-          start--
-        nextAttrs = nextAttrs.slice(0, start) + nextAttrs.slice(stop)
+    // Only tags with an attribute region (whitespace after the name) can merge.
+    if (!/\s/.test(code.charAt(afterName))) {
+      const gt = findStartTagClose(code, afterName)
+      if (gt === null) {
+        result += code.slice(lt)
+        break
       }
+      result += code.slice(lt, gt + 1)
+      cursor = gt + 1
+      continue
+    }
 
-      const first = matches[0]!
-      if (merged) {
-        nextAttrs
-          = nextAttrs.slice(0, first.index)
-            + merged
-            + nextAttrs.slice(first.index + first.length)
-      }
-      else {
-        let start = first.index
-        const stop = first.index + first.length
-        while (start > 0 && /\s/.test(nextAttrs.charAt(start - 1)))
-          start--
-        nextAttrs = nextAttrs.slice(0, start) + nextAttrs.slice(stop)
-        if (process.env.NODE_ENV !== 'test') {
-          console.warn('No classes found in class attribute:', attrs)
-        }
-      }
+    const closeIdx = findStartTagClose(code, afterName)
+    if (closeIdx === null) {
+      result += code.slice(lt)
+      break
+    }
 
-      return `<${tagName}${nextAttrs}${end}`
-    },
-  )
+    const beforeClose = code.slice(afterName, closeIdx)
+    const endMatch = beforeClose.match(/(\s*\/?)$/)
+    const endPrefix = endMatch?.[1] ?? ''
+    const attrs = beforeClose.slice(0, beforeClose.length - endPrefix.length)
+    const end = `${endPrefix}>`
+
+    const nextAttrs = mergeAttrsInStartTag(attrs, attrName, classAttrRegex)
+    if (nextAttrs === null) {
+      result += code.slice(lt, closeIdx + 1)
+    }
+    else {
+      result += `<${tagName}${nextAttrs}${end}`
+    }
+    cursor = closeIdx + 1
+  }
+
+  return result
 }
