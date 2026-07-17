@@ -6,6 +6,8 @@ import {
   CLASS_MODIFIER_REGEX,
   REACT_CLASS_REGEX,
   REACT_CLASS_MODIFIER_REGEX,
+  SVELTE_CLASS_REGEX,
+  SVELTE_CLASS_MODIFIER_REGEX,
   generateCacheKey,
   extractClasses,
   transformClassModifiers,
@@ -36,7 +38,7 @@ import {
  * UseClassy Vite plugin
  * Transforms class:modifier attributes into Tailwind JIT-compatible class names.
  * @param options - Configuration options for the plugin
- * @param options.language - The framework language to use (e.g., "vue" or "react")
+ * @param options.language - The framework language to use (e.g., "vue", "react", "blade", or "svelte")
  * @param options.outputDir - The directory to output the generated class file
  * @param options.outputFileName - The filename for the generated class file
  * @param options.debug - Enable debug logging
@@ -47,7 +49,7 @@ import {
  * export default {
  *   plugins: [
  *     useClassy({
- *       language: 'react',
+ *       language: 'svelte',
  *       outputDir: '.classy',
  *       outputFileName: 'output.classy.html',
  *       debug: true
@@ -71,6 +73,7 @@ export default function useClassy(options: ClassyOptions = {}): PluginOption {
   const outputFileName = options.outputFileName || 'output.classy.html'
   const isReact = options.language === 'react'
   const isBlade = options.language === 'blade'
+  const isSvelte = options.language === 'svelte'
   const debug = options.debug || false
   const injectTailwindSource = options.injectTailwindSource !== false
 
@@ -159,10 +162,16 @@ export default function useClassy(options: ClassyOptions = {}): PluginOption {
     return changed
   }
 
-  const classRegex = isReact ? REACT_CLASS_REGEX : CLASS_REGEX
+  const classRegex = isReact
+    ? REACT_CLASS_REGEX
+    : isSvelte
+      ? SVELTE_CLASS_REGEX
+      : CLASS_REGEX
   const classModifierRegex = isReact
     ? REACT_CLASS_MODIFIER_REGEX
-    : CLASS_MODIFIER_REGEX
+    : isSvelte
+      ? SVELTE_CLASS_MODIFIER_REGEX
+      : CLASS_MODIFIER_REGEX
   const classAttrName = isReact ? 'className' : 'class'
 
   function runProjectScan(): void {

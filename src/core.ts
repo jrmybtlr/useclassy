@@ -24,6 +24,17 @@ export const REACT_CLASS_MODIFIER_REGEX
   = /(?<![:\w])(?:className|class):([\w-:]+)="([^"]*)"/g
 
 /**
+ * Svelte `class` regexes.
+ * UseClassy modifiers use quoted values (`class:hover="..."`).
+ * Native Svelte class directives (`class:active={cond}`, shorthand `class:active`)
+ * are left alone because they do not use a quoted string value.
+ * Unlike Vue, there is no `:class` binding lookahead.
+ */
+export const SVELTE_CLASS_REGEX = /(?<![:\w])class=(?:"([^"]*)"|{([^}]*)})/g
+export const SVELTE_CLASS_MODIFIER_REGEX
+  = /(?<![:\w])class:([\w-:]+)="([^"]*)"/g
+
+/**
  * Generates a hash string from the input string
  */
 export function hashString(str: string): string {

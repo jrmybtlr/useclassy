@@ -10,6 +10,8 @@ import {
   CLASS_MODIFIER_REGEX,
   REACT_CLASS_REGEX,
   REACT_CLASS_MODIFIER_REGEX,
+  SVELTE_CLASS_REGEX,
+  SVELTE_CLASS_MODIFIER_REGEX,
 } from '../core'
 
 describe('core module', () => {
@@ -736,6 +738,94 @@ describe('core module', () => {
         ':class="active ? \'bg-white\' : \'text-zinc-400\'"',
       )
       expect(result).not.toContain('class:hover')
+    })
+  })
+
+  describe('Svelte class modifiers', () => {
+    it('should extract and transform UseClassy modifiers in Svelte markup', () => {
+      const code = `<button
+        class="px-4 py-2"
+        class:hover="bg-blue-700"
+        class:sm:hover="scale-105"
+      >Click</button>`
+      const allClasses = new Set<string>()
+      const modifierClasses = new Set<string>()
+
+      extractClasses(
+        code,
+        allClasses,
+        modifierClasses,
+        SVELTE_CLASS_REGEX,
+        SVELTE_CLASS_MODIFIER_REGEX,
+      )
+
+      expect(allClasses.has('px-4')).toBeTruthy()
+      expect(allClasses.has('py-2')).toBeTruthy()
+      expect(modifierClasses.has('hover:bg-blue-700')).toBeTruthy()
+      expect(modifierClasses.has('sm:hover:scale-105')).toBeTruthy()
+
+      const afterModifiers = transformClassModifiers(
+        code,
+        allClasses,
+        SVELTE_CLASS_MODIFIER_REGEX,
+        'class',
+      )
+      const result = mergeClassAttributes(afterModifiers, 'class')
+
+      expect(result).toContain('hover:bg-blue-700')
+      expect(result).toContain('sm:hover:scale-105')
+      expect(result).not.toContain('class:hover')
+      expect(result).not.toContain('class:sm:hover')
+    })
+
+    it('should preserve native Svelte class directives', () => {
+      const code = `<div
+        class="base"
+        class:active={isActive}
+        class:hover="text-blue-500"
+        class:disabled
+      >Content</div>`
+      const allClasses = new Set<string>()
+      const modifierClasses = new Set<string>()
+
+      extractClasses(
+        code,
+        allClasses,
+        modifierClasses,
+        SVELTE_CLASS_REGEX,
+        SVELTE_CLASS_MODIFIER_REGEX,
+      )
+
+      const afterModifiers = transformClassModifiers(
+        code,
+        allClasses,
+        SVELTE_CLASS_MODIFIER_REGEX,
+        'class',
+      )
+      const result = mergeClassAttributes(afterModifiers, 'class')
+
+      expect(result).toContain('class:active={isActive}')
+      expect(result).toContain('class:disabled')
+      expect(result).toContain('hover:text-blue-500')
+      expect(result).not.toContain('class:hover=')
+    })
+
+    it('should extract static classes from Svelte class={...} template literals', () => {
+      const code = '<div class={`flex items-center`}>Content</div>'
+      const allClasses = new Set<string>()
+      const modifierClasses = new Set<string>()
+
+      extractClasses(
+        code,
+        allClasses,
+        modifierClasses,
+        SVELTE_CLASS_REGEX,
+        SVELTE_CLASS_MODIFIER_REGEX,
+      )
+
+      expect(allClasses.has('flex')).toBeTruthy()
+      expect(allClasses.has('items-center')).toBeTruthy()
+      expect(modifierClasses.size).toBe(0)
     })
   })
 })
