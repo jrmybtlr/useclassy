@@ -623,7 +623,9 @@ function mergeParsedClassAttrs(
     const dynamicParts = jsxExprs.map((expr) => {
       if (expr.startsWith('`') && expr.endsWith('`'))
         return expr.slice(1, -1)
-      return `\${${expr}}`
+      // Coerce falsy runtime values (e.g. `cond && 'class'`) so template
+      // interpolation does not stringify `false` into the class list.
+      return `\${(${expr}) || ''}`
     }).join(' ')
 
     if (combinedStatic)

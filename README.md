@@ -107,7 +107,7 @@ JSX expression values work too — string literals inside the expression are pre
 
 // Output
 <button
-  className={`px-4 py-2 rounded ${isActive ? 'hover:bg-blue-500 hover:text-white' : 'hover:bg-gray-200'} ${isDisabled && 'disabled:opacity-50 disabled:cursor-not-allowed'}`}
+  className={`px-4 py-2 rounded ${(isActive ? 'hover:bg-blue-500 hover:text-white' : 'hover:bg-gray-200') || ''} ${(isDisabled && 'disabled:opacity-50 disabled:cursor-not-allowed') || ''}`}
 />
 ```
 

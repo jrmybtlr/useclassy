@@ -706,7 +706,7 @@ describe('core module', () => {
       const result = mergeClassAttributes(code, 'className')
 
       expect(result).toBe(
-        '<div className={`flex ${active ? "bg-blue-500" : ""}`}>Content</div>',
+        '<div className={`flex ${(active ? "bg-blue-500" : "") || \'\'}`}>Content</div>',
       )
     })
 
@@ -793,7 +793,7 @@ describe('core module', () => {
       const result = mergeClassAttributes(code, 'className')
 
       expect(result).toBe(
-        '<div className={`flex ${active ? "bg-blue-500" : ""} ${theme}`}>Content</div>',
+        '<div className={`flex ${(active ? "bg-blue-500" : "") || \'\'} ${(theme) || \'\'}`}>Content</div>',
       )
     })
 
@@ -903,7 +903,7 @@ describe('core module', () => {
 
       expect(result).toBe(
         `<button
-        className={\`px-4 py-2 \${isActive ? 'hover:bg-blue-500' : 'hover:bg-gray-200'}\`}
+        className={\`px-4 py-2 \${(isActive ? 'hover:bg-blue-500' : 'hover:bg-gray-200') || ''}\`}
       >Save</button>`,
       )
       expect(classes.has('hover:bg-blue-500')).toBeTruthy()
@@ -925,7 +925,7 @@ describe('core module', () => {
       const result = mergeClassAttributes(afterModifiers, 'className')
 
       expect(result).toBe(
-        `<div className={\`flex \${cn({ 'hover:bg-blue-500': on })}\`}>X</div>`,
+        `<div className={\`flex \${(cn({ 'hover:bg-blue-500': on })) || ''}\`}>X</div>`,
       )
       expect(classes.has('hover:bg-blue-500')).toBeTruthy()
     })
@@ -948,7 +948,7 @@ describe('core module', () => {
 
       expect(result).toBe(
         `<button
-        className={\`px-4 \${isActive ? 'hover:bg-blue-500' : 'hover:bg-gray-200'} \${isDisabled && 'disabled:opacity-50'}\`}
+        className={\`px-4 \${(isActive ? 'hover:bg-blue-500' : 'hover:bg-gray-200') || ''} \${(isDisabled && 'disabled:opacity-50') || ''}\`}
       >Save</button>`,
       )
       expect(classes.has('hover:bg-blue-500')).toBeTruthy()
