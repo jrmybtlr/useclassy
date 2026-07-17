@@ -705,6 +705,43 @@ describe('core module', () => {
 
       expect(result).toBe('<div class="a b" :class="x">Content</div>')
     })
+
+    it('should merge class attributes separated by other attributes', () => {
+      const code = '<div class="base" id="x" class="hover:text-blue-500">Content</div>'
+
+      const result = mergeClassAttributes(code, 'class')
+
+      expect(result).toBe(
+        '<div class="base hover:text-blue-500" id="x">Content</div>',
+      )
+    })
+
+    it('should merge class attributes separated by Svelte class directives', () => {
+      const code = `<div
+        class="base"
+        class:active={isActive}
+        class="hover:text-blue-500"
+        class:disabled
+      >Content</div>`
+
+      const result = mergeClassAttributes(code, 'class')
+
+      expect(result).toContain('class="base hover:text-blue-500"')
+      expect(result).toContain('class:active={isActive}')
+      expect(result).toContain('class:disabled')
+      expect(result.match(/(?<![:\w])class="/g)).toHaveLength(1)
+    })
+
+    it('should merge class attributes on namespaced Svelte tags', () => {
+      const code
+        = '<svelte:element this="div" class="a" class:active={on} class="b">x</svelte:element>'
+
+      const result = mergeClassAttributes(code, 'class')
+
+      expect(result).toContain('class="a b"')
+      expect(result).toContain('class:active={on}')
+      expect(result.match(/(?<![:\w])class="/g)).toHaveLength(1)
+    })
   })
 
   describe('Vue :class with class modifiers pipeline', () => {
@@ -772,8 +809,10 @@ describe('core module', () => {
       )
       const result = mergeClassAttributes(afterModifiers, 'class')
 
-      expect(result).toContain('hover:bg-blue-700')
-      expect(result).toContain('sm:hover:scale-105')
+      expect(result).toContain(
+        'class="px-4 py-2 hover:bg-blue-700 sm:hover:scale-105 sm:scale-105 hover:scale-105"',
+      )
+      expect(result.match(/(?<![:\w])class="/g)).toHaveLength(1)
       expect(result).not.toContain('class:hover')
       expect(result).not.toContain('class:sm:hover')
     })
@@ -781,8 +820,8 @@ describe('core module', () => {
     it('should preserve native Svelte class directives', () => {
       const code = `<div
         class="base"
-        class:hover="text-blue-500"
         class:active={isActive}
+        class:hover="text-blue-500"
         class:disabled
       >Content</div>`
       const allClasses = new Set<string>()
@@ -804,9 +843,10 @@ describe('core module', () => {
       )
       const result = mergeClassAttributes(afterModifiers, 'class')
 
+      expect(result).toContain('class="base hover:text-blue-500"')
       expect(result).toContain('class:active={isActive}')
       expect(result).toContain('class:disabled')
-      expect(result).toContain('hover:text-blue-500')
+      expect(result.match(/(?<![:\w])class="/g)).toHaveLength(1)
       expect(result).not.toContain('class:hover=')
     })
 

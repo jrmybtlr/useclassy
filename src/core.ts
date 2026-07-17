@@ -185,90 +185,142 @@ export function transformClassModifiers(
   })
 }
 
-const regexCache = new Map<string, { multipleClassRegex: RegExp, attrFinderRegex: RegExp }>()
+const regexCache = new Map<string, RegExp>()
 
-function getCompiledRegexes(attrName: string): {
-  multipleClassRegex: RegExp
-  attrFinderRegex: RegExp
-} {
+/** Matches `class` / `className` attrs, excluding Vue `:class` and Svelte `class:name`. */
+function getClassAttrRegex(attrName: string): RegExp {
   let cached = regexCache.get(attrName)
   if (!cached) {
-    cached = {
-      multipleClassRegex: new RegExp(
-        `(?<![:\\w])((?:${attrName}|class)=(?:(?:"[^"]*")|(?:{[^}]*})))`
-        + `(?:\\s+((?:${attrName}|class)=(?:(?:"[^"]*")|(?:{[^}]*}))))*`,
-        'g',
-      ),
-      attrFinderRegex: new RegExp(
-        `(?:${attrName}|class)=(?:(?:"([^"]*)")|(?:{([^}]*)}))`,
-        'g',
-      ),
-    }
+    cached = new RegExp(
+      `(?<![:\\w])(?:${attrName}|class)=(?:(?:"([^"]*)")|(?:{([^}]*)}))`,
+      'g',
+    )
     regexCache.set(attrName, cached)
   }
   return cached
 }
 
-/** Collapses repeated `class` / `className` attributes on one element (Vue or React). */
-export function mergeClassAttributes(code: string, attrName: string): string {
-  const { multipleClassRegex, attrFinderRegex } = getCompiledRegexes(attrName)
+interface ClassAttrMatch {
+  index: number
+  length: number
+  staticClass: string | undefined
+  jsx: string | undefined
+}
 
-  return code.replace(multipleClassRegex, (match) => {
-    attrFinderRegex.lastIndex = 0
-    const staticClasses: string[] = []
-    let jsxExpr: string | null = null
-    let isFunctionCall = false
+function collectMergedClassValue(
+  matches: ClassAttrMatch[],
+  attrName: string,
+): string {
+  const staticClasses: string[] = []
+  let jsxExpr: string | null = null
+  let isFunctionCall = false
 
-    let singleAttrMatch
-    while ((singleAttrMatch = attrFinderRegex.exec(match)) !== null) {
-      const staticClassValue = singleAttrMatch[1]
-      const potentialJsx = singleAttrMatch[2]
+  for (const match of matches) {
+    const staticClassValue = match.staticClass
+    const potentialJsx = match.jsx
 
-      if (staticClassValue?.trim()) {
-        staticClasses.push(staticClassValue.trim())
-      }
-      else if (potentialJsx) {
-        const currentJsx = potentialJsx.trim()
-        if (currentJsx) {
-          if (currentJsx.startsWith('`') && currentJsx.endsWith('`')) {
-            const literalContent = currentJsx.slice(1, -1).trim()
-            if (literalContent) {
-              staticClasses.push(literalContent)
-            }
+    if (staticClassValue?.trim()) {
+      staticClasses.push(staticClassValue.trim())
+    }
+    else if (potentialJsx) {
+      const currentJsx = potentialJsx.trim()
+      if (currentJsx) {
+        if (currentJsx.startsWith('`') && currentJsx.endsWith('`')) {
+          const literalContent = currentJsx.slice(1, -1).trim()
+          if (literalContent)
+            staticClasses.push(literalContent)
+        }
+        else {
+          const currentIsFunctionCall = /^[a-zA-Z_][\w.]*\(.*\)$/.test(currentJsx)
+
+          if (!jsxExpr || (currentIsFunctionCall && !isFunctionCall)) {
+            jsxExpr = currentJsx
+            isFunctionCall = currentIsFunctionCall
           }
-          else {
-            const currentIsFunctionCall = /^[a-zA-Z_][\w.]*\(.*\)$/.test(currentJsx)
-
-            if (!jsxExpr || (currentIsFunctionCall && !isFunctionCall)) {
-              jsxExpr = currentJsx
-              isFunctionCall = currentIsFunctionCall
-            }
-            else if (currentIsFunctionCall && isFunctionCall) {
-              jsxExpr = currentJsx
-            }
-            else if (!jsxExpr) {
-              jsxExpr = currentJsx
-              isFunctionCall = false
-            }
+          else if (currentIsFunctionCall && isFunctionCall) {
+            jsxExpr = currentJsx
+          }
+          else if (!jsxExpr) {
+            jsxExpr = currentJsx
+            isFunctionCall = false
           }
         }
       }
     }
+  }
 
-    const combinedStatic = staticClasses.join(' ').trim()
+  const combinedStatic = staticClasses.join(' ').trim()
 
-    if (jsxExpr) {
-      if (!combinedStatic)
-        return `${attrName}={${jsxExpr}}`
+  if (jsxExpr) {
+    if (!combinedStatic)
+      return `${attrName}={${jsxExpr}}`
 
-      return `${attrName}={\`${combinedStatic} \${${jsxExpr}}\`}`
-    }
-    if (combinedStatic)
-      return `${attrName}="${combinedStatic}"`
+    return `${attrName}={\`${combinedStatic} \${${jsxExpr}}\`}`
+  }
+  if (combinedStatic)
+    return `${attrName}="${combinedStatic}"`
 
-    if (process.env.NODE_ENV !== 'test') {
-      console.warn('No classes found in class attribute:', match)
-    }
-    return ''
-  })
+  return ''
+}
+
+/**
+ * Collapses repeated `class` / `className` attributes within a start tag,
+ * preserving intervening attrs (Vue `:class`, Svelte `class:name`, etc.).
+ */
+export function mergeClassAttributes(code: string, attrName: string): string {
+  const classAttrRegex = getClassAttrRegex(attrName)
+
+  return code.replace(
+    // Include `svelte:element`-style namespaced tags (`:` in the name).
+    /<([A-Za-z][\w.:-]*)(\s[^>]*?)(\s*\/?>)/g,
+    (full, tagName: string, attrs: string, end: string) => {
+      classAttrRegex.lastIndex = 0
+      const matches: ClassAttrMatch[] = []
+      let singleAttrMatch: RegExpExecArray | null
+      while ((singleAttrMatch = classAttrRegex.exec(attrs)) !== null) {
+        matches.push({
+          index: singleAttrMatch.index,
+          length: singleAttrMatch[0].length,
+          staticClass: singleAttrMatch[1],
+          jsx: singleAttrMatch[2],
+        })
+      }
+
+      if (matches.length < 2)
+        return full
+
+      const merged = collectMergedClassValue(matches, attrName)
+      let nextAttrs = attrs
+
+      // Remove trailing class attrs first so earlier indices stay valid.
+      for (let i = matches.length - 1; i >= 1; i--) {
+        const match = matches[i]!
+        let start = match.index
+        const stop = match.index + match.length
+        while (start > 0 && /\s/.test(nextAttrs.charAt(start - 1)))
+          start--
+        nextAttrs = nextAttrs.slice(0, start) + nextAttrs.slice(stop)
+      }
+
+      const first = matches[0]!
+      if (merged) {
+        nextAttrs
+          = nextAttrs.slice(0, first.index)
+            + merged
+            + nextAttrs.slice(first.index + first.length)
+      }
+      else {
+        let start = first.index
+        const stop = first.index + first.length
+        while (start > 0 && /\s/.test(nextAttrs.charAt(start - 1)))
+          start--
+        nextAttrs = nextAttrs.slice(0, start) + nextAttrs.slice(stop)
+        if (process.env.NODE_ENV !== 'test') {
+          console.warn('No classes found in class attribute:', attrs)
+        }
+      }
+
+      return `<${tagName}${nextAttrs}${end}`
+    },
+  )
 }
