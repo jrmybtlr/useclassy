@@ -12,7 +12,9 @@
     "deploy:cf": "wrangler --cwd .output deploy"
   },
   "dependencies": {
+    "@iconify-json/vscode-icons": "^1.2.67",
     "@nuxt/fonts": "^0.14.0",
+    "@nuxt/icon": "^2.3.1",
     "vue": "latest"
   },
   "devDependencies": {

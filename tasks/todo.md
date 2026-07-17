@@ -1,14 +1,13 @@
-# Svelte demo
-
-Add a simple Vite + Svelte demo under `demos/svelte`, mirroring `demos/react`.
+# Sync framework selection
 
 ## Plan
 
-- [ ] Create `demos/svelte` package (Vite, Svelte 5, Tailwind v4, useClassy)
-- [ ] App shows UseClassy `class:hover` / `class:md` plus a native Svelte `class:` directive
-- [ ] Install workspace deps and verify `dev`/`build`
-- [ ] Commit, push, update PR
+- [x] Lift shared framework state in `app.vue`
+- [x] Wire ClassExample via v-model; map blade ↔ laravel for init control
+- [x] Drive manual Vite `language:` from shared state
+- [x] Verify sync across hero / quick / manual
 
 ## Review
 
-_(pending)_
+- Shared `demoFormat` drives hero tabs, init CLI (blade↔laravel), and manual `language:`
+- Verified: Svelte hero → Svelte init + `language: 'svelte'`; Blade hero → Laravel init selected
