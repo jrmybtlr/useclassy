@@ -61,6 +61,8 @@ export default function useClassy(options: ClassyOptions = {}): PluginOption {
   let ignoredDirectories: string[] = []
   let allClassesSet: Set<string> = new Set()
   let isBuild = false
+  /** True when this plugin instance is attached to an SSR / server build. */
+  let isSSR = false
   let initialScanComplete = false
   let projectRoot = process.cwd()
   let manifestRoot = process.cwd()
@@ -118,6 +120,53 @@ export default function useClassy(options: ClassyOptions = {}): PluginOption {
   const { writeDirect, writeDebounced, resetCache } = createOutputFileWriter({
     onWrote: invalidateTailwindCssModules,
   })
+
+  /**
+   * Persist the in-memory class set to disk.
+   * Used after transforms complete (`renderStart` / `generateBundle`) so SSR
+   * builds — which never run `transformIndexHtml` — still get a fresh manifest
+   * before the first server render.
+   */
+  function flushManifest(reason: string): void {
+    if (allClassesSet.size === 0) {
+      if (debug)
+        console.log(`🎩 Skipping manifest flush (${reason}): no classes.`)
+      return
+    }
+
+    if (debug) {
+      console.log(
+        `🎩 Flushing manifest (${reason}${isSSR ? ', SSR' : ''}): ${allClassesSet.size} class(es).`,
+      )
+    }
+
+    writeDirect(
+      allClassesSet,
+      outputDir,
+      outputFileName,
+      manifestRoot,
+    )
+  }
+
+  /** Prefer an immediate write during builds so debounce cannot leave the file stale. */
+  function scheduleManifestWrite(): void {
+    if (isBuild) {
+      writeDirect(
+        allClassesSet,
+        outputDir,
+        outputFileName,
+        manifestRoot,
+      )
+      return
+    }
+
+    writeDebounced(
+      allClassesSet,
+      outputDir,
+      outputFileName,
+      manifestRoot,
+    )
+  }
 
   const transformCache: Map<string, string> = new Map()
   const fileClassMap: Map<string, Set<string>> = new Map()
@@ -213,6 +262,9 @@ export default function useClassy(options: ClassyOptions = {}): PluginOption {
 
     configResolved(config) {
       isBuild = config.command === 'build'
+      // Classic SSR builds set `build.ssr`. Vite Environment API (Nuxt / Vite 6+)
+      // exposes server builds via `consumer === 'server'` on the environment later.
+      isSSR = Boolean(config.build?.ssr)
       projectRoot = config.root
       manifestRoot = options.manifestRoot
         ? path.resolve(options.manifestRoot)
@@ -225,7 +277,8 @@ export default function useClassy(options: ClassyOptions = {}): PluginOption {
       }
 
       if (debug) {
-        console.log(`🎩 Running in ${isBuild ? 'build' : 'dev'} mode.`)
+        const mode = isBuild ? (isSSR ? 'SSR build' : 'build') : 'dev'
+        console.log(`🎩 Running in ${mode} mode.`)
       }
     },
 
@@ -327,12 +380,7 @@ export default function useClassy(options: ClassyOptions = {}): PluginOption {
       if (classesChanged) {
         if (debug)
           console.log('🎩 Classes changed, writing output file.')
-        writeDebounced(
-          allClassesSet,
-          outputDir,
-          outputFileName,
-          manifestRoot,
-        )
+        scheduleManifestWrite()
       }
 
       if (!initialScanComplete) {
@@ -366,23 +414,37 @@ export default function useClassy(options: ClassyOptions = {}): PluginOption {
         initialScanComplete = true
     },
 
-    buildEnd() {
+    /**
+     * All modules are transformed by `renderStart`. Flush here so SSR builds
+     * (which never invoke `transformIndexHtml`) write a complete manifest
+     * before Rollup emits output / the server renders.
+     */
+    renderStart() {
       if (!isBuild) return
 
-      if (allClassesSet.size === 0) {
-        if (debug)
-          console.log('🎩 Build ended, no classes found to write.')
-        return
+      // Vite Environment API: prefer live environment over configResolved snapshot.
+      const environment = (this as { environment?: { name?: string, config?: { consumer?: string } } }).environment
+      if (environment) {
+        isSSR = environment.name === 'ssr'
+          || environment.config?.consumer === 'server'
+          || isSSR
       }
 
-      if (debug)
-        console.log('🎩 Build ended, writing final output file.')
-      writeDirect(
-        allClassesSet,
-        outputDir,
-        outputFileName,
-        manifestRoot,
-      )
+      flushManifest('renderStart')
+    },
+
+    /**
+     * Final SSR-safe write during bundle generation. Content-deduped with
+     * `renderStart` / `buildEnd` so duplicate flushes are cheap no-ops.
+     */
+    generateBundle() {
+      if (!isBuild) return
+      flushManifest('generateBundle')
+    },
+
+    buildEnd() {
+      if (!isBuild) return
+      flushManifest('buildEnd')
     },
   }
 

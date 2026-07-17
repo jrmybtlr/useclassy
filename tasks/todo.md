@@ -1,41 +1,29 @@
-# Issue #36: Manifest written too late for Tailwind
+# SSR manifest robustness
 
-## Review summary
+## Problem
 
-**Valid bug** against published `vite-plugin-useclassy@3.1.0`.
+`manifestRoot` correctly places `.classy/` for Nuxt `srcDir`, but the plugin has no
+SSR-aware flush hook. `transformIndexHtml` is client-only, so SSR builds can finish
+transforms with a stale on-disk manifest before the first server render.
 
-Tailwind v4 reads `.classy/output.classy.html` via `@source` while CSS compiles.
-Published 3.1.0 only wrote that file in `buildEnd`, so the first cold `vite build`
-missed UseClassy variants (`md:h-40`). A second build worked because the first
-left a manifest behind.
+## Plan
 
-## Fix (this PR)
+- [x] Add shared `flushManifest` helper (write current `allClassesSet` via `writeDirect`)
+- [x] Call it from `renderStart` (post-transform, works for client + SSR)
+- [x] Call it from `generateBundle` (final SSR-safe write before emit)
+- [x] Track SSR via `config.build.ssr` / environment consumer for debug
+- [x] Prefer `writeDirect` over `writeDebounced` during builds (no debounce race)
+- [x] Tests for the new hooks
+- [x] Commit, push, open PR
 
-- [x] Run project/blade scan on `buildStart` in **dev and build**
-- [x] Pass instance `writeDirect` into early scan (triggers `onWrote`)
-- [x] Invalidate CSS modules after manifest writes in Dev (HMR)
-- [x] Allowlist the manifest in `.classy/.gitignore` so Oxide can read `@source`
-- [x] Use function-based Vite watch ignore for `.classy/` (avoid HTML full reload)
-- [x] Tests for early scan + CSS invalidation + gitignore allowlist
-- [x] Commit, push, open PR (#37)
+## Review
 
-## Verification
+**Fix:** After all module transforms, `renderStart` and `generateBundle` flush the
+class manifest to disk. These hooks run for SSR builds (unlike `transformIndexHtml`),
+so Nuxt / Vite SSR no longer relies on a client-only path for a fresh manifest.
 
-- Fresh `vite build` with empty `.classy/` includes variant classes in CSS (reproduced on react demo: `md:text-7xl`)
-- Published 3.1.0 still fails first build; local fix succeeds
-- Unit tests: 179 passed
-- CI checks green on PR head
+Also uses immediate writes during builds (`scheduleManifestWrite`) so a 200ms
+debounce cannot leave `.classy/output.classy.html` stale mid-build.
 
-## Review (post-implementation)
-
-Verified against reproduction matching issue #36:
-
-1. **Cold `vite build`** with empty `.classy/`: CSS includes `md:h-40` on the first run.
-2. **Dev HMR**: adding `class:hover="text-pink-500"` updates the manifest and the
-   Tailwind CSS (`?direct`) without a full page reload.
-3. Published 3.1.0 still writes only at `buildEnd` and fails the cold build.
-
-Root causes addressed:
-- Manifest was written too late for Tailwind's CSS pass → early `buildStart` scan.
-- Dev updates did not refresh Tailwind → `handleHotUpdate` + CSS invalidation.
-- Nested `.classy/.gitignore` of `*` blocked Oxide → allowlist the manifest file.
+**Verification:** 183 unit tests passed, including new coverage for SSR `renderStart`,
+`generateBundle`, and the dev-mode no-op.
