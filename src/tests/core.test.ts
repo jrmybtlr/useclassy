@@ -781,8 +781,8 @@ describe('core module', () => {
     it('should preserve native Svelte class directives', () => {
       const code = `<div
         class="base"
-        class:active={isActive}
         class:hover="text-blue-500"
+        class:active={isActive}
         class:disabled
       >Content</div>`
       const allClasses = new Set<string>()
