@@ -1,41 +1,42 @@
-# Issue #36: Manifest written too late for Tailwind
+# Feature: Dynamic/conditional variant syntax (JSX expressions)
 
-## Review summary
+## Goal
 
-**Valid bug** against published `vite-plugin-useclassy@3.1.0`.
+Support React JSX expression values on variant attributes, e.g.:
 
-Tailwind v4 reads `.classy/output.classy.html` via `@source` while CSS compiles.
-Published 3.1.0 only wrote that file in `buildEnd`, so the first cold `vite build`
-missed UseClassy variants (`md:h-40`). A second build worked because the first
-left a manifest behind.
+```tsx
+className:hover={isActive ? 'bg-blue-500' : 'bg-gray-200'}
+```
 
-## Fix (this PR)
+Today only quoted strings (`className:hover="..."`) are matched; expression forms are ignored.
 
-- [x] Run project/blade scan on `buildStart` in **dev and build**
-- [x] Pass instance `writeDirect` into early scan (triggers `onWrote`)
-- [x] Invalidate CSS modules after manifest writes in Dev (HMR)
-- [x] Allowlist the manifest in `.classy/.gitignore` so Oxide can read `@source`
-- [x] Use function-based Vite watch ignore for `.classy/` (avoid HTML full reload)
-- [x] Tests for early scan + CSS invalidation + gitignore allowlist
-- [x] Commit, push, open PR (#37)
+## Plan
 
-## Verification
+- [x] Branch `cursor/jsx-conditional-variants-1ea7`
+- [x] Add balanced-brace scanner + string-literal class prefixing in `src/core.ts`
+- [x] Extract modified classes from JSX expression modifiers into the Tailwind manifest
+- [x] Transform `className:mod={expr}` / `class:mod={expr}` → `className={prefixedExpr}`
+- [x] Ensure `mergeClassAttributes` handles nested `{}` in JSX values (needed after transform)
+- [x] Tests for extract + transform + merge + nested modifiers + edge cases
+- [x] Document React conditional usage in README
+- [x] Run unit tests; commit, push, open PR
 
-- Fresh `vite build` with empty `.classy/` includes variant classes in CSS (reproduced on react demo: `md:text-7xl`)
-- Published 3.1.0 still fails first build; local fix succeeds
-- Unit tests: 179 passed
-- CI checks green on PR head
+## Design notes
 
-## Review (post-implementation)
+- Keep zero new dependencies; extend the existing regex/scanner approach
+- Rewrite whitespace-separated tokens inside `'...'`, `"..."`, and static `` `...` `` literals
+- Leave template interpolations (`${...}`) untouched
+- Nested modifiers keep current behavior: full chain + partials (`sm:hover` → `sm:hover:X sm:X hover:X`)
+- Vue quoted `class:hover="..."` path unchanged
+- Expressions with no string literals are left unchanged
 
-Verified against reproduction matching issue #36:
+## Review
 
-1. **Cold `vite build`** with empty `.classy/`: CSS includes `md:h-40` on the first run.
-2. **Dev HMR**: adding `class:hover="text-pink-500"` updates the manifest and the
-   Tailwind CSS (`?direct`) without a full page reload.
-3. Published 3.1.0 still writes only at `buildEnd` and fails the cold build.
+Implemented in `src/core.ts`:
 
-Root causes addressed:
-- Manifest was written too late for Tailwind's CSS pass → early `buildStart` scan.
-- Dev updates did not refresh Tailwind → `handleHotUpdate` + CSS invalidation.
-- Nested `.classy/.gitignore` of `*` blocked Oxide → allowlist the manifest file.
+1. **`readBalancedJsxExpression`** — brace scanner that respects strings/templates/comments
+2. **`rewriteClassLiteralsInExpression`** — prefixes class tokens inside literals
+3. **`transformJsxExpressionModifiers`** — `className:hover={...}` → `className={...}`
+4. **`mergeClassAttributes`** — scanner-based merge; keeps multiple JSX exprs; nested `{}` safe
+
+Verification: **190** unit tests passed (11 new). README documents the syntax.

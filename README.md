@@ -6,6 +6,7 @@ UseClassy transforms Tailwind variant attributes (`class:hover="..."`) into stan
 
 - Transforms attributes like `class:hover="text-blue-500"` to standard `class="hover:text-blue-500"`.
 - Supports chaining modifiers like `class:dark:hover="text-blue-500"`.
+- Supports React conditional variants: `className:hover={isActive ? 'bg-blue-500' : 'bg-gray-200'}`.
 - Works seamlessly with React (`className`) and Vue/HTML (`class`).
 - Integrates with Vite's build process and dev server. No runtime overhead.
 - Smart Caching: Avoids reprocessing unchanged files during development.
@@ -91,6 +92,26 @@ export default {
   className="px-4 py-2 rounded bg-blue-600 text-white hover:bg-blue-700 hover:scale-105 focus:ring-2 focus:ring-blue-300 disabled:opacity-50 disabled:cursor-not-allowed dark:bg-sky-700 dark:hover:bg-sky-800"
 />
 ```
+
+### Conditional / dynamic variants
+
+JSX expression values work too — string literals inside the expression are prefixed with the variant:
+
+```tsx
+// Input
+<button
+  className="px-4 py-2 rounded"
+  className:hover={isActive ? 'bg-blue-500 text-white' : 'bg-gray-200'}
+  className:disabled={isDisabled && 'opacity-50 cursor-not-allowed'}
+/>
+
+// Output
+<button
+  className={`px-4 py-2 rounded ${isActive ? 'hover:bg-blue-500 hover:text-white' : 'hover:bg-gray-200'} ${isDisabled && 'disabled:opacity-50 disabled:cursor-not-allowed'}`}
+/>
+```
+
+Expressions without string literals (e.g. `className:hover={hoverClasses}`) are left unchanged so runtime variables are not corrupted. Prefer string literals in the expression (as above), or store already-prefixed class names in the variable.
 
 ## Vue / HTML Usage (`class`)
 
