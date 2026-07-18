@@ -28,6 +28,15 @@ export function isLaravelProject(): boolean {
   }
 }
 
+function isLaravelPackageInstalled(): boolean {
+  try {
+    return fs.existsSync(path.join(process.cwd(), 'vendor', 'useclassy', 'laravel'))
+  }
+  catch {
+    return false
+  }
+}
+
 export function setupLaravelServiceProvider(debug = false): boolean {
   if (!isLaravelProject()) {
     if (debug) console.log('ℹ️  Not a Laravel project - skipping Laravel setup')
@@ -36,12 +45,17 @@ export function setupLaravelServiceProvider(debug = false): boolean {
 
   if (debug) {
     console.log('🎩 Laravel project detected!')
-    console.log('📋 To enable UseClassy blade transformations:')
-    console.log('')
-    console.log('   composer require useclassy/laravel')
-    console.log('')
-    console.log('💡 The Vite plugin will handle class extraction for Tailwind JIT')
-    console.log('   The Composer package will handle blade template transformations')
+    if (isLaravelPackageInstalled()) {
+      console.log('🎩 useclassy/laravel package detected!')
+    }
+    else {
+      console.log('📋 To enable UseClassy blade transformations:')
+      console.log('')
+      console.log('   composer require useclassy/laravel')
+      console.log('')
+      console.log('💡 The Vite plugin will handle class extraction for Tailwind JIT')
+      console.log('   The Composer package will handle blade template transformations')
+    }
   }
 
   return true
