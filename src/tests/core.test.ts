@@ -727,6 +727,21 @@ describe('core module', () => {
       )
     })
 
+    it('should not merge class attributes inside HTML comments that contain >', () => {
+      const code = `<!-- note: x > y
+<div class="a" id="x" class="b">oops</div>
+-->
+<div class="c" class="d">real</div>`
+
+      const result = mergeClassAttributes(code, 'class')
+
+      expect(result).toContain(`<!-- note: x > y
+<div class="a" id="x" class="b">oops</div>
+-->`)
+      expect(result).toContain('<div class="c d">real</div>')
+      expect(result).not.toContain('class="a b"')
+    })
+
     it('should merge markup-like class attrs inside <script> string literals', () => {
       // Known limitation: merge walks the whole file, so HTML snippets in
       // <script> strings are rewritten the same as real markup.

@@ -388,15 +388,28 @@ export function mergeClassAttributes(code: string, attrName: string): string {
     result += code.slice(cursor, lt)
 
     const next = code.charAt(lt + 1)
-    // Skip closing tags, comments, and processing instructions.
+    // Skip closing tags, comments, CDATA, and processing instructions.
     if (next === '/' || next === '!' || next === '?' || next === '') {
-      const gt = code.indexOf('>', lt + 1)
-      if (gt === -1) {
+      let end = -1
+      if (next === '!' && code.startsWith('--', lt + 2)) {
+        // HTML comment: must end at `-->`, not the first `>` inside the body.
+        const close = code.indexOf('-->', lt + 4)
+        end = close === -1 ? -1 : close + 2
+      }
+      else if (next === '!' && code.startsWith('[CDATA[', lt + 2)) {
+        const close = code.indexOf(']]>', lt + 9)
+        end = close === -1 ? -1 : close + 2
+      }
+      else {
+        end = code.indexOf('>', lt + 1)
+      }
+
+      if (end === -1) {
         result += code.slice(lt)
         break
       }
-      result += code.slice(lt, gt + 1)
-      cursor = gt + 1
+      result += code.slice(lt, end + 1)
+      cursor = end + 1
       continue
     }
 

@@ -261,9 +261,6 @@ export function resetOutputFileCache(): void {
 }
 
 /**
- * Determine if a file should be processed
- */
-/**
  * Strip Vite query/hash (e.g. `?t=123`) so extension checks work during HMR.
  */
 export function stripViteQuery(id: string): string {
@@ -279,6 +276,9 @@ export function stripViteQuery(id: string): string {
   return id.slice(0, end)
 }
 
+/**
+ * Determine if a file should be processed by UseClassy.
+ */
 export function shouldProcessFile(
   filePath: string,
   ignoredDirectories: string[],
