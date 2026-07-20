@@ -716,6 +716,33 @@ describe('core module', () => {
       )
     })
 
+    it('should merge React className attributes separated by other attributes', () => {
+      const code
+        = '<div className="base" id="x" className="hover:text-blue-500">Content</div>'
+
+      const result = mergeClassAttributes(code, 'className')
+
+      expect(result).toBe(
+        '<div className="base hover:text-blue-500" id="x">Content</div>',
+      )
+    })
+
+    it('should merge markup-like class attrs inside <script> string literals', () => {
+      // Known limitation: merge walks the whole file, so HTML snippets in
+      // <script> strings are rewritten the same as real markup.
+      const code = `<script>
+  const html = '<div class="a" id="i" class="b">x</div>'
+</script>
+<div class="c" class="d">y</div>`
+
+      const result = mergeClassAttributes(code, 'class')
+
+      expect(result).toContain(
+        'const html = \'<div class="a b" id="i">x</div>\'',
+      )
+      expect(result).toContain('<div class="c d">y</div>')
+    })
+
     it('should merge class attributes when another attribute value contains >', () => {
       const code
         = '<div class="base" title="a>b" class="hover:text-blue-500">Content</div>'

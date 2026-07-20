@@ -396,7 +396,8 @@ export default function useClassy(options: ClassyOptions = {}): PluginOption {
   }
 
   function injectTailwindSourceIfNeeded(code: string, id: string): string | null {
-    if (!injectTailwindSource || !id.endsWith('.css'))
+    const cssPath = id.split('?', 1)[0]?.split('#', 1)[0] ?? id
+    if (!injectTailwindSource || !cssPath.endsWith('.css'))
       return null
     if (!/@import\s+["']tailwindcss["']/.test(code))
       return null
