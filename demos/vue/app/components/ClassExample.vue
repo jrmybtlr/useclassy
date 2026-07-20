@@ -7,20 +7,24 @@
         <button
           v-for="formatOption in formatOptions"
           :key="formatOption"
-          @click="toggleFormat(formatOption)"
-          class="px-3 py-3 cursor-pointer"
+          @click="format = formatOption"
+          class="inline-flex items-center gap-1.5 px-3 py-3 cursor-pointer"
           :class="
             format === formatOption
               ? 'border-b-2 border-blue-500 '
               : 'border-b-2 border-transparent text-zinc-400'
           "
         >
+          <Icon
+            :name="formatIcons[formatOption]"
+            class="size-4 shrink-0 grayscale opacity-70"
+          />
           {{ formatOption.charAt(0).toUpperCase() + formatOption.slice(1) }}
         </button>
       </div>
       <code>
         <div
-          v-for="(value, key, index) in examples"
+          v-for="(value, key) in examples"
           :key="key"
           class="transition-opacity duration-200 cursor-pointer"
           :class="{ 'opacity-30': hoveredSection && hoveredSection !== key }"
@@ -68,18 +72,24 @@
 <script setup lang="ts">
 import { ref } from "vue";
 
+export type DemoFormat = "vue" | "react" | "svelte" | "blade";
+
 interface Props {
   examples: Record<string, string>;
 }
 
 defineProps<Props>();
-const formatOptions = ["vue", "react", "blade"] as const;
-const hoveredSection = ref<string | null>(null);
-const format = ref<(typeof formatOptions)[number]>("vue");
 
-const toggleFormat = (newFormat: (typeof formatOptions)[number]) => {
-  format.value = newFormat;
+const format = defineModel<DemoFormat>("format", { default: "vue" });
+
+const formatOptions = ["vue", "react", "svelte", "blade"] as const;
+const formatIcons: Record<DemoFormat, string> = {
+  vue: "vscode-icons:file-type-vue",
+  react: "vscode-icons:file-type-reactjs",
+  svelte: "vscode-icons:file-type-svelte",
+  blade: "vscode-icons:file-type-blade",
 };
+const hoveredSection = ref<string | null>(null);
 
 const formatCombinedClasses = (key: string, value: string): string => {
   return value

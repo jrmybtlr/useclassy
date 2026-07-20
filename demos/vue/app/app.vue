@@ -39,7 +39,11 @@
           Make your Tailwind variants fast, simple, and much more readable.
         </p>
 
-        <ClassExample :examples="classExamples" class="mt-10" />
+        <ClassExample
+          v-model:format="demoFormat"
+          :examples="classExamples"
+          class="mt-10"
+        />
 
         <div class="mt-14 flex w-full flex-col items-center gap-2">
           <SegmentedControl
@@ -94,7 +98,7 @@
                   >{{ t.text }}</span>
                 </div>
                 <div
-                  v-if="initFramework === 'laravel'"
+                  v-if="demoFormat === 'blade'"
                   class="mt-2"
                 >
                   <span class="text-sky-300 pr-1.5">composer</span><span class="text-amber-400 pr-1.5">require</span><span class="text-emerald-400">useclassy/laravel</span>
@@ -121,7 +125,7 @@
                 <div class="ml-4">
                   <div class="ml-4">plugins: [</div>
                   <div class="ml-8 text-white">useClassy({</div>
-                  <div class="ml-12 text-white">language: 'vue',</div>
+                  <div class="ml-12 text-white">language: '{{ demoFormat }}',</div>
                   <div class="ml-8 text-white">}),</div>
                   <div class="ml-8">// ... other plugins</div>
                   <div class="ml-4">],</div>
@@ -194,6 +198,7 @@
 
 <script setup lang="ts">
 import { computed, ref } from "vue";
+import type { DemoFormat } from "./components/ClassExample.vue";
 
 const setupMode = ref<"quick" | "manual">("quick");
 
@@ -202,15 +207,28 @@ const setupModeOptions = [
   { value: "manual", label: "Manual" },
 ] as const;
 
+/** Shared across hero demo, init CLI, and manual Vite snippet. */
+const demoFormat = ref<DemoFormat>("vue");
+
 type InitFrameworkId = "vue" | "svelte" | "react" | "laravel";
 
-const initFramework = ref<InitFrameworkId>("vue");
+const initFramework = computed({
+  get: (): InitFrameworkId =>
+    demoFormat.value === "blade" ? "laravel" : demoFormat.value,
+  set: (value: InitFrameworkId) => {
+    demoFormat.value = value === "laravel" ? "blade" : value;
+  },
+});
 
-const initFrameworkOptions: { value: InitFrameworkId; label: string }[] = [
-  { value: "vue", label: "Vue" },
-  { value: "svelte", label: "Svelte" },
-  { value: "react", label: "React" },
-  { value: "laravel", label: "Laravel" },
+const initFrameworkOptions: {
+  value: InitFrameworkId;
+  label: string;
+  icon: string;
+}[] = [
+  { value: "vue", label: "Vue", icon: "vscode-icons:file-type-vue" },
+  { value: "svelte", label: "Svelte", icon: "vscode-icons:file-type-svelte" },
+  { value: "react", label: "React", icon: "vscode-icons:file-type-reactjs" },
+  { value: "laravel", label: "Laravel", icon: "vscode-icons:file-type-blade" },
 ];
 
 type CliToken = { text: string; class: string };
@@ -226,7 +244,7 @@ const npmInstallTokens: CliToken[] = [
 ];
 
 const quickInitTokens = computed((): CliToken[] => {
-  const fw = initFramework.value;
+  const format = demoFormat.value;
   const tokens: CliToken[] = [
     { text: "npx", class: "text-sky-300" },
     { text: " ", class: "text-zinc-600" },
@@ -234,22 +252,15 @@ const quickInitTokens = computed((): CliToken[] => {
     { text: " ", class: "text-zinc-600" },
     { text: "init", class: "text-zinc-100" },
   ];
-  if (fw === "react") {
-    tokens.push(
-      { text: " ", class: "text-zinc-600" },
-      { text: "--language", class: "text-amber-400" },
-      { text: " ", class: "text-zinc-600" },
-      { text: "react", class: "text-orange-300" },
-    );
+  if (format === "vue") {
+    return tokens;
   }
-  else if (fw === "laravel") {
-    tokens.push(
-      { text: " ", class: "text-zinc-600" },
-      { text: "--language", class: "text-amber-400" },
-      { text: " ", class: "text-zinc-600" },
-      { text: "blade", class: "text-orange-300" },
-    );
-  }
+  tokens.push(
+    { text: " ", class: "text-zinc-600" },
+    { text: "--language", class: "text-amber-400" },
+    { text: " ", class: "text-zinc-600" },
+    { text: format, class: "text-orange-300" },
+  );
   return tokens;
 });
 

@@ -7,7 +7,13 @@ const rootDir = path.dirname(fileURLToPath(import.meta.url))
 
 export default defineNuxtConfig({
 
-  modules: ['@nuxt/fonts', '@nuxthub/core'],
+  modules: ['@nuxt/fonts', '@nuxthub/core', '@nuxt/icon'],
+
+  icon: {
+    serverBundle: {
+      collections: ['vscode-icons'],
+    },
+  },
 
   devtools: {
     enabled: true,

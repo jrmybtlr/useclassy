@@ -261,7 +261,23 @@ export function resetOutputFileCache(): void {
 }
 
 /**
- * Determine if a file should be processed
+ * Strip Vite query/hash (e.g. `?t=123`) so extension checks work during HMR.
+ */
+export function stripViteQuery(id: string): string {
+  if (!id)
+    return ''
+  const queryIndex = id.indexOf('?')
+  const hashIndex = id.indexOf('#')
+  let end = id.length
+  if (queryIndex !== -1)
+    end = Math.min(end, queryIndex)
+  if (hashIndex !== -1)
+    end = Math.min(end, hashIndex)
+  return id.slice(0, end)
+}
+
+/**
+ * Determine if a file should be processed by UseClassy.
  */
 export function shouldProcessFile(
   filePath: string,
@@ -269,21 +285,38 @@ export function shouldProcessFile(
   outputDir: string,
   projectRoot = process.cwd(),
 ): boolean {
-  if (isInIgnoredDirectory(filePath, ignoredDirectories, projectRoot)) {
+  if (!filePath)
+    return false
+
+  // Skip non-source Vite sub-requests (raw assets, Svelte style/script parts).
+  const queryIndex = filePath.indexOf('?')
+  if (queryIndex !== -1) {
+    const query = filePath.slice(queryIndex + 1)
+    if (
+      /(?:^|&)(?:raw|url|worker|sharedworker)(?:&|=|$)/.test(query)
+      || /(?:^|&)type=(?:style|script|preprocessed)(?:&|=|$)/.test(query)
+    ) {
+      return false
+    }
+  }
+
+  const pathname = stripViteQuery(filePath)
+
+  if (isInIgnoredDirectory(pathname, ignoredDirectories, projectRoot)) {
     return false
   }
-  if (!SUPPORTED_FILES.some(ext => filePath?.endsWith(ext))) {
+  if (!SUPPORTED_FILES.some(ext => pathname.endsWith(ext))) {
     return false
   }
   const outputDirNormalized = path.normalize(outputDir)
   if (
-    filePath.includes('node_modules')
+    pathname.includes('node_modules')
     || filePath.includes('\0')
-    || (outputDir && filePath.includes(outputDirNormalized))
+    || (outputDir && pathname.includes(outputDirNormalized))
   ) {
     return false
   }
-  if (filePath.includes('virtual:') || filePath.includes('runtime')) {
+  if (pathname.includes('virtual:') || pathname.includes('runtime')) {
     return false
   }
   return true

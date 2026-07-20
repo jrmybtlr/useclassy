@@ -114,4 +114,11 @@ describe('mergeTailwindClassAttributes', () => {
     expect(out).toContain('className')
     expect(out).toContain('className:[\\w:-]*')
   })
+
+  it('uses vue-style patterns for svelte', () => {
+    const out = mergeTailwindClassAttributes(['class'], 'svelte')
+    expect(out).toContain('class')
+    expect(out).toContain('class:[\\w:-]*')
+    expect(out).not.toContain('className')
+  })
 })

@@ -18,7 +18,7 @@ export interface ClassyOptions {
    * Framework language to use for class attribute
    * @default "vue"
    */
-  language?: 'vue' | 'react' | 'blade'
+  language?: 'vue' | 'react' | 'blade' | 'svelte'
 
   /**
    * Directory to output the generated class file
