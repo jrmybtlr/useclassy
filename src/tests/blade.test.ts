@@ -130,6 +130,7 @@ describe('blade module', () => {
       ;(fs.existsSync as Mock)
         .mockReturnValueOnce(true) // artisan
         .mockReturnValueOnce(true) // app
+        .mockReturnValueOnce(false) // vendor/useclassy/laravel
 
       const result = setupLaravelServiceProvider(true)
 
@@ -141,6 +142,20 @@ describe('blade module', () => {
       expect(console.log).toHaveBeenCalledWith('')
       expect(console.log).toHaveBeenCalledWith('💡 The Vite plugin will handle class extraction for Tailwind JIT')
       expect(console.log).toHaveBeenCalledWith('   The Composer package will handle blade template transformations')
+    })
+
+    it('should not log setup instructions when the Laravel package is installed', () => {
+      ;(fs.existsSync as Mock)
+        .mockReturnValueOnce(true) // artisan
+        .mockReturnValueOnce(true) // app
+        .mockReturnValueOnce(true) // vendor/useclassy/laravel
+
+      const result = setupLaravelServiceProvider(true)
+
+      expect(result).toBe(true)
+      expect(console.log).toHaveBeenCalledWith('🎩 Laravel project detected!')
+      expect(console.log).toHaveBeenCalledWith('🎩 useclassy/laravel package detected!')
+      expect(console.log).not.toHaveBeenCalledWith('   composer require useclassy/laravel')
     })
 
     it('should not log when debug is false', () => {

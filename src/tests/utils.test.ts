@@ -9,6 +9,7 @@ import {
   writeOutputFileDirect,
   createOutputFileWriter,
   shouldProcessFile,
+  stripViteQuery,
 } from '../utils'
 
 // Mock fs and path modules
@@ -521,13 +522,52 @@ describe('utils module', () => {
     })
 
     it('should handle filePath with multiple dots', () => {
+      (path.relative as Mock).mockReturnValue('component.test.vue')
+
       const result = shouldProcessFile(
         'component.test.vue',
         ['node_modules'],
         '.classy',
       )
 
-      expect(result).toBe(false)
+      expect(result).toBe(true)
+    })
+
+    it('should process files when Vite appends an HMR timestamp query', () => {
+      (path.relative as Mock).mockReturnValue('src/App.svelte')
+
+      const result = shouldProcessFile(
+        '/project/src/App.svelte?t=123456',
+        ['node_modules'],
+        '.classy',
+      )
+
+      expect(result).toBe(true)
+    })
+
+    it('should skip Svelte style/script sub-requests even with a matching extension', () => {
+      const style = shouldProcessFile(
+        '/project/src/App.svelte?svelte&type=style',
+        ['node_modules'],
+        '.classy',
+      )
+      const raw = shouldProcessFile(
+        '/project/src/App.svelte?raw',
+        ['node_modules'],
+        '.classy',
+      )
+
+      expect(style).toBe(false)
+      expect(raw).toBe(false)
+    })
+  })
+
+  describe('stripViteQuery', () => {
+    it('should strip query and hash suffixes', () => {
+      expect(stripViteQuery('/src/App.svelte?t=1')).toBe('/src/App.svelte')
+      expect(stripViteQuery('/src/App.svelte#hash')).toBe('/src/App.svelte')
+      expect(stripViteQuery('/src/main.css?v=2#x')).toBe('/src/main.css')
+      expect(stripViteQuery('')).toBe('')
     })
   })
 })

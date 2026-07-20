@@ -19,25 +19,26 @@ And transforms them into:
 <div class="hover:text-blue-500 sm:hover:text-blue-500">
 ```
 
-This works with both Vue (`class`) and React (`className`) syntax.
+ This works with Vue (`class`), React (`className`), and Svelte (`class`) syntax.
 
 ## Key Components
 
 1. **File Processing**
-   - Processes `.vue`, `.ts`, `.tsx`, `.js`, `.jsx`, `.html`, and `.blade.php` files
-   - Skips `node_modules`, virtual files, and runtime files
-   - Respects `.gitignore` patterns
+ - Processes `.vue`, `.svelte`, `.ts`, `.tsx`, `.js`, `.jsx`, `.html`, and `.blade.php` files
+ - Skips `node_modules`, virtual files, and runtime files
+ - Respects `.gitignore` patterns
 
 2. **Class Transformations**
-   - Handles state modifiers (hover, focus, active, etc.)
-   - Supports responsive modifiers (sm, md, lg, xl, 2xl)
-   - Combines multiple class attributes
-   - Works with nested modifiers (e.g., `sm:hover`, `lg:focus`)
+ - Handles state modifiers (hover, focus, active, etc.)
+ - Supports responsive modifiers (sm, md, lg, xl, 2xl)
+ - Combines multiple class attributes
+ - Works with nested modifiers (e.g., `sm:hover`, `lg:focus`)
 
 3. **Framework Support**
-   - Vue: Uses `class` attribute
-   - React: Uses `className` attribute
-   - Automatically detects framework based on file extension
+ - Vue: Uses `class` attribute
+ - React: Uses `className` attribute
+ - Svelte: Uses `class` attribute (quoted UseClassy modifiers only; preserves native `class:name={cond}`)
+ - Language is selected via the `language` plugin option
 
 ## Usage Example
 

@@ -6,7 +6,7 @@ UseClassy transforms Tailwind variant attributes (`class:hover="..."`) into stan
 
 - Transforms attributes like `class:hover="text-blue-500"` to standard `class="hover:text-blue-500"`.
 - Supports chaining modifiers like `class:dark:hover="text-blue-500"`.
-- Works seamlessly with React (`className`) and Vue/HTML (`class`).
+- Works seamlessly with React (`className`), Vue/HTML (`class`), and Svelte (`class`).
 - Integrates with Vite's build process and dev server. No runtime overhead.
 - Smart Caching: Avoids reprocessing unchanged files during development.
 - Runs before Tailwind JIT compiler with HMR and TailwindMerge support.
@@ -24,7 +24,7 @@ yarn add vite-plugin-useclassy -D
 pnpm add vite-plugin-useclassy -D
 ```
 
-When using the React helpers (`vite-plugin-useclassy/react`), install **React 18 or 19** (`react` satisfies `^18.0.0 || ^19.0.0`). The Vite plugin alone does not require React for Vue or Blade projects.
+When using the React helpers (`vite-plugin-useclassy/react`), install **React 18 or 19** (`react` satisfies `^18.0.0 || ^19.0.0`). The Vite plugin alone does not require React for Vue, Svelte, or Blade projects.
 
 ## Quick setup (recommended)
 
@@ -39,6 +39,9 @@ Options:
 ```bash
 # React: include className:* IntelliSense patterns
 npx vite-plugin-useclassy init --language react
+
+# Svelte
+npx vite-plugin-useclassy init --language svelte
 ```
 
 Add **`--dry-run`** to any init command to print the planned file changes without modifying your repo (for example `npx vite-plugin-useclassy init --language react --dry-run`).
@@ -56,7 +59,7 @@ import useClassy from "vite-plugin-useclassy";
 export default {
   plugins: [
     useClassy({
-      language: "react", // or 'vue' or 'blade'
+      language: "react", // or 'vue', 'blade', or 'svelte'
 
       // Optional: Customize the output directory. Defaults to '.classy'.
       // outputDir: '.classy',
@@ -110,6 +113,37 @@ export default {
   />
 </template>
 ```
+
+## Svelte Usage (`class`)
+
+Set `language: "svelte"` so the plugin uses Svelte-aware regexes. Place `useClassy` **before** `@sveltejs/vite-plugin-svelte` so UseClassy modifiers are rewritten before the Svelte compiler sees them.
+
+```ts
+useClassy({
+  language: "svelte",
+});
+```
+
+```svelte
+<button
+  class="px-4 py-2 rounded bg-blue-600 text-white"
+  class:hover="bg-blue-700 scale-105"
+  class:focus="ring-2 ring-blue-300"
+  class:active={isActive}
+>
+  Click
+</button>
+
+<!-- Output -->
+<button
+  class="px-4 py-2 rounded bg-blue-600 text-white hover:bg-blue-700 hover:scale-105 focus:ring-2 focus:ring-blue-300"
+  class:active={isActive}
+>
+  Click
+</button>
+```
+
+Quoted UseClassy modifiers (`class:hover="..."`) are transformed. Native Svelte class directives (`class:active={isActive}` or shorthand `class:active`) are left unchanged.
 
 ## Laravel Blade Usage
 
@@ -233,7 +267,7 @@ Use this prompt in your editor agent when you want a one-shot manual setup (for 
 **Prompt — “Set up UseClassy in this repo”**
 
 1. Install dev dependency: `vite-plugin-useclassy` (use the repo’s package manager: npm, pnpm, or yarn).
-2. Open `vite.config.*`. Add `import useClassy from 'vite-plugin-useclassy'`. In `plugins`, insert `useClassy({ language: '<vue|react|blade>' })` **before** `@tailwindcss/vite` or other CSS pipeline plugins so it runs early.
+2. Open `vite.config.*`. Add `import useClassy from 'vite-plugin-useclassy'`. In `plugins`, insert `useClassy({ language: '<vue|react|blade|svelte>' })` **before** `@tailwindcss/vite` or other CSS pipeline plugins so it runs early.
 3. **Tailwind v4** (project uses `@import "tailwindcss"` and typically `@tailwindcss/vite`): In the main CSS entry that imports Tailwind, add an `@source` line pointing at the generated manifest. Default manifest path is `.classy/output.classy.html` from the project root; the `@source` path must be **relative to that CSS file**. If `useClassy` uses custom `outputDir` / `outputFileName`, use those instead.
 4. **Tailwind v3** (`tailwind.config.*`): Add `".classy/output.classy.html"` (or `./.classy/output.classy.html` as appropriate) to the `content` array without removing existing entries.
 5. **VS Code**: In `.vscode/settings.json` (merge, do not wipe), set or extend `tailwindCSS.classAttributes` to include `"class:[\\w:-]*"`. For React, also add `"className:[\\w:-]*"`.

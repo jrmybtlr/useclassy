@@ -13,7 +13,7 @@ Usage:
   npx vite-plugin-useclassy init [options]
 
 Options:
-  --language <vue|react|blade>   Framework language for useClassy (default: vue)
+  --language <vue|react|blade|svelte>   Framework language for useClassy (default: vue)
   --dry-run                        Print actions without writing files
   -h, --help                       Show this message
 `)
