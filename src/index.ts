@@ -65,6 +65,14 @@ export default function useClassy(options: ClassyOptions = {}): PluginOption {
   let isBuild = false
   /** True when this plugin instance is attached to an SSR / server build. */
   let isSSR = false
+  /**
+   * Vite Environment API server consumer (`consumer === 'server'` / `name === 'ssr'`).
+   * Distinct from classic `build.ssr`: in dual client+SSR environments only the
+   * client instance should write the shared manifest, or a smaller SSR set can
+   * overwrite classes the client already flushed. Classic `vite build --ssr`
+   * alone still writes (no Environment API server consumer).
+   */
+  let isEnvironmentServer = false
   let initialScanComplete = false
   let projectRoot = process.cwd()
   let manifestRoot = process.cwd()
@@ -124,13 +132,71 @@ export default function useClassy(options: ClassyOptions = {}): PluginOption {
     onWrote: invalidateTailwindCssModules,
   })
 
+  type EnvironmentLike = {
+    name?: string
+    config?: { consumer?: string }
+  }
+
+  function detectEnvironmentServer(
+    config?: { build?: { ssr?: boolean | string }, consumer?: string },
+    environment?: EnvironmentLike,
+  ): boolean {
+    if (environment?.name === 'ssr' || environment?.config?.consumer === 'server')
+      return true
+    // Vite Environment API sets `consumer` on the resolved environment config.
+    if (config?.consumer === 'server')
+      return true
+    return false
+  }
+
+  function syncEnvironmentFlags(
+    config?: { build?: { ssr?: boolean | string }, consumer?: string },
+    environment?: EnvironmentLike,
+  ): void {
+    const envServer = detectEnvironmentServer(config, environment)
+    if (config)
+      isSSR = Boolean(config.build?.ssr) || envServer
+    else if (envServer)
+      isSSR = true
+
+    if (envServer)
+      isEnvironmentServer = true
+  }
+
+  /**
+   * Write the class manifest unless this instance is the Environment API server
+   * side of a dual client+SSR setup (would shrink a shared manifest).
+   * Signature matches `writeDirect` so it can be passed to scan helpers.
+   */
+  function writeManifest(
+    classes: Set<string> = allClassesSet,
+    dir: string = outputDir,
+    fileName: string = outputFileName,
+    root: string = manifestRoot,
+  ): boolean {
+    if (isEnvironmentServer) {
+      if (debug)
+        console.log('🎩 Skipping manifest write (Vite server environment).')
+      return false
+    }
+
+    return writeDirect(classes, dir, fileName, root)
+  }
+
   /**
    * Persist the in-memory class set to disk.
-   * Used after transforms complete (`renderStart` / `generateBundle`) so SSR
-   * builds — which never run `transformIndexHtml` — still get a fresh manifest
-   * before the first server render.
+   * Used after transforms complete (`renderStart` / `generateBundle`) so builds
+   * still get a fresh manifest before emit / first server render.
+   * Skipped for Environment API server instances — the client instance owns the
+   * shared manifest file.
    */
   function flushManifest(reason: string): void {
+    if (isEnvironmentServer) {
+      if (debug)
+        console.log(`🎩 Skipping manifest flush (${reason}): server environment.`)
+      return
+    }
+
     if (allClassesSet.size === 0) {
       if (debug)
         console.log(`🎩 Skipping manifest flush (${reason}): no classes.`)
@@ -143,21 +209,17 @@ export default function useClassy(options: ClassyOptions = {}): PluginOption {
       )
     }
 
-    writeDirect(
-      allClassesSet,
-      outputDir,
-      outputFileName,
-      manifestRoot,
-    )
+    writeManifest()
   }
 
   /**
    * Schedule a manifest write after classes change during transform.
    * Builds skip here — `renderStart` / `generateBundle` / `buildEnd` flush
    * once after all modules are processed, avoiding per-module sync rewrites.
+   * Environment API server instances never write (client owns the file).
    */
   function scheduleManifestWrite(): void {
-    if (isBuild)
+    if (isBuild || isEnvironmentServer)
       return
 
     writeDebounced(
@@ -231,7 +293,7 @@ export default function useClassy(options: ClassyOptions = {}): PluginOption {
       outputFileName,
       manifestRoot,
       debug,
-      writeDirect,
+      writeManifest,
     )
   }
 
@@ -245,7 +307,7 @@ export default function useClassy(options: ClassyOptions = {}): PluginOption {
       outputFileName,
       debug,
       manifestRoot,
-      writeDirect,
+      writeManifest,
     )
   }
 
@@ -268,9 +330,10 @@ export default function useClassy(options: ClassyOptions = {}): PluginOption {
 
     configResolved(config) {
       isBuild = config.command === 'build'
-      // Classic SSR builds set `build.ssr`. Vite Environment API (Nuxt / Vite 6+)
-      // exposes server builds via `consumer === 'server'` on the environment later.
-      isSSR = Boolean(config.build?.ssr)
+      // Classic SSR: `build.ssr`. Vite Environment API (Nuxt / Vite 6+):
+      // `consumer === 'server'` — that path skips manifest writes so a dual
+      // client+SSR setup cannot shrink the shared file.
+      syncEnvironmentFlags(config as { build?: { ssr?: boolean | string }, consumer?: string })
       projectRoot = config.root
       manifestRoot = options.manifestRoot
         ? path.resolve(options.manifestRoot)
@@ -283,7 +346,9 @@ export default function useClassy(options: ClassyOptions = {}): PluginOption {
       }
 
       if (debug) {
-        const mode = isBuild ? (isSSR ? 'SSR build' : 'build') : 'dev'
+        const mode = isBuild
+          ? (isEnvironmentServer ? 'server environment build' : isSSR ? 'SSR build' : 'build')
+          : 'dev'
         console.log(`🎩 Running in ${mode} mode.`)
       }
     },
@@ -308,19 +373,18 @@ export default function useClassy(options: ClassyOptions = {}): PluginOption {
           outputFileName,
           debug,
           manifestRoot,
-          writeDebounced,
+          (...args: Parameters<typeof writeDebounced>) => {
+            if (isEnvironmentServer)
+              return
+            writeDebounced(...args)
+          },
         )
       }
 
       server.httpServer?.once('listening', () => {
         if (initialScanComplete && allClassesSet.size > 0) {
           if (debug) console.log('🎩 Initial write on server ready.')
-          writeDirect(
-            allClassesSet,
-            outputDir,
-            outputFileName,
-            manifestRoot,
-          )
+          writeManifest()
         }
       })
     },
@@ -384,8 +448,13 @@ export default function useClassy(options: ClassyOptions = {}): PluginOption {
       const classesChanged = applyFileClasses(id, fileSpecificClasses)
 
       if (classesChanged) {
-        if (debug)
-          console.log('🎩 Classes changed, writing output file.')
+        if (debug) {
+          console.log(
+            isBuild || isEnvironmentServer
+              ? '🎩 Classes changed (manifest write deferred).'
+              : '🎩 Classes changed, writing output file.',
+          )
+        }
         scheduleManifestWrite()
       }
 
@@ -401,6 +470,12 @@ export default function useClassy(options: ClassyOptions = {}): PluginOption {
     },
 
     buildStart() {
+      // Environment API: `this.environment` is available here even when
+      // `config.build.ssr` was unset in configResolved.
+      const environment = (this as { environment?: EnvironmentLike }).environment
+      if (environment)
+        syncEnvironmentFlags(undefined, environment)
+
       if (debug) console.log('🎩 Build starting, resetting state.')
       allClassesSet = new Set()
       classRefCounts.clear()
@@ -421,20 +496,17 @@ export default function useClassy(options: ClassyOptions = {}): PluginOption {
     },
 
     /**
-     * All modules are transformed by `renderStart`. Flush here so SSR builds
-     * (which never invoke `transformIndexHtml`) write a complete manifest
-     * before Rollup emits output / the server renders.
+     * All modules are transformed by the end of the build phase. Flush here so
+     * builds write a complete manifest before Rollup emits output.
+     * Environment API server instances skip — client owns the shared file.
      */
     renderStart() {
       if (!isBuild) return
 
       // Vite Environment API: prefer live environment over configResolved snapshot.
-      const environment = (this as { environment?: { name?: string, config?: { consumer?: string } } }).environment
-      if (environment) {
-        isSSR = environment.name === 'ssr'
-          || environment.config?.consumer === 'server'
-          || isSSR
-      }
+      const environment = (this as { environment?: EnvironmentLike }).environment
+      if (environment)
+        syncEnvironmentFlags(undefined, environment)
 
       flushManifest('renderStart')
     },
@@ -491,12 +563,7 @@ export default function useClassy(options: ClassyOptions = {}): PluginOption {
           console.log(
             '🎩 Manual output generation requested via HTTP endpoint.',
           )
-        writeDirect(
-          allClassesSet,
-          outputDir,
-          outputFileName,
-          manifestRoot,
-        )
+        writeManifest()
         res.statusCode = 200
         res.end(`Output file generated (${allClassesSet.size} classes)`)
       },
