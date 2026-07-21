@@ -111,6 +111,8 @@ vi.doMock('../core', () => ({
   CLASS_MODIFIER_REGEX: /(?<![:\w])class:([\w-:]+)="([^"]*)"/g,
   REACT_CLASS_REGEX: /(?<![:\w])className=(?:"([^"]*)"|{([^}]*)})(?![^>]*:)/g,
   REACT_CLASS_MODIFIER_REGEX: /(?<![:\w])(?:className|class):([\w-:]+)="([^"]*)"/g,
+  SVELTE_CLASS_REGEX: /(?<![:\w])class=(?:"([^"]*)"|{([^}]*)})/g,
+  SVELTE_CLASS_MODIFIER_REGEX: /(?<![:\w])class:([\w-:]+)="([^"]*)"/g,
   generateCacheKey: vi.fn(() => 'mock-cache-key'),
   extractClasses: vi.fn((_code, generatedClassesSet, modifierDerivedClassesSet) => {
     // Mock the behavior of extractClasses
@@ -1376,6 +1378,19 @@ describe('useClassy plugin', () => {
 
       const result = await transform.call(mockContext, input, 'test.jsx')
       expect(result).toBeDefined()
+    })
+
+    it('should use Svelte regex for Svelte language', async () => {
+      const plugin = useClassy({ language: 'svelte' }) as Plugin
+      const transform = plugin.transform as (code: string, id: string) => Promise<{ code: string }>
+
+      const mockContext = { addWatchFile: vi.fn() }
+      const input = `<div class="base" class:hover="text-blue-500">Test</div>`
+
+      const result = await transform.call(mockContext, input, 'test.svelte')
+      expect(result).toBeDefined()
+      const transformedCode = (result as { code: string }).code
+      expect(transformedCode).toContain('hover:text-blue-500')
     })
   })
 

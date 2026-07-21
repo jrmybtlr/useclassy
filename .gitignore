@@ -30,3 +30,4 @@ node_modules/.pnpm/@babel+compat-data@7.26.8/node_modules/@babel/compat-data/plu
 coverage/*
 demos/vue/.data
 wrangler.json
+tasks/todo.md

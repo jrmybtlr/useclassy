@@ -9,7 +9,7 @@
       :key="opt.value"
       type="button"
       role="tab"
-      class="min-w-0 flex-1 px-2 py-4 text-center text-sm font-medium transition-colors focus-visible:relative focus-visible:z-10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/25 sm:px-4"
+      class="min-w-0 flex-1 inline-flex items-center justify-center gap-1.5 px-2 py-4 text-center text-sm font-medium transition-colors focus-visible:relative focus-visible:z-10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/25 sm:px-4"
       :class="
         modelValue === opt.value
           ? 'bg-white text-zinc-950'
@@ -18,6 +18,12 @@
       :aria-selected="modelValue === opt.value"
       @click="emit('update:modelValue', opt.value)"
     >
+      <Icon
+        v-if="opt.icon"
+        :name="opt.icon"
+        class="size-4 shrink-0 grayscale opacity-70"
+        :class="modelValue === opt.value ? 'opacity-90' : ''"
+      />
       {{ opt.label }}
     </button>
   </div>
@@ -26,7 +32,7 @@
 <script setup lang="ts">
 defineProps<{
   modelValue: string
-  options: readonly { value: string; label: string }[]
+  options: readonly { value: string; label: string; icon?: string }[]
   ariaLabel: string
 }>()
 

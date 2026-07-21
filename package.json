@@ -23,7 +23,8 @@
     "vue",
     "nuxt",
     "react",
-    "next"
+    "next",
+    "svelte"
   ],
   "engines": {
     "node": ">=22"
