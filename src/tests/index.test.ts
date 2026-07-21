@@ -34,6 +34,9 @@ vi.mock('path', () => ({
 }))
 
 // Mock utils module
+// NOTE: `vi.doMock` is not applied to the static `../index` import (ESM hoisting).
+// The plugin closes over the real `createOutputFileWriter`; assert writes via `fs`
+// (see scanProjectFiles tests which spy `importActual` for the same reason).
 vi.doMock('../utils', () => {
   const writeOutputFileDirect = vi.fn(() => true)
   const writeOutputFileDebounced = vi.fn()
@@ -623,6 +626,8 @@ describe('useClassy plugin', () => {
     })
 
     it('should flush the manifest on renderStart during SSR builds', async () => {
+      // Plugin uses real createOutputFileWriter (doMock does not replace the
+      // static index import); observe the write through the mocked fs module.
       const fs = await import('fs')
       const writeSpy = vi.spyOn(fs.default, 'writeFileSync').mockImplementation(() => undefined)
       const renameSpy = vi.spyOn(fs.default, 'renameSync').mockImplementation(() => undefined)
@@ -710,13 +715,16 @@ describe('useClassy plugin', () => {
 
       writeSpy.mockClear()
 
+      // Rollup/Vite signature: generateBundle(outputOptions, bundle, isWrite)
       if (typeof plugin.generateBundle === 'function') {
-        await plugin.generateBundle.call(
-          {} as never,
-          {} as never,
-          {} as never,
-          false,
-        )
+        const generateBundle = plugin.generateBundle as (
+          this: unknown,
+          outputOptions: object,
+          bundle: object,
+          isWrite?: boolean,
+        ) => void | Promise<void>
+
+        await generateBundle.call({}, {}, {}, false)
       }
 
       expect(
@@ -750,6 +758,50 @@ describe('useClassy plugin', () => {
         await plugin.renderStart.call({} as never)
       }
 
+      expect(
+        writeSpy.mock.calls.some(([filePath]) =>
+          String(filePath).includes('output.classy.html'),
+        ),
+      ).toBe(false)
+
+      writeSpy.mockRestore()
+    })
+
+    it('should not write the manifest from transform during builds', async () => {
+      const fs = await import('fs')
+      const writeSpy = vi.spyOn(fs.default, 'writeFileSync').mockImplementation(() => undefined)
+      ;(fs.default.existsSync as unknown as ReturnType<typeof vi.fn>).mockReturnValue(false)
+      ;(fs.default.mkdirSync as unknown as ReturnType<typeof vi.fn>).mockImplementation(() => undefined)
+      vi.spyOn(fs.default, 'renameSync').mockImplementation(() => undefined)
+
+      const plugin = useClassy({
+        debug: true,
+        manifestRoot: '/project',
+      }) as Plugin
+
+      if (plugin.configResolved) {
+        await plugin.configResolved({
+          command: 'build',
+          root: '/project',
+          build: { ssr: true },
+        } as never)
+      }
+
+      writeSpy.mockClear()
+
+      const transform = plugin.transform as (
+        this: { addWatchFile: (id: string) => void },
+        code: string,
+        id: string,
+      ) => { code: string } | null
+
+      transform.call(
+        { addWatchFile: vi.fn() },
+        '<div class="base" class:hover="text-red-500">x</div>',
+        '/project/Component.vue',
+      )
+
+      // Builds defer writes to renderStart / generateBundle / buildEnd.
       expect(
         writeSpy.mock.calls.some(([filePath]) =>
           String(filePath).includes('output.classy.html'),

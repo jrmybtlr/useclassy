@@ -151,17 +151,14 @@ export default function useClassy(options: ClassyOptions = {}): PluginOption {
     )
   }
 
-  /** Prefer an immediate write during builds so debounce cannot leave the file stale. */
+  /**
+   * Schedule a manifest write after classes change during transform.
+   * Builds skip here — `renderStart` / `generateBundle` / `buildEnd` flush
+   * once after all modules are processed, avoiding per-module sync rewrites.
+   */
   function scheduleManifestWrite(): void {
-    if (isBuild) {
-      writeDirect(
-        allClassesSet,
-        outputDir,
-        outputFileName,
-        manifestRoot,
-      )
+    if (isBuild)
       return
-    }
 
     writeDebounced(
       allClassesSet,
