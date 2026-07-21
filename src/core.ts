@@ -23,8 +23,8 @@ export const REACT_CLASS_REGEX = /(?<![:\w])className=(?:"([^"]*)"|{([^}]*)})(?!
 export const REACT_CLASS_MODIFIER_REGEX
   = /(?<![:\w])(?:className|class):([\w-:]+)="([^"]*)"/g
 
-/** Start of a JSX expression modifier: `className:hover={` or `class:sm:hover={` */
-const JSX_MODIFIER_START_REGEX = /(?<![:\w])(?:className|class):([\w-:]+)=\{/g
+/** Start of a JSX expression modifier: `className:hover={` or `class:sm:hover = {` */
+const JSX_MODIFIER_START_REGEX = /(?<![:\w])(?:className|class):([\w-:]+)\s*=\s*\{/g
 
 /**
  * Svelte `class` regexes.
@@ -206,9 +206,55 @@ function buildModifiedClasses(
 }
 
 /**
+ * True when a string/template literal is a comparison operand or method receiver
+ * (e.g. `status === 'active'`, `'x'.includes(y)`), not a class list to prefix.
+ */
+function isNonClassStringLiteral(
+  expr: string,
+  literalStart: number,
+  literalEndExclusive: number,
+): boolean {
+  let before = literalStart - 1
+  while (before >= 0 && /\s/.test(expr.charAt(before)))
+    before--
+
+  if (before >= 0) {
+    if (
+      (before >= 2 && expr.slice(before - 2, before + 1) === '===')
+      || (before >= 2 && expr.slice(before - 2, before + 1) === '!==')
+      || (before >= 1 && expr.slice(before - 1, before + 1) === '==')
+      || (before >= 1 && expr.slice(before - 1, before + 1) === '!=')
+    ) {
+      return true
+    }
+  }
+
+  let after = literalEndExclusive
+  while (after < expr.length && /\s/.test(expr.charAt(after)))
+    after++
+
+  if (after < expr.length) {
+    if (
+      expr.startsWith('===', after)
+      || expr.startsWith('!==', after)
+      || expr.startsWith('==', after)
+      || expr.startsWith('!=', after)
+      || expr.charAt(after) === '.'
+    ) {
+      return true
+    }
+  }
+
+  return false
+}
+
+/**
  * Rewrites class string/template literals inside a JSX expression so each token
  * receives the variant prefix (e.g. `hover:`). Returns null when no literals
  * were rewritten — callers should leave the original attribute unchanged.
+ *
+ * Comparison operands and string method receivers are left untouched so
+ * `status === 'active' ? 'bg-a' : 'bg-b'` does not become `'hover:active'`.
  */
 function rewriteClassLiteralsInExpression(
   expr: string,
@@ -236,6 +282,31 @@ function rewriteClassLiteralsInExpression(
 
   while (i < expr.length) {
     const ch = expr[i]
+    const next = expr[i + 1]
+
+    // Skip comments so quotes inside them are not treated as class literals.
+    if (ch === '/' && next === '/') {
+      const start = i
+      i += 2
+      while (i < expr.length && expr[i] !== '\n')
+        i++
+      result += expr.slice(start, i)
+      continue
+    }
+
+    if (ch === '/' && next === '*') {
+      const start = i
+      i += 2
+      while (i < expr.length) {
+        if (expr[i] === '*' && expr[i + 1] === '/') {
+          i += 2
+          break
+        }
+        i++
+      }
+      result += expr.slice(start, i)
+      continue
+    }
 
     if (ch === '"' || ch === '\'') {
       const quote = ch
@@ -256,53 +327,88 @@ function rewriteClassLiteralsInExpression(
         result += expr.slice(i)
         break
       }
-      result += quote + emitModified(content) + quote
-      i = j + 1
+      const endExclusive = j + 1
+      const nextContent = isNonClassStringLiteral(expr, i, endExclusive)
+        ? content
+        : emitModified(content)
+      result += quote + nextContent + quote
+      i = endExclusive
       continue
     }
 
     if (ch === '`') {
       let j = i + 1
-      let staticPart = ''
-      let rebuilt = '`'
       let templateClosed = false
 
+      // Locate the closing backtick first so comparison/method templates
+      // can be skipped without emitting prefixed classes.
       while (j < expr.length) {
         if (expr[j] === '\\' && j + 1 < expr.length) {
-          staticPart += expr[j] + expr[j + 1]
           j += 2
           continue
         }
         if (expr[j] === '`') {
-          if (staticPart)
-            rebuilt += emitModified(staticPart)
-          rebuilt += '`'
           templateClosed = true
           j++
           break
         }
         if (expr[j] === '$' && expr[j + 1] === '{') {
+          const nested = readBalancedJsxExpression(expr, j + 1)
+          if (!nested) {
+            j = expr.length
+            break
+          }
+          j = nested.endIndex + 1
+          continue
+        }
+        j++
+      }
+
+      if (!templateClosed) {
+        result += expr.slice(i)
+        break
+      }
+
+      if (isNonClassStringLiteral(expr, i, j)) {
+        result += expr.slice(i, j)
+        i = j
+        continue
+      }
+
+      let k = i + 1
+      let staticPart = ''
+      let rebuilt = '`'
+
+      while (k < j - 1) {
+        if (expr[k] === '\\' && k + 1 < expr.length) {
+          staticPart += expr[k] + expr[k + 1]
+          k += 2
+          continue
+        }
+        if (expr[k] === '$' && expr[k + 1] === '{') {
           if (staticPart) {
             rebuilt += emitModified(staticPart)
             staticPart = ''
           }
-          const nested = readBalancedJsxExpression(expr, j + 1)
+          const nested = readBalancedJsxExpression(expr, k + 1)
           if (!nested) {
-            rebuilt += expr.slice(j)
-            j = expr.length
+            rebuilt += expr.slice(k, j - 1)
             break
           }
-          // Interpolations are runtime values — leave them untouched.
           rebuilt += '${' + nested.content + '}'
-          j = nested.endIndex + 1
+          k = nested.endIndex + 1
           continue
         }
-        staticPart += expr[j]
-        j++
+        staticPart += expr[k]
+        k++
       }
 
-      result += templateClosed ? rebuilt : expr.slice(i)
-      i = templateClosed ? j : expr.length
+      if (staticPart)
+        rebuilt += emitModified(staticPart)
+      rebuilt += '`'
+
+      result += rebuilt
+      i = j
       continue
     }
 

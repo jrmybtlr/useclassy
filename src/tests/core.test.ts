@@ -214,6 +214,26 @@ describe('core module', () => {
       expect(modifierClasses.size).toBe(0)
     })
 
+    it('should not extract comparison string operands from JSX expressions', () => {
+      const code
+        = `<div className:hover={status === 'active' ? 'bg-blue-500' : 'bg-gray-200'}>X</div>`
+      const allClasses = new Set<string>()
+      const modifierClasses = new Set<string>()
+
+      extractClasses(
+        code,
+        allClasses,
+        modifierClasses,
+        REACT_CLASS_REGEX,
+        REACT_CLASS_MODIFIER_REGEX,
+      )
+
+      expect(allClasses.has('hover:bg-blue-500')).toBeTruthy()
+      expect(allClasses.has('hover:bg-gray-200')).toBeTruthy()
+      expect(allClasses.has('hover:active')).toBeFalsy()
+      expect(modifierClasses.has('hover:active')).toBeFalsy()
+    })
+
     it('should ignore empty classes', () => {
       const code = '<div class="  ">Content</div>'
       const allClasses = new Set<string>()
@@ -399,6 +419,101 @@ describe('core module', () => {
       )
       expect(classes.has('hover:bg-blue-500')).toBeTruthy()
       expect(classes.has('hover:bg-gray-200')).toBeTruthy()
+    })
+
+    it('should not rewrite comparison string operands inside JSX expressions', () => {
+      const code
+        = `<div className:hover={status === 'active' ? 'bg-blue-500' : 'bg-gray-200'}>X</div>`
+      const classes = new Set<string>()
+
+      const result = transformClassModifiers(
+        code,
+        classes,
+        REACT_CLASS_MODIFIER_REGEX,
+        'className',
+      )
+
+      expect(result).toBe(
+        `<div className={status === 'active' ? 'hover:bg-blue-500' : 'hover:bg-gray-200'}>X</div>`,
+      )
+      expect(classes.has('hover:bg-blue-500')).toBeTruthy()
+      expect(classes.has('hover:bg-gray-200')).toBeTruthy()
+      expect(classes.has('hover:active')).toBeFalsy()
+      expect(result).toContain(`=== 'active'`)
+      expect(result).not.toContain(`=== 'hover:active'`)
+    })
+
+    it('should not rewrite string method receivers inside JSX expressions', () => {
+      const code
+        = `<div className:hover={'primary'.includes(kind) ? 'bg-blue-500' : 'bg-gray-200'}>X</div>`
+      const classes = new Set<string>()
+
+      const result = transformClassModifiers(
+        code,
+        classes,
+        REACT_CLASS_MODIFIER_REGEX,
+        'className',
+      )
+
+      expect(result).toBe(
+        `<div className={'primary'.includes(kind) ? 'hover:bg-blue-500' : 'hover:bg-gray-200'}>X</div>`,
+      )
+      expect(classes.has('hover:primary')).toBeFalsy()
+      expect(classes.has('hover:bg-blue-500')).toBeTruthy()
+    })
+
+    it('should allow whitespace around = and { on JSX modifiers', () => {
+      const code
+        = `<div className:hover = {isActive ? 'bg-blue-500' : 'bg-gray-200'}>X</div>`
+      const classes = new Set<string>()
+
+      const result = transformClassModifiers(
+        code,
+        classes,
+        REACT_CLASS_MODIFIER_REGEX,
+        'className',
+      )
+
+      expect(result).toBe(
+        `<div className={isActive ? 'hover:bg-blue-500' : 'hover:bg-gray-200'}>X</div>`,
+      )
+      expect(classes.has('hover:bg-blue-500')).toBeTruthy()
+      expect(classes.has('hover:bg-gray-200')).toBeTruthy()
+    })
+
+    it('should ignore string literals inside comments in JSX expressions', () => {
+      const withBlock
+        = `<div className:hover={/* 'skip-me' */ isActive ? 'bg-blue-500' : 'bg-gray-200'}>X</div>`
+      const withLine = `<div className:hover={
+  // 'skip-me'
+  isActive ? 'bg-blue-500' : 'bg-gray-200'
+}>X</div>`
+      const classes = new Set<string>()
+
+      const blockResult = transformClassModifiers(
+        withBlock,
+        classes,
+        REACT_CLASS_MODIFIER_REGEX,
+        'className',
+      )
+      expect(blockResult).toBe(
+        `<div className={/* 'skip-me' */ isActive ? 'hover:bg-blue-500' : 'hover:bg-gray-200'}>X</div>`,
+      )
+      expect(classes.has('hover:skip-me')).toBeFalsy()
+      expect(classes.has('hover:bg-blue-500')).toBeTruthy()
+
+      classes.clear()
+      const lineResult = transformClassModifiers(
+        withLine,
+        classes,
+        REACT_CLASS_MODIFIER_REGEX,
+        'className',
+      )
+      expect(lineResult).toContain(`// 'skip-me'`)
+      expect(lineResult).toContain(`'hover:bg-blue-500'`)
+      expect(lineResult).not.toContain(`'hover:skip-me'`)
+      expect(classes.has('hover:skip-me')).toBeFalsy()
+      expect(classes.has('hover:bg-blue-500')).toBeTruthy()
     })
 
     it('should transform logical && className:modifier expressions', () => {
