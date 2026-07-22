@@ -23,6 +23,9 @@ export const REACT_CLASS_REGEX = /(?<![:\w])className=(?:"([^"]*)"|{([^}]*)})(?!
 export const REACT_CLASS_MODIFIER_REGEX
   = /(?<![:\w])(?:className|class):([\w-:]+)="([^"]*)"/g
 
+/** Start of a JSX expression modifier: `className:hover={` or `class:sm:hover = {` */
+const JSX_MODIFIER_START_REGEX = /(?<![:\w])(?:className|class):([\w-:]+)\s*=\s*\{/g
+
 /**
  * Svelte `class` regexes.
  * UseClassy modifiers use quoted values (`class:hover="..."`).
@@ -69,6 +72,382 @@ function tokenize(str: string, callback: (token: string) => void): void {
       }
       start = i + 1
     }
+  }
+}
+
+/**
+ * Reads a `{...}` JSX expression starting at `openIndex` (must point at `{`).
+ * Respects string/template literals and comments so nested braces are handled.
+ */
+export function readBalancedJsxExpression(
+  code: string,
+  openIndex: number,
+): { content: string, endIndex: number } | null {
+  if (code[openIndex] !== '{')
+    return null
+
+  let depth = 0
+  let inQuote: '"' | '\'' | null = null
+  let inTemplate = false
+  let inLineComment = false
+  let inBlockComment = false
+
+  for (let i = openIndex; i < code.length; i++) {
+    const ch = code[i]
+    const next = code[i + 1]
+
+    if (inLineComment) {
+      if (ch === '\n')
+        inLineComment = false
+      continue
+    }
+
+    if (inBlockComment) {
+      if (ch === '*' && next === '/') {
+        inBlockComment = false
+        i++
+      }
+      continue
+    }
+
+    if (inQuote) {
+      if (ch === '\\') {
+        i++
+        continue
+      }
+      if (ch === inQuote)
+        inQuote = null
+      continue
+    }
+
+    if (inTemplate) {
+      if (ch === '\\') {
+        i++
+        continue
+      }
+      if (ch === '`') {
+        inTemplate = false
+        continue
+      }
+      if (ch === '$' && next === '{') {
+        const nested = readBalancedJsxExpression(code, i + 1)
+        if (!nested)
+          return null
+        i = nested.endIndex
+      }
+      continue
+    }
+
+    if (ch === '"' || ch === '\'') {
+      inQuote = ch
+      continue
+    }
+
+    if (ch === '`') {
+      inTemplate = true
+      continue
+    }
+
+    if (ch === '/' && next === '/') {
+      inLineComment = true
+      i++
+      continue
+    }
+
+    if (ch === '/' && next === '*') {
+      inBlockComment = true
+      i++
+      continue
+    }
+
+    if (ch === '{') {
+      depth++
+      continue
+    }
+
+    if (ch === '}') {
+      depth--
+      if (depth === 0) {
+        return {
+          content: code.slice(openIndex + 1, i),
+          endIndex: i,
+        }
+      }
+    }
+  }
+
+  return null
+}
+
+/**
+ * Builds the prefixed class list for a modifier (full chain + partials).
+ */
+function buildModifiedClasses(
+  classes: string,
+  modifiers: string,
+): string[] {
+  if (!modifiers.trim())
+    return []
+
+  const modifierParts = modifiers.split(':')
+  const modifiedClassesArr: string[] = []
+
+  tokenize(classes, (value) => {
+    modifiedClassesArr.push(`${modifiers}:${value}`)
+    if (modifierParts.length > 1) {
+      for (const part of modifierParts) {
+        if (part)
+          modifiedClassesArr.push(`${part}:${value}`)
+      }
+    }
+  })
+
+  return modifiedClassesArr
+}
+
+/**
+ * True when a string/template literal is a comparison operand or method receiver
+ * (e.g. `status === 'active'`, `'x'.includes(y)`), not a class list to prefix.
+ */
+function isNonClassStringLiteral(
+  expr: string,
+  literalStart: number,
+  literalEndExclusive: number,
+): boolean {
+  let before = literalStart - 1
+  while (before >= 0 && /\s/.test(expr.charAt(before)))
+    before--
+
+  if (before >= 0) {
+    if (
+      (before >= 2 && expr.slice(before - 2, before + 1) === '===')
+      || (before >= 2 && expr.slice(before - 2, before + 1) === '!==')
+      || (before >= 1 && expr.slice(before - 1, before + 1) === '==')
+      || (before >= 1 && expr.slice(before - 1, before + 1) === '!=')
+    ) {
+      return true
+    }
+  }
+
+  let after = literalEndExclusive
+  while (after < expr.length && /\s/.test(expr.charAt(after)))
+    after++
+
+  if (after < expr.length) {
+    if (
+      expr.startsWith('===', after)
+      || expr.startsWith('!==', after)
+      || expr.startsWith('==', after)
+      || expr.startsWith('!=', after)
+      || expr.charAt(after) === '.'
+    ) {
+      return true
+    }
+  }
+
+  return false
+}
+
+/**
+ * Rewrites class string/template literals inside a JSX expression so each token
+ * receives the variant prefix (e.g. `hover:`). Returns null when no literals
+ * were rewritten — callers should leave the original attribute unchanged.
+ *
+ * Comparison operands and string method receivers are left untouched so
+ * `status === 'active' ? 'bg-a' : 'bg-b'` does not become `'hover:active'`.
+ */
+function rewriteClassLiteralsInExpression(
+  expr: string,
+  modifiers: string,
+  onClass?: (cls: string) => void,
+): string | null {
+  let result = ''
+  let i = 0
+  let rewrote = false
+
+  const emitModified = (classStr: string): string => {
+    const modified = buildModifiedClasses(classStr, modifiers)
+    if (modified.length === 0)
+      return classStr
+
+    rewrote = true
+    if (onClass) {
+      for (const cls of modified) {
+        if (isTrackedGeneratedClass(cls))
+          onClass(cls)
+      }
+    }
+    return modified.join(' ')
+  }
+
+  while (i < expr.length) {
+    const ch = expr[i]
+    const next = expr[i + 1]
+
+    // Skip comments so quotes inside them are not treated as class literals.
+    if (ch === '/' && next === '/') {
+      const start = i
+      i += 2
+      while (i < expr.length && expr[i] !== '\n')
+        i++
+      result += expr.slice(start, i)
+      continue
+    }
+
+    if (ch === '/' && next === '*') {
+      const start = i
+      i += 2
+      while (i < expr.length) {
+        if (expr[i] === '*' && expr[i + 1] === '/') {
+          i += 2
+          break
+        }
+        i++
+      }
+      result += expr.slice(start, i)
+      continue
+    }
+
+    if (ch === '"' || ch === '\'') {
+      const quote = ch
+      let j = i + 1
+      let content = ''
+      while (j < expr.length) {
+        if (expr[j] === '\\' && j + 1 < expr.length) {
+          content += expr[j] + expr[j + 1]
+          j += 2
+          continue
+        }
+        if (expr[j] === quote)
+          break
+        content += expr[j]
+        j++
+      }
+      if (j >= expr.length) {
+        result += expr.slice(i)
+        break
+      }
+      const endExclusive = j + 1
+      const nextContent = isNonClassStringLiteral(expr, i, endExclusive)
+        ? content
+        : emitModified(content)
+      result += quote + nextContent + quote
+      i = endExclusive
+      continue
+    }
+
+    if (ch === '`') {
+      let j = i + 1
+      let templateClosed = false
+
+      // Locate the closing backtick first so comparison/method templates
+      // can be skipped without emitting prefixed classes.
+      while (j < expr.length) {
+        if (expr[j] === '\\' && j + 1 < expr.length) {
+          j += 2
+          continue
+        }
+        if (expr[j] === '`') {
+          templateClosed = true
+          j++
+          break
+        }
+        if (expr[j] === '$' && expr[j + 1] === '{') {
+          const nested = readBalancedJsxExpression(expr, j + 1)
+          if (!nested) {
+            j = expr.length
+            break
+          }
+          j = nested.endIndex + 1
+          continue
+        }
+        j++
+      }
+
+      if (!templateClosed) {
+        result += expr.slice(i)
+        break
+      }
+
+      if (isNonClassStringLiteral(expr, i, j)) {
+        result += expr.slice(i, j)
+        i = j
+        continue
+      }
+
+      let k = i + 1
+      let staticPart = ''
+      let rebuilt = '`'
+
+      while (k < j - 1) {
+        if (expr[k] === '\\' && k + 1 < expr.length) {
+          staticPart += expr[k] + expr[k + 1]
+          k += 2
+          continue
+        }
+        if (expr[k] === '$' && expr[k + 1] === '{') {
+          if (staticPart) {
+            rebuilt += emitModified(staticPart)
+            staticPart = ''
+          }
+          const nested = readBalancedJsxExpression(expr, k + 1)
+          if (!nested) {
+            rebuilt += expr.slice(k, j - 1)
+            break
+          }
+          rebuilt += '${' + nested.content + '}'
+          k = nested.endIndex + 1
+          continue
+        }
+        staticPart += expr[k]
+        k++
+      }
+
+      if (staticPart)
+        rebuilt += emitModified(staticPart)
+      rebuilt += '`'
+
+      result += rebuilt
+      i = j
+      continue
+    }
+
+    result += ch
+    i++
+  }
+
+  return rewrote ? result : null
+}
+
+function forEachJsxModifier(
+  code: string,
+  callback: (match: {
+    fullStart: number
+    fullEnd: number
+    modifiers: string
+    expression: string
+  }) => void,
+): void {
+  JSX_MODIFIER_START_REGEX.lastIndex = 0
+  let startMatch: RegExpExecArray | null
+  while ((startMatch = JSX_MODIFIER_START_REGEX.exec(code)) !== null) {
+    const modifiers = startMatch[1]
+    const openBraceIndex = startMatch.index + startMatch[0].length - 1
+    const balanced = readBalancedJsxExpression(code, openBraceIndex)
+    if (!balanced || !modifiers) {
+      // Avoid tight loops on malformed `{` without a closing brace.
+      JSX_MODIFIER_START_REGEX.lastIndex = openBraceIndex + 1
+      continue
+    }
+
+    callback({
+      fullStart: startMatch.index,
+      fullEnd: balanced.endIndex + 1,
+      modifiers,
+      expression: balanced.content,
+    })
+
+    JSX_MODIFIER_START_REGEX.lastIndex = balanced.endIndex + 1
   }
 }
 
@@ -140,6 +519,14 @@ export function extractClasses(
       })
     }
   }
+
+  // Conditional / JSX expression modifiers: className:hover={cond ? 'a' : 'b'}
+  forEachJsxModifier(code, ({ modifiers, expression }) => {
+    rewriteClassLiteralsInExpression(expression, modifiers, (cls) => {
+      allFileClasses.add(cls)
+      modifierDerivedClasses.add(cls)
+    })
+  })
 }
 
 function isTrackedGeneratedClass(cls: string): boolean {
@@ -152,7 +539,7 @@ function isTrackedGeneratedClass(cls: string): boolean {
 }
 
 /**
- * Replaces `class:modifier="..."` (or React equivalents) with a single merged attribute.
+ * Replaces `class:modifier="..."` / `className:modifier={...}` with merged attributes.
  */
 export function transformClassModifiers(
   code: string,
@@ -160,21 +547,10 @@ export function transformClassModifiers(
   classModifierRegex: RegExp,
   classAttrName: string,
 ): string {
-  return code.replace(classModifierRegex, (match, modifiers, classes) => {
+  const withStaticModifiers = code.replace(classModifierRegex, (match, modifiers, classes) => {
     if (!modifiers?.trim()) return match
 
-    const modifierParts = modifiers.split(':')
-    const modifiedClassesArr: string[] = []
-
-    tokenize(classes, (value) => {
-      modifiedClassesArr.push(`${modifiers}:${value}`)
-      if (modifierParts.length > 1) {
-        for (const part of modifierParts) {
-          if (part)
-            modifiedClassesArr.push(`${part}:${value}`)
-        }
-      }
-    })
+    const modifiedClassesArr = buildModifiedClasses(classes, modifiers)
 
     for (const cls of modifiedClassesArr) {
       if (isTrackedGeneratedClass(cls))
@@ -183,84 +559,247 @@ export function transformClassModifiers(
 
     return `${classAttrName}="${modifiedClassesArr.join(' ')}"`
   })
+
+  return transformJsxExpressionModifiers(
+    withStaticModifiers,
+    generatedClassesSet,
+    classAttrName,
+  )
 }
 
-const regexCache = new Map<string, RegExp>()
-
-/** Matches `class` / `className` attrs, excluding Vue `:class` and Svelte `class:name`. */
-function getClassAttrRegex(attrName: string): RegExp {
-  let cached = regexCache.get(attrName)
-  if (!cached) {
-    cached = new RegExp(
-      `(?<![:\\w])(?:${attrName}|class)=(?:(?:"([^"]*)")|(?:{([^}]*)}))`,
-      'g',
-    )
-    regexCache.set(attrName, cached)
-  }
-  return cached
-}
-
-interface ClassAttrMatch {
-  index: number
-  length: number
-  staticClass: string | undefined
-  jsx: string | undefined
-}
-
-function collectMergedClassValue(
-  matches: ClassAttrMatch[],
-  attrName: string,
+/**
+ * Transforms `className:hover={cond ? 'a' : 'b'}` into
+ * `className={cond ? 'hover:a' : 'hover:b'}`. Leaves expression-only values
+ * (no string literals) unchanged so runtime variables stay intact.
+ */
+function transformJsxExpressionModifiers(
+  code: string,
+  generatedClassesSet: Set<string>,
+  classAttrName: string,
 ): string {
-  const staticClasses: string[] = []
-  let jsxExpr: string | null = null
-  let isFunctionCall = false
+  const replacements: Array<{ start: number, end: number, text: string }> = []
 
-  for (const match of matches) {
-    const staticClassValue = match.staticClass
-    const potentialJsx = match.jsx
+  forEachJsxModifier(code, ({ fullStart, fullEnd, modifiers, expression }) => {
+    if (!modifiers.trim())
+      return
 
-    if (staticClassValue?.trim()) {
-      staticClasses.push(staticClassValue.trim())
+    const rewritten = rewriteClassLiteralsInExpression(
+      expression,
+      modifiers,
+      (cls) => {
+        generatedClassesSet.add(cls)
+      },
+    )
+
+    if (rewritten === null)
+      return
+
+    replacements.push({
+      start: fullStart,
+      end: fullEnd,
+      text: `${classAttrName}={${rewritten}}`,
+    })
+  })
+
+  if (replacements.length === 0)
+    return code
+
+  // Apply from the end so earlier offsets stay valid.
+  let result = code
+  for (let i = replacements.length - 1; i >= 0; i--) {
+    const replacement = replacements[i]
+    if (!replacement)
+      continue
+    result = result.slice(0, replacement.start)
+      + replacement.text
+      + result.slice(replacement.end)
+  }
+  return result
+}
+
+interface ParsedClassAttr {
+  start: number
+  end: number
+  staticValue?: string
+  jsxValue?: string
+}
+
+function isClassAttrNameBoundary(code: string, index: number): boolean {
+  if (index <= 0)
+    return true
+  const prev = code[index - 1]
+  return prev !== ':' && !((prev >= 'a' && prev <= 'z')
+    || (prev >= 'A' && prev <= 'Z')
+    || (prev >= '0' && prev <= '9')
+    || prev === '_')
+}
+
+function matchClassAttrAt(
+  code: string,
+  index: number,
+  attrName: string,
+): ParsedClassAttr | null {
+  const names = attrName === 'className' ? ['className', 'class'] as const : ['class'] as const
+
+  for (const name of names) {
+    if (!code.startsWith(`${name}=`, index))
+      continue
+    if (!isClassAttrNameBoundary(code, index))
+      continue
+
+    const valueIndex = index + name.length + 1
+    const valueCh = code[valueIndex]
+
+    if (valueCh === '"') {
+      let j = valueIndex + 1
+      while (j < code.length) {
+        if (code[j] === '\\') {
+          j += 2
+          continue
+        }
+        if (code[j] === '"')
+          break
+        j++
+      }
+      if (j >= code.length)
+        return null
+      return {
+        start: index,
+        end: j + 1,
+        staticValue: code.slice(valueIndex + 1, j),
+      }
     }
-    else if (potentialJsx) {
-      const currentJsx = potentialJsx.trim()
-      if (currentJsx) {
-        if (currentJsx.startsWith('`') && currentJsx.endsWith('`')) {
-          const literalContent = currentJsx.slice(1, -1).trim()
-          if (literalContent)
-            staticClasses.push(literalContent)
-        }
-        else {
-          const currentIsFunctionCall = /^[a-zA-Z_][\w.]*\(.*\)$/.test(currentJsx)
 
-          if (!jsxExpr || (currentIsFunctionCall && !isFunctionCall)) {
-            jsxExpr = currentJsx
-            isFunctionCall = currentIsFunctionCall
-          }
-          else if (currentIsFunctionCall && isFunctionCall) {
-            jsxExpr = currentJsx
-          }
-          else if (!jsxExpr) {
-            jsxExpr = currentJsx
-            isFunctionCall = false
-          }
-        }
+    if (valueCh === '{') {
+      const balanced = readBalancedJsxExpression(code, valueIndex)
+      if (!balanced)
+        return null
+      return {
+        start: index,
+        end: balanced.endIndex + 1,
+        jsxValue: balanced.content,
       }
     }
   }
 
+  return null
+}
+
+function mergeParsedClassAttrs(
+  attrs: ParsedClassAttr[],
+  attrName: string,
+): string {
+  const staticClasses: string[] = []
+  const jsxExprs: string[] = []
+
+  for (const attr of attrs) {
+    if (attr.staticValue?.trim()) {
+      staticClasses.push(attr.staticValue.trim())
+      continue
+    }
+
+    if (!attr.jsxValue)
+      continue
+
+    const currentJsx = attr.jsxValue.trim()
+    if (!currentJsx)
+      continue
+
+    if (currentJsx.startsWith('`') && currentJsx.endsWith('`')) {
+      const inner = currentJsx.slice(1, -1)
+      if (!inner.includes('${')) {
+        const literalContent = inner.trim()
+        if (literalContent)
+          staticClasses.push(literalContent)
+        continue
+      }
+    }
+
+    jsxExprs.push(currentJsx)
+  }
+
   const combinedStatic = staticClasses.join(' ').trim()
 
-  if (jsxExpr) {
-    if (!combinedStatic)
-      return `${attrName}={${jsxExpr}}`
+  if (jsxExprs.length > 0) {
+    if (jsxExprs.length === 1 && !combinedStatic)
+      return `${attrName}={${jsxExprs[0]}}`
 
-    return `${attrName}={\`${combinedStatic} \${${jsxExpr}}\`}`
+    const dynamicParts = jsxExprs.map((expr) => {
+      if (expr.startsWith('`') && expr.endsWith('`'))
+        return expr.slice(1, -1)
+      // Coerce falsy runtime values (e.g. `cond && 'class'`) so template
+      // interpolation does not stringify `false` into the class list.
+      return `\${(${expr}) || ''}`
+    }).join(' ')
+
+    if (combinedStatic)
+      return `${attrName}={\`${combinedStatic} ${dynamicParts}\`}`
+
+    return `${attrName}={\`${dynamicParts}\`}`
   }
   if (combinedStatic)
     return `${attrName}="${combinedStatic}"`
 
+  if (process.env.NODE_ENV !== 'test') {
+    console.warn('No classes found in class attribute group')
+  }
   return ''
+}
+
+function removeAttrWithLeadingWhitespace(
+  attrs: string,
+  start: number,
+  end: number,
+): string {
+  let from = start
+  while (from > 0 && /\s/.test(attrs.charAt(from - 1)))
+    from--
+  return attrs.slice(0, from) + attrs.slice(end)
+}
+
+function mergeAttrsInStartTag(
+  attrs: string,
+  attrName: string,
+): string | null {
+  const matches: ParsedClassAttr[] = []
+  let i = 0
+
+  while (i < attrs.length) {
+    const match = matchClassAttrAt(attrs, i, attrName)
+    if (!match) {
+      i++
+      continue
+    }
+    matches.push(match)
+    i = match.end
+  }
+
+  if (matches.length < 2)
+    return null
+
+  const merged = mergeParsedClassAttrs(matches, attrName)
+  let nextAttrs = attrs
+
+  for (let i = matches.length - 1; i >= 1; i--) {
+    const match = matches[i]
+    if (!match)
+      continue
+    nextAttrs = removeAttrWithLeadingWhitespace(nextAttrs, match.start, match.end)
+  }
+
+  const first = matches[0]
+  if (!first)
+    return nextAttrs
+
+  if (merged) {
+    return (
+      nextAttrs.slice(0, first.start)
+      + merged
+      + nextAttrs.slice(first.end)
+    )
+  }
+
+  return removeAttrWithLeadingWhitespace(nextAttrs, first.start, first.end)
 }
 
 /**
@@ -315,65 +854,11 @@ function findStartTagClose(code: string, from: number): number | null {
   return null
 }
 
-function mergeAttrsInStartTag(
-  attrs: string,
-  attrName: string,
-  classAttrRegex: RegExp,
-): string | null {
-  classAttrRegex.lastIndex = 0
-  const matches: ClassAttrMatch[] = []
-  let singleAttrMatch: RegExpExecArray | null
-  while ((singleAttrMatch = classAttrRegex.exec(attrs)) !== null) {
-    matches.push({
-      index: singleAttrMatch.index,
-      length: singleAttrMatch[0].length,
-      staticClass: singleAttrMatch[1],
-      jsx: singleAttrMatch[2],
-    })
-  }
-
-  if (matches.length < 2)
-    return null
-
-  const merged = collectMergedClassValue(matches, attrName)
-  let nextAttrs = attrs
-
-  // Remove trailing class attrs first so earlier indices stay valid.
-  for (let i = matches.length - 1; i >= 1; i--) {
-    const match = matches[i]!
-    let start = match.index
-    const stop = match.index + match.length
-    while (start > 0 && /\s/.test(nextAttrs.charAt(start - 1)))
-      start--
-    nextAttrs = nextAttrs.slice(0, start) + nextAttrs.slice(stop)
-  }
-
-  const first = matches[0]!
-  if (merged) {
-    return (
-      nextAttrs.slice(0, first.index)
-      + merged
-      + nextAttrs.slice(first.index + first.length)
-    )
-  }
-
-  let start = first.index
-  const stop = first.index + first.length
-  while (start > 0 && /\s/.test(nextAttrs.charAt(start - 1)))
-    start--
-  nextAttrs = nextAttrs.slice(0, start) + nextAttrs.slice(stop)
-  if (process.env.NODE_ENV !== 'test') {
-    console.warn('No classes found in class attribute:', attrs)
-  }
-  return nextAttrs
-}
-
 /**
  * Collapses repeated `class` / `className` attributes within a start tag,
  * preserving intervening attrs (Vue `:class`, Svelte `class:name`, etc.).
  */
 export function mergeClassAttributes(code: string, attrName: string): string {
-  const classAttrRegex = getClassAttrRegex(attrName)
   const tagNameRe = /^[A-Za-z][\w.:-]*/
   let result = ''
   let cursor = 0
@@ -447,7 +932,7 @@ export function mergeClassAttributes(code: string, attrName: string): string {
     const attrs = beforeClose.slice(0, beforeClose.length - endPrefix.length)
     const end = `${endPrefix}>`
 
-    const nextAttrs = mergeAttrsInStartTag(attrs, attrName, classAttrRegex)
+    const nextAttrs = mergeAttrsInStartTag(attrs, attrName)
     if (nextAttrs === null) {
       result += code.slice(lt, closeIdx + 1)
     }
