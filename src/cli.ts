@@ -14,8 +14,16 @@ Usage:
 
 Options:
   --language <vue|react|blade|svelte>   Framework language for useClassy (default: vue)
+  --with-skills                    Install the UseClassy agent skill (.agents/skills),
+                                   Cursor rules, and an AGENTS.md section
+  --with-claude                    With --with-skills: also copy the skill to
+                                   .claude/skills for Claude Code
+  --force                          Overwrite skill/rule files that differ from templates
   --dry-run                        Print actions without writing files
   -h, --help                       Show this message
+
+Notes:
+  --with-cursor is an alias for --with-skills.
 `)
 }
 
@@ -23,10 +31,16 @@ function parseArgs(argv: string[]): {
   cmd: string | null
   language: InitLanguage
   dryRun: boolean
+  withSkills: boolean
+  withClaude: boolean
+  force: boolean
 } {
   const rest = argv.slice(2)
   let language: InitLanguage = 'vue'
   let dryRun = false
+  let withSkills = false
+  let withClaude = false
+  let force = false
   let cmd: string | null = null
 
   for (let i = 0; i < rest.length; i++) {
@@ -38,6 +52,18 @@ function parseArgs(argv: string[]): {
     }
     if (arg === '--dry-run') {
       dryRun = true
+      continue
+    }
+    if (arg === '--with-skills' || arg === '--with-cursor') {
+      withSkills = true
+      continue
+    }
+    if (arg === '--with-claude') {
+      withClaude = true
+      continue
+    }
+    if (arg === '--force') {
+      force = true
       continue
     }
     if (arg === '--language' || arg === '-l') {
@@ -54,7 +80,7 @@ function parseArgs(argv: string[]): {
     }
   }
 
-  return { cmd, language, dryRun }
+  return { cmd, language, dryRun, withSkills, withClaude, force }
 }
 
 function exitWithHelp(code: number): never {
@@ -63,7 +89,14 @@ function exitWithHelp(code: number): never {
 }
 
 function main(): void {
-  const { cmd, language, dryRun } = parseArgs(process.argv)
+  const {
+    cmd,
+    language,
+    dryRun,
+    withSkills,
+    withClaude,
+    force,
+  } = parseArgs(process.argv)
 
   if (cmd !== 'init') {
     if (cmd !== null)
@@ -71,7 +104,19 @@ function main(): void {
     exitWithHelp(1)
   }
 
-  const result = runInitSetup({ cwd: process.cwd(), language, dryRun })
+  if (withClaude && !withSkills) {
+    console.error('--with-claude requires --with-skills')
+    exitWithHelp(1)
+  }
+
+  const result = runInitSetup({
+    cwd: process.cwd(),
+    language,
+    dryRun,
+    withSkills,
+    withClaude,
+    force,
+  })
 
   for (const line of result.messages)
     console.log(line)
