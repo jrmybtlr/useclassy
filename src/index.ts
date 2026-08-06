@@ -154,13 +154,14 @@ export default function useClassy(options: ClassyOptions = {}): PluginOption {
     environment?: EnvironmentLike,
   ): void {
     const envServer = detectEnvironmentServer(config, environment)
+    // Always assign — never sticky-OR. A shared plugin instance can see server
+    // then client (or the reverse); a sticky `true` would skip client flushes.
+    isEnvironmentServer = envServer
+
     if (config)
       isSSR = Boolean(config.build?.ssr) || envServer
-    else if (envServer)
-      isSSR = true
-
-    if (envServer)
-      isEnvironmentServer = true
+    else if (environment)
+      isSSR = envServer
   }
 
   /**

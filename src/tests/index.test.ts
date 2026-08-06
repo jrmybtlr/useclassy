@@ -730,7 +730,11 @@ describe('useClassy plugin', () => {
           bundle: object,
           isWrite?: boolean,
         ) => void | Promise<void>
-        await generateBundle.call({}, {}, {}, false)
+        // Function.prototype.call(thisArg, ...args) — Rollup args are the last three.
+        const outputOptions = {}
+        const bundle = {}
+        const isWrite = false
+        await generateBundle.call({}, outputOptions, bundle, isWrite)
       }
 
       if (typeof plugin.buildEnd === 'function') {
@@ -780,7 +784,8 @@ describe('useClassy plugin', () => {
 
       writeSpy.mockClear()
 
-      // Rollup/Vite signature: generateBundle(outputOptions, bundle, isWrite)
+      // Rollup/Vite: generateBundle(outputOptions, bundle, isWrite)
+      // call(thisArg, outputOptions, bundle, isWrite) — first arg is `this`, not isWrite.
       if (typeof plugin.generateBundle === 'function') {
         const generateBundle = plugin.generateBundle as (
           this: unknown,
@@ -789,7 +794,10 @@ describe('useClassy plugin', () => {
           isWrite?: boolean,
         ) => void | Promise<void>
 
-        await generateBundle.call({}, {}, {}, false)
+        const outputOptions = {}
+        const bundle = {}
+        const isWrite = false
+        await generateBundle.call({}, outputOptions, bundle, isWrite)
       }
 
       expect(
@@ -801,6 +809,62 @@ describe('useClassy plugin', () => {
       ).toBe(true)
 
       writeSpy.mockRestore()
+    })
+
+    it('should reset environment flags when the same instance moves from server to client', async () => {
+      // Sticky true would leave the client skipping flushes after a server hook ran.
+      const fs = await import('fs')
+      const writeSpy = vi.spyOn(fs.default, 'writeFileSync').mockImplementation(() => undefined)
+      const renameSpy = vi.spyOn(fs.default, 'renameSync').mockImplementation(() => undefined)
+      ;(fs.default.existsSync as unknown as ReturnType<typeof vi.fn>).mockReturnValue(false)
+      ;(fs.default.mkdirSync as unknown as ReturnType<typeof vi.fn>).mockImplementation(() => undefined)
+
+      const plugin = useClassy({
+        debug: true,
+        manifestRoot: '/project',
+      }) as Plugin
+
+      if (plugin.configResolved) {
+        await plugin.configResolved({
+          command: 'build',
+          root: '/project',
+          build: { ssr: false },
+          consumer: 'server',
+        } as never)
+      }
+
+      const transform = plugin.transform as (
+        this: { addWatchFile: (id: string) => void },
+        code: string,
+        id: string,
+      ) => { code: string } | null
+
+      transform.call(
+        { addWatchFile: vi.fn() },
+        '<div class="base" class:hover="text-blue-500">x</div>',
+        '/project/Component.vue',
+      )
+
+      writeSpy.mockClear()
+      renameSpy.mockClear()
+
+      if (typeof plugin.renderStart === 'function') {
+        await plugin.renderStart.call({
+          environment: { name: 'client', config: { consumer: 'client' } },
+        } as never)
+      }
+
+      expect(writeSpy).toHaveBeenCalled()
+      expect(
+        writeSpy.mock.calls.some(
+          ([filePath, content]) =>
+            String(filePath).includes('output.classy.html')
+            && String(content).includes('hover:text-blue-500'),
+        ),
+      ).toBe(true)
+
+      writeSpy.mockRestore()
+      renameSpy.mockRestore()
     })
 
     it('should not flush the manifest on renderStart in dev mode', async () => {
