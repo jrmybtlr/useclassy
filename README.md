@@ -43,9 +43,15 @@ npx vite-plugin-useclassy init --language react
 
 # Svelte
 npx vite-plugin-useclassy init --language svelte
+
+# Also install the AI agent skill (Cursor, Codex, Copilot + AGENTS.md)
+npx vite-plugin-useclassy init --with-skills
+
+# Claude Code users: also copy into .claude/skills
+npx vite-plugin-useclassy init --with-skills --with-claude
 ```
 
-Add **`--dry-run`** to any init command to print the planned file changes without modifying your repo (for example `npx vite-plugin-useclassy init --language react --dry-run`).
+Add **`--dry-run`** to any init command to print the planned file changes without modifying your repo (for example `npx vite-plugin-useclassy init --language react --dry-run`). Use **`--force`** with `--with-skills` to overwrite skill/rule files that differ from the packaged templates.
 
 If detection fails or your config is non-standard, use the manual steps below.
 
@@ -283,18 +289,43 @@ For Vue-only projects you can omit the `className` entries. Running `npx vite-pl
 
 ## AI-assisted setup
 
+### Agent skill (recommended)
+
+Install an [Agent Skill](https://agentskills.io) that teaches AI coding agents how to write and refactor UseClassy markup:
+
+```bash
+npx vite-plugin-useclassy init --with-skills
+```
+
+That writes:
+
+| Destination | Read by |
+|-------------|---------|
+| `.agents/skills/useclassy/` | Cursor, Codex, GitHub Copilot |
+| `.cursor/rules/useclassy-*.mdc` | Cursor (glob-scoped setup and authoring rules) |
+| `AGENTS.md` (fenced section) | Windsurf, Aider, Cline, and other AGENTS.md readers |
+
+Claude Code does not read `.agents/skills`. If you use Claude Code, also pass **`--with-claude`** to copy the same skill into `.claude/skills/useclassy/`. That copy is opt-in because Cursor also discovers `.claude/skills` and would otherwise load the skill twice.
+
+The skill is a single portable `SKILL.md` using the standard `name` + `description` frontmatter. Re-running is idempotent: matching files are left alone, the fenced `AGENTS.md` block (`<!-- useclassy:start -->` … `<!-- useclassy:end -->`) is refreshed to the latest template text without touching content outside the markers, and skill/rule files with local edits are **skipped** unless you pass **`--force`**. `--with-cursor` is an alias for `--with-skills`.
+
+The **skill focuses on writing new UseClassy markup and safely refactoring existing Tailwind variant classes** across Vue, React, Svelte, Blade, and HTML. It teaches grouping by modifier, preserving dynamic classes, handling Svelte directives, and avoiding behavior changes from chained modifiers. Installation and Tailwind/Vite wiring stay in the separate setup rule.
+
+Source templates live in [`templates/`](templates/) if you prefer to copy them manually.
+
+### One-shot prompt
+
 Use this prompt in your editor agent when you want a one-shot manual setup (for example if `init` cannot patch your repo):
 
 **Prompt — “Set up UseClassy in this repo”**
 
 1. Install dev dependency: `vite-plugin-useclassy` (use the repo’s package manager: npm, pnpm, or yarn).
-2. Open `vite.config.*`. Add `import useClassy from 'vite-plugin-useclassy'`. In `plugins`, insert `useClassy({ language: '<vue|react|blade|svelte>' })` **before** `@tailwindcss/vite` or other CSS pipeline plugins so it runs early.
+2. Open `vite.config.*`. Add `import useClassy from 'vite-plugin-useclassy'`. In `plugins`, insert `useClassy({ language: '<vue|react|blade|svelte>' })` **before** `@tailwindcss/vite` or other CSS pipeline plugins so it runs early. For Svelte, also place it before `@sveltejs/vite-plugin-svelte`.
 3. **Tailwind v4** (project uses `@import "tailwindcss"` and typically `@tailwindcss/vite`): In the main CSS entry that imports Tailwind, add an `@source` line pointing at the generated manifest. Default manifest path is `.classy/output.classy.html` from the project root; the `@source` path must be **relative to that CSS file**. If `useClassy` uses custom `outputDir` / `outputFileName`, use those instead.
 4. **Tailwind v3** (`tailwind.config.*`): Add `".classy/output.classy.html"` (or `./.classy/output.classy.html` as appropriate) to the `content` array without removing existing entries.
 5. **VS Code**: In `.vscode/settings.json` (merge, do not wipe), set or extend `tailwindCSS.classAttributes` to include `"class:[\\w:-]*"`. For React, also add `"className:[\\w:-]*"`.
 6. Run `dev` once so `.classy/output.classy.html` is generated; confirm Tailwind includes a class that only appears on a `class:hover` or `className:hover` attribute.
-
-A **Cursor rule template** you can copy into an app repo lives at [`templates/useclassy-setup.cursor-rule.mdc`](templates/useclassy-setup.cursor-rule.mdc).
+7. Optionally run `npx vite-plugin-useclassy init --with-skills` (or copy the templates above) so agents keep using UseClassy modifier attributes when editing UI.
 
 ## Debugging
 
