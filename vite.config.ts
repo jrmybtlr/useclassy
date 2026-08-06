@@ -15,7 +15,7 @@ export default defineConfig({
         `${entryName}.${format === 'es' ? 'js' : 'cjs'}`,
     },
     rollupOptions: {
-      external: ['vite', 'react', 'path', 'fs', 'crypto'],
+      external: ['vite', 'react', 'path', 'fs', 'crypto', 'url', 'node:url', 'node:fs', 'node:path'],
       output: {
         preserveModules: true,
         exports: 'named',

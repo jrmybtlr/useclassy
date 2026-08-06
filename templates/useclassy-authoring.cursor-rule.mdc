@@ -1,0 +1,33 @@
+---
+description: Write UseClassy modifier attributes and safely refactor existing Tailwind variant classes.
+globs: "**/*.{vue,svelte,tsx,jsx,blade.php,html}"
+---
+
+# UseClassy authoring and refactoring
+
+When this project uses `vite-plugin-useclassy`, write new static Tailwind variants as modifier attributes and migrate existing static variant tokens when behavior is preserved.
+
+## Conversion
+
+```html
+<!-- Before -->
+<button class="rounded px-4 hover:bg-blue-500 hover:text-white sm:px-6">
+
+<!-- After -->
+<button class="rounded px-4" class:hover="bg-blue-500 text-white" class:sm="px-6">
+```
+
+```tsx
+<button className="rounded px-4" className:hover="bg-blue-500" className:focus="ring-2">
+```
+
+## Rules
+
+- Base utilities on `class` / `className`; variants on `class:mod="…"` / `className:mod="…"`.
+- Group static utilities by identical single modifier and remove the prefix from each modifier value.
+- Values must be double-quoted static strings.
+- Leave dynamic expressions, template interpolation, conditional helpers, and Vue `:class` unchanged.
+- **Svelte**: only transform quoted UseClassy modifiers (`class:hover="…"`). Do not rewrite native `class:name={cond}` or `class:name`.
+- Keep arbitrary variants such as `[&>*]:mt-2` and `data-[state=open]:block` in the base string.
+- Chained attributes are additive: `class:sm:hover="underline"` generates `sm:hover:underline`, `sm:underline`, and `hover:underline`. Keep an existing exact chained token in the base string unless all combinations are intended.
+- After refactoring, run formatting and relevant tests/build; verify dynamic classes and rendered states are unchanged.
