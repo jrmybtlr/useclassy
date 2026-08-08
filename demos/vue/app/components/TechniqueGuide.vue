@@ -1,6 +1,6 @@
 <template>
-  <section class="mt-20 w-full min-w-0">
-    <div class="text-center">
+  <section class="w-full min-w-0">
+    <div v-if="showHeading" class="text-center">
       <h2 class="font-serif text-4xl font-extralight tracking-tight">
         Techniques
       </h2>
@@ -14,7 +14,8 @@
       v-model="technique"
       aria-label="UseClassy technique"
       :options="techniqueOptions"
-      class="mt-8 w-full"
+      class="w-full"
+      :class="showHeading ? 'mt-8' : 'mt-10'"
     />
 
     <div class="mt-4 flex w-full flex-col gap-3">
@@ -135,6 +136,15 @@ type Snippet = {
 };
 
 const format = defineModel<DemoFormat>("format", { default: "vue" });
+
+withDefaults(
+  defineProps<{
+    showHeading?: boolean;
+  }>(),
+  {
+    showHeading: false,
+  },
+);
 
 const technique = ref<TechniqueId>("static");
 const hoveredGroup = ref<string | null>(null);
