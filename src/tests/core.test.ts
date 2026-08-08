@@ -685,13 +685,43 @@ describe('core module', () => {
         CLASS_MODIFIER_REGEX,
       )
 
-      // Should limit the number of partial modifier classes created
-      // With depth limit of 4, we shouldn't see all 9 possible modifiers
-      const partialModifiers = Array.from(modifierClasses).filter(cls =>
-        cls.includes(':text-blue-500') && !cls.startsWith('sm:md:lg:xl:2xl:hover:focus:active:disabled:'))
+      // Full chain + first 4 partials only (MAX_MODIFIER_DEPTH)
+      expect(modifierClasses.size).toBe(5)
+      expect(modifierClasses.has('sm:md:lg:xl:2xl:hover:focus:active:disabled:text-blue-500')).toBeTruthy()
+      expect(modifierClasses.has('sm:text-blue-500')).toBeTruthy()
+      expect(modifierClasses.has('md:text-blue-500')).toBeTruthy()
+      expect(modifierClasses.has('lg:text-blue-500')).toBeTruthy()
+      expect(modifierClasses.has('xl:text-blue-500')).toBeTruthy()
+      expect(modifierClasses.has('2xl:text-blue-500')).toBeFalsy()
+      expect(modifierClasses.has('hover:text-blue-500')).toBeFalsy()
+    })
 
-      // Should have limited the depth (exact count depends on implementation)
-      expect(partialModifiers.length).toBeLessThan(10) // Much less than would be without limiting
+    it('should apply the same modifier depth cap to JSX expression modifiers', () => {
+      const code = `
+        <div className:sm:md:lg:xl:2xl:hover={on ? 'text-blue-500' : 'text-red-500'}>
+          Content
+        </div>
+      `
+      const classes = new Set<string>()
+
+      const result = transformClassModifiers(
+        code,
+        classes,
+        REACT_CLASS_MODIFIER_REGEX,
+        'className',
+      )
+
+      // Full chain + first 4 partials per branch value (not 2xl:/hover:)
+      expect(classes.has('sm:md:lg:xl:2xl:hover:text-blue-500')).toBeTruthy()
+      expect(classes.has('sm:text-blue-500')).toBeTruthy()
+      expect(classes.has('xl:text-blue-500')).toBeTruthy()
+      expect(classes.has('2xl:text-blue-500')).toBeFalsy()
+      expect(classes.has('hover:text-blue-500')).toBeFalsy()
+      expect(result).toContain(
+        'sm:md:lg:xl:2xl:hover:text-blue-500 sm:text-blue-500 md:text-blue-500 lg:text-blue-500 xl:text-blue-500',
+      )
+      expect(result).not.toMatch(/(?:^|[\s'])2xl:text-blue-500(?:$|[\s'])/)
+      expect(result).not.toMatch(/(?:^|[\s'])hover:text-blue-500(?:$|[\s'])/)
     })
 
     it('should handle empty modifier strings gracefully', () => {

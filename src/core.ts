@@ -181,6 +181,8 @@ export function readBalancedJsxExpression(
 
 /**
  * Builds the prefixed class list for a modifier (full chain + partials).
+ * Partials are capped by `MAX_MODIFIER_DEPTH` so long chains stay bounded,
+ * matching the historical `extractClasses` behavior.
  */
 function buildModifiedClasses(
   classes: string,
@@ -191,11 +193,13 @@ function buildModifiedClasses(
 
   const modifierParts = modifiers.split(':')
   const modifiedClassesArr: string[] = []
+  const maxDepth = Math.min(modifierParts.length, MAX_MODIFIER_DEPTH)
 
   tokenize(classes, (value) => {
     modifiedClassesArr.push(`${modifiers}:${value}`)
     if (modifierParts.length > 1) {
-      for (const part of modifierParts) {
+      for (let j = 0; j < maxDepth; j++) {
+        const part = modifierParts[j]
         if (part)
           modifiedClassesArr.push(`${part}:${value}`)
       }
@@ -498,25 +502,10 @@ export function extractClasses(
     const classes = modifierMatch[2]
 
     if (modifiers && classes) {
-      const modifierParts = modifiers.includes(':') ? modifiers.split(':') : null
-
-      tokenize(classes, (cls) => {
-        const modifiedClass = `${modifiers}:${cls}`
+      for (const modifiedClass of buildModifiedClasses(classes, modifiers)) {
         allFileClasses.add(modifiedClass)
         modifierDerivedClasses.add(modifiedClass)
-
-        if (modifierParts) {
-          const maxDepth = Math.min(modifierParts.length, MAX_MODIFIER_DEPTH)
-          for (let j = 0; j < maxDepth; j++) {
-            const part = modifierParts[j]
-            if (part) {
-              const partialModifiedClass = `${part}:${cls}`
-              allFileClasses.add(partialModifiedClass)
-              modifierDerivedClasses.add(partialModifiedClass)
-            }
-          }
-        }
-      })
+      }
     }
   }
 
