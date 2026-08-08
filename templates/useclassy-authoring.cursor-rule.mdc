@@ -21,12 +21,18 @@ When this project uses `vite-plugin-useclassy`, write new static Tailwind varian
 <button className="rounded px-4" className:hover="bg-blue-500" className:focus="ring-2">
 ```
 
+```tsx
+// React: JSX expressions with string literals are supported
+<button className:hover={on ? 'bg-blue-500' : 'bg-gray-200'} />
+```
+
 ## Rules
 
 - Base utilities on `class` / `className`; variants on `class:mod="…"` / `className:mod="…"`.
 - Group static utilities by identical single modifier and remove the prefix from each modifier value.
-- Values must be double-quoted static strings.
-- Leave dynamic expressions, template interpolation, conditional helpers, and Vue `:class` unchanged.
+- Vue / Blade / Svelte / HTML: values must be double-quoted static strings.
+- React: prefer double-quoted static strings; `className:mod={cond ? 'a' : 'b'}` is also valid when literals should be prefixed.
+- Leave Vue `:class`, Svelte native `class:name={cond}`, and unrelated dynamic base expressions unchanged.
 - **Svelte**: only transform quoted UseClassy modifiers (`class:hover="…"`). Do not rewrite native `class:name={cond}` or `class:name`.
 - Keep arbitrary variants such as `[&>*]:mt-2` and `data-[state=open]:block` in the base string.
 - Chained attributes are additive: `class:sm:hover="underline"` generates `sm:hover:underline`, `sm:underline`, and `hover:underline`. Keep an existing exact chained token in the base string unless all combinations are intended.

@@ -1,3 +1,43 @@
+## v3.3.0
+
+[compare changes](https://github.com/jrmybtlr/useclassy/compare/v3.2.0...v3.3.0)
+
+### 🚀 Enhancements
+
+- **react:** Support conditional JSX expressions on `className:` / `class:` modifiers (e.g. `className:hover={on ? 'bg-blue-500' : 'bg-gray-200'}`).
+- **react:** Ship JSX attribute typing via `vite-plugin-useclassy/react` (`ClassyProps` + `HTMLAttributes` / `SVGAttributes` augmentation).
+- **peer:** Mark `react` as an optional peer dependency so Vue, Svelte, and Blade installs are not warned.
+
+### 📖 Documentation
+
+- Sync README processing rules with `SUPPORTED_FILES` (include `.svelte`, `.ts`, `.js`).
+- Document React JSX type setup and update agent skill / authoring templates for React conditionals.
+- Replace `SECURITY.md` placeholders with current supported versions and contact info.
+
+### 🏡 Chore
+
+- Align package version and changelog with published `3.2.0` history and unreleased main commits.
+
+## v3.2.0
+
+[compare changes](https://github.com/jrmybtlr/useclassy/compare/v3.1.3...v3.2.0)
+
+### 🚀 Enhancements
+
+- **svelte:** Add `language: 'svelte'` with dedicated class regexes that transform quoted UseClassy modifiers and preserve native `class:name={cond}` directives.
+- **cli:** Add `npx vite-plugin-useclassy init --with-skills` (and `--with-claude`) to install portable agent skills, Cursor rules, and an `AGENTS.md` section.
+- **core:** More robust class-attribute merging (HTML comments, CDATA, Vite query/hash stripping).
+- **ssr:** Flush the Tailwind class manifest on SSR `renderStart` / `generateBundle` and skip overwrites from Vite server environments.
+
+### 🩹 Fixes
+
+- Clear Dependabot alerts via pnpm CI and patched transitive dependencies.
+- Move `wrangler` to `devDependencies` so consumers are not charged Cloudflare tooling weight.
+
+### 📖 Documentation
+
+- Expand README for Svelte usage, agent skill install paths, and Tailwind manifest integration.
+
 ## v3.1.3
 
 [compare changes](https://github.com/jrmybtlr/useclassy/compare/v3.0.1...v3.1.3)
@@ -65,10 +105,6 @@
 ### 📖 Docs
 
 - Expand README with quick-setup (`init`), React version requirements, and Tailwind integration notes.
-
-### 📝 Notes
-
-- React `classy` / `useClassy` helpers have limited automated test coverage (peer dependency); manual verification recommended when changing `src/react.ts`.
 
 ## v2.6.0
 

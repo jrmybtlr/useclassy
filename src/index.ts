@@ -613,7 +613,8 @@ export {
 } from './tailwind'
 export type { UseClassyTailwindPathsOptions } from './tailwind'
 
-// Export React-specific utilities
+// Runtime helpers re-exported for backward compatibility. Prefer
+// `vite-plugin-useclassy/react` for new code (and for ClassyProps / JSX types).
 export { classy, useClassy as useClassyHook } from './react'
 export { writeGitignore } from './utils'
 export type { ClassyOptions } from './types.d.ts'

@@ -28,10 +28,13 @@ Use UseClassy to separate Tailwind variants from base utilities:
 | Language | Base | Modifiers |
 |----------|------|-----------|
 | Vue / Blade | `class="…"` | `class:hover="…"`, `class:sm:hover="…"` |
-| React | `className="…"` | `className:hover="…"` (also accepts `class:…`) |
+| React | `className="…"` | `className:hover="…"` (also accepts `class:…`); JSX expressions allowed |
 | Svelte | `class="…"` | Quoted only: `class:hover="…"` |
 
-Modifier names may contain letters, numbers, `_`, `-`, and `:`. Values must be double-quoted static class strings.
+Modifier names may contain letters, numbers, `_`, `-`, and `:`.
+
+- **Vue / Blade / Svelte / HTML:** modifier values must be double-quoted static class strings.
+- **React:** prefer double-quoted static strings. JSX expressions are also supported when string literals inside the expression should receive the variant prefix, e.g. `className:hover={on ? 'bg-blue-500' : 'bg-gray-200'}`.
 
 ## Refactor existing code
 
@@ -49,9 +52,9 @@ When asked to convert markup to UseClassy:
 
 Convert only static tokens that can be represented safely. Do not rewrite:
 
-- Dynamic expressions, template interpolations, conditional class helpers, Vue `:class`, or Svelte directives.
+- Dynamic expressions, template interpolations, conditional class helpers, Vue `:class`, or Svelte directives — unless you are intentionally using React's `className:mod={…}` expression form with string literals.
 - Arbitrary variant prefixes such as `[&>*]:mt-2` or `data-[state=open]:block`; their characters are not valid in a UseClassy modifier name.
-- Variant tokens embedded in variables or function calls.
+- Variant tokens embedded in variables or function calls (leave those variables unchanged, or store already-prefixed class names).
 
 ## Chained modifier semantics
 
@@ -72,10 +75,10 @@ Therefore, converting an existing `sm:hover:underline` token to `class:sm:hover=
 
 - Put base utilities on `class` / `className`.
 - Vue / Blade / HTML: use `class:modifier="…"`.
-- React: prefer `className:modifier="…"` and keep dynamic `className={...}` expressions unchanged.
+- React: prefer `className:modifier="…"` for static variants. For runtime conditions that still use string literals, `className:modifier={cond ? 'a' : 'b'}` is valid and will prefix those literals. Leave `className={…}` base expressions unchanged when they are unrelated.
 - Vue: leave `:class` and other dynamic bindings unchanged.
-- **Svelte**: only quoted UseClassy modifiers transform. Native `class:active={cond}` and `class:active` stay untouched — do not rewrite those.
-- Do not move conditional base utilities into modifier attributes; UseClassy modifiers represent Tailwind variants, not runtime conditions.
+- **Svelte**: only transform quoted UseClassy modifiers. Native `class:active={cond}` and `class:active` stay untouched — do not rewrite those.
+- Do not move conditional base utilities into modifier attributes on Vue/Svelte/Blade; UseClassy modifiers represent Tailwind variants. React is the exception for `className:mod={…}` expression values.
 
 ## Verification
 

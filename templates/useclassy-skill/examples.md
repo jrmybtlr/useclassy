@@ -39,7 +39,7 @@ Do not alter Vue dynamic bindings:
 >
 ```
 
-## React: preserve expressions
+## React: static variants and conditional modifiers
 
 ```tsx
 // Before
@@ -49,7 +49,7 @@ Do not alter Vue dynamic bindings:
   Save
 </button>
 
-// After: only move safely separable static variants.
+// After: move safely separable static variants; keep unrelated base expressions.
 <button
   className={`rounded px-4 ${active ? 'font-bold' : ''}`}
   className:hover="bg-blue-600"
@@ -59,7 +59,17 @@ Do not alter Vue dynamic bindings:
 </button>
 ```
 
-If moving tokens safely would require rewriting expression logic, leave the expression unchanged. UseClassy modifier attributes are not a replacement for `clsx`, `classy`, or conditional expressions.
+React also supports JSX expressions on modifiers when the class strings are literals:
+
+```tsx
+<button
+  className="rounded px-4"
+  className:hover={isActive ? 'bg-blue-500 text-white' : 'bg-gray-200'}
+  className:disabled={isDisabled && 'opacity-50 cursor-not-allowed'}
+/>
+```
+
+Leave expressions without string literals unchanged (e.g. `className:hover={hoverClasses}`), or store already-prefixed class names in the variable. UseClassy modifiers are not a general replacement for `clsx` / `classy` on the base `className`.
 
 ## Svelte: preserve native directives
 
