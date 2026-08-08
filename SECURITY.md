@@ -4,15 +4,15 @@
 
 | Version | Supported          |
 | ------- | ------------------ |
-| 1.2.x   | :white_check_mark: |
-| 1.1.x   | :x:                |
-| 1.0.x   | :x:                |
+| 3.3.x   | :white_check_mark: |
+| 3.2.x   | :white_check_mark: |
+| < 3.2   | :x:                |
 
 ## Reporting a Vulnerability
 
 Please do **not** open a public issue for security vulnerabilities.
 
-Instead, report them privately by emailing security@example.com with:
+Instead, report them privately by emailing jeremy@jeremymbutler.com with:
 - A clear description of the issue
 - Steps to reproduce
 - Likely impact
@@ -26,6 +26,6 @@ We request that you give us a reasonable amount of time to fix the issue before 
 
 ## Scope
 
-In scope: this repository, published packages, and the production deployment at https://example.com.
+In scope: this repository, the published `vite-plugin-useclassy` package, and the production site at https://useclassy.com.
 
 Out of scope: third-party dependencies, intentionally vulnerable test code, and denial-of-service testing.

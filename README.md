@@ -25,7 +25,7 @@ yarn add vite-plugin-useclassy -D
 pnpm add vite-plugin-useclassy -D
 ```
 
-When using the React helpers (`vite-plugin-useclassy/react`), install **React 18 or 19** (`react` satisfies `^18.0.0 || ^19.0.0`). The Vite plugin alone does not require React for Vue, Svelte, or Blade projects.
+When using the React helpers or JSX attribute types (`vite-plugin-useclassy/react`), install **React 18 or 19** (`react` satisfies `^18.0.0 || ^19.0.0`). `react` is an **optional** peer dependency — the Vite plugin alone does not require React for Vue, Svelte, or Blade projects.
 
 ## Quick setup (recommended)
 
@@ -121,6 +121,23 @@ JSX expression values work too — string literals inside the expression are pre
 ```
 
 Expressions without string literals (e.g. `className:hover={hoverClasses}`) are left unchanged so runtime variables are not corrupted. Prefer string literals in the expression (as above), or store already-prefixed class names in the variable.
+
+### TypeScript / JSX attribute types
+
+Importing the React entry enables `class:` / `className:` attributes on intrinsic elements:
+
+```ts
+import 'vite-plugin-useclassy/react'
+// or: /// <reference types="vite-plugin-useclassy/react" />
+```
+
+You can also type component props with `ClassyProps`:
+
+```ts
+import type { ClassyProps } from 'vite-plugin-useclassy/react'
+
+type ButtonProps = ClassyProps<{ onClick?: () => void }>
+```
 
 ## Vue / HTML Usage (`class`)
 
@@ -339,7 +356,7 @@ useClassy({
 
 ## Processing Rules
 
-- Only processes files with `.vue`, `.tsx`, `.jsx`, `.html`, `.blade.php` extensions.
+- Only processes files with `.vue`, `.svelte`, `.ts`, `.tsx`, `.js`, `.jsx`, `.html`, and `.blade.php` extensions.
 - Does not process files in the `node_modules` directory.
 - Does not process files in `.gitignore` directories.
 - Does not process virtual modules.

@@ -238,10 +238,10 @@ This project uses \`vite-plugin-useclassy\`. Write Tailwind variants as modifier
 attributes instead of inline variant prefixes:
 
 - Vue, Svelte, Blade, HTML: \`class="rounded px-4" class:hover="bg-blue-500"\`
-- React: \`className="rounded px-4" className:hover="bg-blue-500"\`
+- React: \`className="rounded px-4" className:hover="bg-blue-500"\` (JSX expressions with string literals are also supported, e.g. \`className:hover={on ? 'a' : 'b'}\`)
 
-Leave dynamic bindings, Vue \`:class\`, and native Svelte \`class:name={cond}\`
-directives unchanged.
+Leave Vue \`:class\`, native Svelte \`class:name={cond}\` directives, and unrelated
+dynamic base expressions unchanged.
 
 Full authoring and refactoring guide: \`.agents/skills/${SKILL_NAME}/SKILL.md\`
 ${AGENTS_MD_END}`

@@ -1,16 +1,4 @@
-import { HTMLAttributes, DetailedHTMLProps } from 'react'
 import type { ViteDevServer } from 'vite'
-
-type VariantClassNames = {
-  [key: `class${string}`]: string
-  [key: `className${string}`]: string
-}
-
-export type DivWithVariants = DetailedHTMLProps<
-  HTMLAttributes<HTMLDivElement>,
-  HTMLDivElement
-> &
-VariantClassNames
 
 // Plugin-specific types
 export interface ClassyOptions {
@@ -80,11 +68,4 @@ export interface ViteServer extends ViteDevServer {
   } | null
   moduleGraph: ViteDevServer['moduleGraph']
   ws: ViteDevServer['ws']
-}
-
-// Type for React component props that can use class variants
-export type ClassyProps<TProps = object> = TProps & {
-  [key: `class:${string}`]: string
-  [key: `className:${string}`]: string
-  className?: string
 }

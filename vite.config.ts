@@ -25,7 +25,7 @@ export default defineConfig({
   plugins: [
     dts({
       include: ['src/**/*.ts'],
-      exclude: ['**/*.test.ts', 'src/cli.ts', 'src/init-setup.ts'],
+      exclude: ['**/*.test.ts', 'src/cli.ts', 'src/init-setup.ts', 'src/tests/**'],
       copyDtsFiles: true,
     }),
   ],

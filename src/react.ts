@@ -1,9 +1,36 @@
+import 'react'
 import { useMemo } from 'react'
+
+/** Allowed values for UseClassy `class:` / `className:` JSX attributes. */
+export type ClassyAttrValue = string | number | boolean | null | undefined
+
+declare module 'react' {
+  interface HTMLAttributes<T> {
+    [key: `class:${string}`]: ClassyAttrValue
+    [key: `className:${string}`]: ClassyAttrValue
+  }
+
+  interface SVGAttributes<T> {
+    [key: `class:${string}`]: ClassyAttrValue
+    [key: `className:${string}`]: ClassyAttrValue
+  }
+}
 
 type ClassyArg =
   | string
   | Record<string, boolean>
   | (string | Record<string, boolean>)[]
+
+/**
+ * Props helper for components that accept UseClassy modifier attributes.
+ * For global JSX typing, import this module or add:
+ * `/// <reference types="vite-plugin-useclassy/react" />`
+ */
+export type ClassyProps<TProps = object> = TProps & {
+  [key: `class:${string}`]: ClassyAttrValue
+  [key: `className:${string}`]: ClassyAttrValue
+  className?: string
+}
 
 function classStringFromArg(arg: ClassyArg): string {
   if (typeof arg === 'string')

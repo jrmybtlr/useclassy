@@ -1,5 +1,14 @@
-import { describe, it, expect } from 'vitest'
-import { classy } from '../react'
+import { describe, it, expect, vi } from 'vitest'
+
+vi.mock('react', async () => {
+  const actual = await vi.importActual<typeof import('react')>('react')
+  return {
+    ...actual,
+    useMemo: (fn: () => unknown) => fn(),
+  }
+})
+
+import { classy, useClassy } from '../react'
 
 describe('classy', () => {
   describe('string arguments', () => {
@@ -54,5 +63,18 @@ describe('classy', () => {
     it('should combine strings and arrays', () => {
       expect(classy('flex', ['items-center', 'gap-2'])).toBe('flex items-center gap-2')
     })
+  })
+})
+
+describe('useClassy', () => {
+  it('should match classy for the same arguments', () => {
+    expect(useClassy('foo', { bar: true }, ['baz'])).toBe(
+      classy('foo', { bar: true }, ['baz']),
+    )
+  })
+
+  it('should join mixed class arguments', () => {
+    expect(useClassy('px-4', { 'text-red-500': true, hidden: false }, 'py-2'))
+      .toBe('px-4 text-red-500 py-2')
   })
 })
