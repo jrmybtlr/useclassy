@@ -31,7 +31,7 @@
       </section>
 
       <!-- Example -->
-      <section class="mt-2">
+      <section class="mt-2 w-full">
         <p
           class="text-center font-semibold text-2xl motion-preset-blur-up motion-delay-600 text-balance"
           class:md="text-3xl mt-2"
@@ -44,8 +44,21 @@
           :examples="classExamples"
           class="mt-10"
         />
+      </section>
 
-        <div class="mt-14 flex w-full flex-col items-center gap-2">
+      <TechniqueGuide v-model:format="demoFormat" />
+
+      <section class="mt-20 w-full">
+        <div class="text-center">
+          <h2 class="font-serif text-4xl font-extralight tracking-tight">
+            Setup
+          </h2>
+          <p class="mx-auto mt-3 max-w-lg text-balance text-zinc-400">
+            One init command for most apps, or wire Vite and Tailwind yourself.
+          </p>
+        </div>
+
+        <div class="mt-8 flex w-full flex-col items-center gap-2">
           <SegmentedControl
             v-model="setupMode"
             aria-label="Setup instructions"
@@ -54,7 +67,6 @@
           />
         </div>
       </section>
-
 
       <div class="relative mt-4 w-full min-w-0">
         <div
@@ -75,7 +87,7 @@
           </Code>
         </Step>
 
-        <!-- Quick setup (same commands as intro; numbered checklist) -->
+        <!-- Quick setup -->
         <Step
           v-if="setupMode === 'quick'"
           :number="2"
@@ -116,7 +128,7 @@
           description="Add useClassy before Tailwind or other CSS plugins so transforms run first."
         >
           <Code class="mt-6 w-full text-zinc-500" showCopy>
-            <code>
+            <code class="font-mono text-sm leading-relaxed">
               <div class="text-white">
                 import useClassy from 'vite-plugin-useclassy';
               </div>
@@ -141,10 +153,10 @@
           v-if="setupMode === 'manual'"
           :number="3"
           title="Tailwind"
-          description="Add the UseClassy output to Tailwind's @source directive in your CSS"
+          description="Point Tailwind at the generated UseClassy manifest so variant utilities are detected."
         >
           <Code class="mt-6 w-full text-zinc-500" showCopy>
-            <code>
+            <code class="font-mono text-sm leading-relaxed">
               <div>@import "tailwindcss";</div>
               <div class="text-white mt-2">@source "./.classy/output.classy.html";</div>
             </code>
@@ -159,7 +171,7 @@
           description="VS Code: merge into .vscode/settings.json. Omit className lines for Vue-only projects."
         >
           <Code class="mt-6 w-full text-zinc-500" showCopy>
-            <code>
+            <code class="font-mono text-sm leading-relaxed">
               <div>{</div>
               <div class="ml-4">"tailwindCSS.classAttributes": [</div>
               <div class="ml-8">"class",</div>
@@ -207,7 +219,7 @@ const setupModeOptions = [
   { value: "manual", label: "Manual" },
 ] as const;
 
-/** Shared across hero demo, init CLI, and manual Vite snippet. */
+/** Shared across hero demo, techniques, init CLI, and manual Vite snippet. */
 const demoFormat = ref<DemoFormat>("vue");
 
 type InitFrameworkId = "vue" | "svelte" | "react" | "laravel";
@@ -294,29 +306,11 @@ useHead({
 });
 
 const classExamples = {
-  // Base styles
-  base: "p-6 bg-white rounded-xl shadow-lg border",
-
-  // Interactive states
-  hover: "bg-blue-50 scale-105 shadow-xl",
-  focus: "ring-2 ring-blue-500 ring-offset-2",
-
-  // Dark mode
-  dark: "bg-zinc-800 text-white border-zinc-700",
-
-  // Responsive design
-  lg: "p-6 text-base mt-4",
-
-  // Group interactions
-  "group-hover": "bg-blue-100 shadow-lg border-blue-200",
-  "focus-within": "ring-2 ring-blue-500",
-
-  // Arbitrary values
-  "[&>svg]": "size-6 fill-blue-700 stroke-blue-700",
-  "dark:[&>svg]": "fill-blue-200 stroke-blue-200",
-
-  // Complex selectors
-  "[&:has(>svg)]": "pl-10 pr-2 fill-blue-500",
-  "[&:not(:has(>svg))]": "pl-4 pr-3 text-zinc-100 underline",
+  base: "px-4 py-2 rounded-lg bg-blue-600 text-white",
+  hover: "bg-blue-500 scale-105",
+  focus: "ring-2 ring-blue-300",
+  dark: "bg-sky-700",
+  md: "px-6 text-lg",
+  "group-hover": "shadow-lg",
 };
 </script>

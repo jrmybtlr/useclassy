@@ -7,13 +7,14 @@
         <button
           v-for="formatOption in formatOptions"
           :key="formatOption"
-          @click="format = formatOption"
+          type="button"
           class="inline-flex items-center gap-1.5 px-3 py-3 cursor-pointer"
           :class="
             format === formatOption
-              ? 'border-b-2 border-blue-500 '
+              ? 'border-b-2 border-blue-500'
               : 'border-b-2 border-transparent text-zinc-400'
           "
+          @click="format = formatOption"
         >
           <Icon
             :name="formatIcons[formatOption]"
@@ -22,13 +23,13 @@
           {{ formatOption.charAt(0).toUpperCase() + formatOption.slice(1) }}
         </button>
       </div>
-      <code>
+      <code class="font-mono text-sm leading-relaxed">
         <div
           v-for="(value, key) in examples"
           :key="key"
           class="transition-opacity duration-200 cursor-pointer"
           :class="{ 'opacity-30': hoveredSection && hoveredSection !== key }"
-          @mouseenter="hoveredSection = key"
+          @mouseenter="hoveredSection = String(key)"
           @mouseleave="hoveredSection = null"
         >
           <span class="text-blue-400">
@@ -42,14 +43,19 @@
 
     <!-- Combined View -->
     <Code class="motion-preset-blur-up motion-delay-800">
-      <code>
-        <span class="text-blue-400 text-sm"
+      <div
+        class="border-b border-white/10 px-5 py-2 text-xs uppercase tracking-[0.14em] text-zinc-500"
+      >
+        Compiles to
+      </div>
+      <code class="font-mono text-sm leading-relaxed">
+        <span class="text-blue-400"
           >{{ format === "react" ? "className" : "class" }}="</span
         >
         <span class="text-zinc-300">
           <template v-for="(value, key) in examples" :key="key">
             <span
-              class="mx-1 first:ml-0 last:mr-0"
+              class="mx-1 first:ml-0 last:mr-0 transition-opacity duration-200"
               :class="{
                 'opacity-30': hoveredSection && hoveredSection !== key,
               }"
@@ -58,7 +64,7 @@
                 {{ value }}
               </template>
               <template v-else>
-                {{ formatCombinedClasses(key, value) }}
+                {{ formatCombinedClasses(String(key), value) }}
               </template>
             </span>
           </template>

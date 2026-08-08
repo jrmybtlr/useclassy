@@ -1,5 +1,6 @@
 @import "tailwindcss";
 @plugin "tailwindcss-motion";
+@source "../../../.classy/output.classy.html";
 
 body {
   @apply bg-zinc-950 text-white;
