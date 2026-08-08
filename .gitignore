@@ -22,8 +22,9 @@ logs
 !.env.example
 node_modules/.pnpm/@babel+compat-data@7.26.8/node_modules/@babel/compat-data/plugin-bugfixes.js
 
-# VSCode
+# VSCode / Cursor
 .vscode
+.cursor/
 
 # Generated Classy files
 .classy/
