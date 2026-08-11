@@ -1,9 +1,17 @@
 #!/usr/bin/env node
-import { runInitSetup, INIT_LANGUAGES } from './init-setup'
-import type { InitLanguage } from './init-setup'
+import {
+  runInitSetup,
+  INIT_LANGUAGES,
+  INIT_ENGINES,
+} from './init-setup'
+import type { InitEngine, InitLanguage } from './init-setup'
 
 function isInitLanguage(value: string): value is InitLanguage {
   return (INIT_LANGUAGES as readonly string[]).includes(value)
+}
+
+function isInitEngine(value: string): value is InitEngine {
+  return (INIT_ENGINES as readonly string[]).includes(value)
 }
 
 function printHelp(): void {
@@ -14,6 +22,8 @@ Usage:
 
 Options:
   --language <vue|react|blade|svelte>   Framework language for useClassy (default: vue)
+  --engine <tailwind|unocss>           CSS engine to configure (default: auto-detect;
+                                       prefers Tailwind when both are present)
   --with-skills                    Install the UseClassy agent skill (.agents/skills),
                                    Cursor rules, and an AGENTS.md section
   --with-claude                    With --with-skills: also copy the skill to
@@ -30,6 +40,7 @@ Notes:
 function parseArgs(argv: string[]): {
   cmd: string | null
   language: InitLanguage
+  engine: InitEngine | undefined
   dryRun: boolean
   withSkills: boolean
   withClaude: boolean
@@ -37,6 +48,7 @@ function parseArgs(argv: string[]): {
 } {
   const rest = argv.slice(2)
   let language: InitLanguage = 'vue'
+  let engine: InitEngine | undefined
   let dryRun = false
   let withSkills = false
   let withClaude = false
@@ -74,13 +86,21 @@ function parseArgs(argv: string[]): {
       }
       continue
     }
+    if (arg === '--engine' || arg === '-e') {
+      const value = rest[i + 1]
+      if (value && isInitEngine(value)) {
+        engine = value
+        i++
+      }
+      continue
+    }
     if (arg === '-h' || arg === '--help') {
       printHelp()
       process.exit(0)
     }
   }
 
-  return { cmd, language, dryRun, withSkills, withClaude, force }
+  return { cmd, language, engine, dryRun, withSkills, withClaude, force }
 }
 
 function exitWithHelp(code: number): never {
@@ -92,6 +112,7 @@ function main(): void {
   const {
     cmd,
     language,
+    engine,
     dryRun,
     withSkills,
     withClaude,
@@ -112,6 +133,7 @@ function main(): void {
   const result = runInitSetup({
     cwd: process.cwd(),
     language,
+    engine,
     dryRun,
     withSkills,
     withClaude,

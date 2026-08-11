@@ -1,6 +1,6 @@
 # 🎩 UseClassy
 
-UseClassy transforms Tailwind variant attributes (`class:hover="..."`) into standard Tailwind classes (`hover:...`). This allows for cleaner component markup by separating base classes from stateful or responsive variants.
+UseClassy transforms variant attributes (`class:hover="..."`) into standard atomic classes (`hover:...`). This allows for cleaner component markup by separating base classes from stateful or responsive variants. Works with **Tailwind CSS** and **UnoCSS**.
 
 ## Features
 
@@ -10,7 +10,7 @@ UseClassy transforms Tailwind variant attributes (`class:hover="..."`) into stan
 - Works seamlessly with React (`className`), Vue/HTML (`class`), and Svelte (`class`).
 - Integrates with Vite's build process and dev server. No runtime overhead.
 - Smart Caching: Avoids reprocessing unchanged files during development.
-- Runs before Tailwind JIT compiler with HMR and TailwindMerge support.
+- Runs before Tailwind / UnoCSS with HMR and TailwindMerge support.
 
 ## Installation
 
@@ -44,6 +44,9 @@ npx vite-plugin-useclassy init --language react
 # Svelte
 npx vite-plugin-useclassy init --language svelte
 
+# UnoCSS instead of Tailwind
+npx vite-plugin-useclassy init --engine unocss --language react
+
 # Also install the AI agent skill (Cursor, Codex, Copilot + AGENTS.md)
 npx vite-plugin-useclassy init --with-skills
 
@@ -57,7 +60,7 @@ If detection fails or your config is non-standard, use the manual steps below.
 
 ## Vite Configuration
 
-Add `useClassy` to your Vite plugins. It's recommended that you place it before Tailwind or other CSS processing plugins.
+Add `useClassy` to your Vite plugins. It's recommended that you place it before Tailwind, UnoCSS, or other CSS processing plugins.
 
 ```ts
 // vite.config.ts
@@ -67,6 +70,10 @@ export default {
   plugins: [
     useClassy({
       language: "react", // or 'vue', 'blade', or 'svelte'
+
+      // Optional: CSS engine that consumes the class manifest.
+      // Defaults to 'tailwind'. Use 'unocss' for UnoCSS projects.
+      // engine: "unocss",
 
       // Optional: Customize the output directory. Defaults to '.classy'.
       // outputDir: '.classy',
@@ -286,6 +293,50 @@ getUseClassyTailwindV3ContentEntry();
 ```
 
 If you customize `outputDir` or `outputFileName` in `useClassy({ ... })`, pass the same options into these helpers.
+
+## UnoCSS Integration
+
+UseClassy’s variant-attribute syntax (`class:hover="…"`) is different from UnoCSS [Attributify](https://unocss.dev/presets/attributify) (`bg="hover:…"`). Prefer UseClassy when you want **variant-first** markup with normal utility tokens.
+
+The transform core is the same as Tailwind. Wire the HTML manifest into Uno:
+
+### 1. Plugin
+
+```ts
+useClassy({
+  language: "react",
+  engine: "unocss", // skips Tailwind @source inject
+});
+```
+
+Place UseClassy **before** `unocss/vite`.
+
+### 2. `uno.config.ts`
+
+```ts
+import { defineConfig, presetUno } from "unocss";
+import { getUseClassyUnoFilesystemEntry } from "vite-plugin-useclassy/unocss";
+
+export default defineConfig({
+  presets: [presetUno()],
+  content: {
+    filesystem: [
+      getUseClassyUnoFilesystemEntry(),
+      // → "./.classy/output.classy.html"
+    ],
+  },
+});
+```
+
+### 3. Init helper
+
+```bash
+npx vite-plugin-useclassy init --engine unocss --language react
+```
+
+When both Tailwind and UnoCSS are installed, init defaults to Tailwind unless you pass `--engine unocss`.
+
+See `demos/unocss-react` for a working canary.
 
 ## Tailwind IntelliSense
 

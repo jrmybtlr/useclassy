@@ -6,11 +6,16 @@ import {
   getUseClassyTailwindSourceDirective,
   getUseClassyTailwindV3ContentEntry,
 } from './tailwind'
+import { getUseClassyUnoFilesystemEntry } from './unocss'
 
 export type TailwindFlavor = 'v4' | 'v3' | 'unknown'
+export type CssEngineDetection = 'tailwind' | 'unocss' | 'both' | 'unknown'
 
 export const INIT_LANGUAGES = ['vue', 'react', 'blade', 'svelte'] as const
 export type InitLanguage = typeof INIT_LANGUAGES[number]
+
+export const INIT_ENGINES = ['tailwind', 'unocss'] as const
+export type InitEngine = typeof INIT_ENGINES[number]
 
 const VITE_CONFIG_NAMES = [
   'vite.config.ts',
@@ -27,6 +32,19 @@ const TAILWIND_CONFIG_NAMES = [
   'tailwind.config.cjs',
   'tailwind.config.ts',
   'tailwind.config.mts',
+] as const
+
+const UNO_CONFIG_NAMES = [
+  'uno.config.ts',
+  'uno.config.mts',
+  'uno.config.js',
+  'uno.config.mjs',
+  'uno.config.cjs',
+  'unocss.config.ts',
+  'unocss.config.mts',
+  'unocss.config.js',
+  'unocss.config.mjs',
+  'unocss.config.cjs',
 ] as const
 
 const TAILWIND_IMPORT_RE = /@import\s+["']tailwindcss["']\s*;/
@@ -168,9 +186,57 @@ export function detectTailwindFlavor(cwd: string): TailwindFlavor {
   return 'unknown'
 }
 
+export function findUnoConfigFile(cwd: string): string | null {
+  for (const name of UNO_CONFIG_NAMES) {
+    const full = path.join(cwd, name)
+    if (fs.existsSync(full)) return full
+  }
+  return null
+}
+
+export function hasUnoDependency(cwd: string): boolean {
+  const pkg = readPackageJson(cwd)
+  if (!pkg) return false
+  const all = mergedDependencies(pkg)
+  return Boolean(
+    all['unocss']
+    || all['@unocss/vite']
+    || all['@unocss/nuxt']
+    || all['@unocss/webpack'],
+  )
+}
+
+export function detectUnoPresent(cwd: string): boolean {
+  return hasUnoDependency(cwd) || findUnoConfigFile(cwd) !== null
+}
+
+export function detectCssEngine(cwd: string): CssEngineDetection {
+  const hasTw = detectTailwindFlavor(cwd) !== 'unknown'
+  const hasUno = detectUnoPresent(cwd)
+  if (hasTw && hasUno) return 'both'
+  if (hasTw) return 'tailwind'
+  if (hasUno) return 'unocss'
+  return 'unknown'
+}
+
+/**
+ * Resolve which engine init should configure.
+ * Explicit `--engine` wins; otherwise prefer Tailwind when both are present.
+ */
+export function resolveInitEngine(
+  cwd: string,
+  explicit?: InitEngine,
+): InitEngine {
+  if (explicit) return explicit
+  const detected = detectCssEngine(cwd)
+  if (detected === 'unocss') return 'unocss'
+  return 'tailwind'
+}
+
 export interface InitSetupResult {
   viteConfig?: string
   tailwind?: string
+  unocss?: string
   vscodeSettings?: string
   agentFiles?: string[]
   messages: string[]
@@ -454,12 +520,25 @@ function ensureUseClassyImport(content: string): string {
   return content.slice(0, firstImport) + importLine + content.slice(firstImport)
 }
 
-function insertUseClassyPlugin(content: string, language: InitLanguage): string {
+function useClassyPluginBlock(
+  language: InitLanguage,
+  engine: InitEngine,
+): string {
+  if (engine === 'unocss') {
+    return `useClassy({\n      language: '${language}',\n      engine: 'unocss',\n    }),`
+  }
+  return `useClassy({\n      language: '${language}',\n    }),`
+}
+
+function insertUseClassyPlugin(
+  content: string,
+  language: InitLanguage,
+  engine: InitEngine = 'tailwind',
+): string {
   if (/useClassy\s*\(/.test(content))
     return content
 
-  const pluginBlock
-    = `useClassy({\n      language: '${language}',\n    }),`
+  const pluginBlock = useClassyPluginBlock(language, engine)
 
   const pluginsMatch = content.match(/plugins\s*:\s*\[/)
   if (!pluginsMatch || pluginsMatch.index === undefined) {
@@ -475,8 +554,9 @@ function insertUseClassyPlugin(content: string, language: InitLanguage): string 
 export function patchViteConfigContent(
   content: string,
   language: InitLanguage,
+  engine: InitEngine = 'tailwind',
 ): string {
-  return insertUseClassyPlugin(ensureUseClassyImport(content), language)
+  return insertUseClassyPlugin(ensureUseClassyImport(content), language, engine)
 }
 
 function applyTextFilePatch(
@@ -507,6 +587,7 @@ export function patchViteConfig(
   cwd: string,
   language: InitLanguage,
   dryRun: boolean,
+  engine: InitEngine = 'tailwind',
 ): FilePatchResult {
   const file = findViteConfigFile(cwd)
   if (!file) {
@@ -519,7 +600,7 @@ export function patchViteConfig(
 
   return applyTextFilePatch(
     file,
-    content => patchViteConfigContent(content, language),
+    content => patchViteConfigContent(content, language, engine),
     dryRun,
   )
 }
@@ -609,6 +690,71 @@ export function patchTailwindV3(
   }
 
   return applyTextFilePatch(file, patchTailwindV3ConfigContent, dryRun)
+}
+
+/**
+ * Insert UseClassy manifest into UnoCSS `content.filesystem`.
+ * Supports `defineConfig({…})` and plain `export default {…}` shapes.
+ */
+export function patchUnoConfigContent(content: string): string {
+  const entry = getUseClassyUnoFilesystemEntry()
+  if (content.includes('output.classy.html'))
+    return content
+
+  if (/filesystem\s*:\s*\[/.test(content)) {
+    return content.replace(
+      /(filesystem\s*:\s*\[)/,
+      `$1\n      '${entry}',`,
+    )
+  }
+
+  if (/content\s*:\s*\{/.test(content)) {
+    return content.replace(
+      /(content\s*:\s*\{)/,
+      `$1\n    filesystem: ['${entry}'],`,
+    )
+  }
+
+  const defineMatch = content.match(/defineConfig\s*\(\s*\{/)
+  if (defineMatch && defineMatch.index !== undefined) {
+    const insertAt = defineMatch.index + defineMatch[0].length
+    return (
+      `${content.slice(0, insertAt)}`
+      + `\n  content: {\n    filesystem: ['${entry}'],\n  },`
+      + content.slice(insertAt)
+    )
+  }
+
+  const exportMatch = content.match(/export\s+default\s+\{/)
+  if (exportMatch && exportMatch.index !== undefined) {
+    const insertAt = exportMatch.index + exportMatch[0].length
+    return (
+      `${content.slice(0, insertAt)}`
+      + `\n  content: {\n    filesystem: ['${entry}'],\n  },`
+      + content.slice(insertAt)
+    )
+  }
+
+  throw new Error(
+    'Could not find a config object in uno.config. Add content.filesystem manually (see README).',
+  )
+}
+
+export function patchUnoConfig(
+  cwd: string,
+  dryRun: boolean,
+): FilePatchResult {
+  const file = findUnoConfigFile(cwd)
+  if (!file) {
+    return {
+      path: '',
+      changed: false,
+      error:
+        'No uno.config.* / unocss.config.* found. Add content.filesystem manually (see README).',
+    }
+  }
+
+  return applyTextFilePatch(file, patchUnoConfigContent, dryRun)
 }
 
 const VSCODE_CLASS_PATTERNS_VUE = ['class:[\\w:-]*']
@@ -721,6 +867,27 @@ function pushTailwindMessages(
   result.messages.push(`${label}: no changes (${tw.path || 'n/a'})`)
 }
 
+function pushUnoMessages(
+  result: InitSetupResult,
+  uno: FilePatchResult,
+  dryRun: boolean,
+): void {
+  const patchLabel = dryRun ? '[dry-run] Would patch' : 'Patched'
+
+  if (uno.error) {
+    result.messages.push(`UnoCSS: ${uno.error}`)
+    return
+  }
+
+  if (uno.changed) {
+    result.unocss = uno.path
+    result.messages.push(`${patchLabel} ${uno.path} (content.filesystem)`)
+    return
+  }
+
+  result.messages.push(`UnoCSS: no changes (${uno.path || 'n/a'})`)
+}
+
 function pushVsCodeMessages(
   result: InitSetupResult,
   vs: FilePatchResult,
@@ -746,6 +913,7 @@ export function runInitSetup(options: {
   cwd: string
   language: InitLanguage
   dryRun: boolean
+  engine?: InitEngine
   withSkills?: boolean
   withClaude?: boolean
   force?: boolean
@@ -760,24 +928,43 @@ export function runInitSetup(options: {
   } = options
   const result: InitSetupResult = { messages: [] }
 
-  const flavor = detectTailwindFlavor(cwd)
-  result.messages.push(`Detected Tailwind: ${flavor}`)
+  const detected = detectCssEngine(cwd)
+  const engine = resolveInitEngine(cwd, options.engine)
+  result.messages.push(`Detected CSS stack: ${detected}`)
+  result.messages.push(`Using engine: ${engine}`)
 
-  pushViteMessages(result, patchViteConfig(cwd, language, dryRun), dryRun)
-
-  if (flavor === 'v4') {
-    pushTailwindMessages(result, 'v4', patchTailwindV4(cwd, dryRun), dryRun)
-  }
-  else if (flavor === 'v3') {
-    pushTailwindMessages(result, 'v3', patchTailwindV3(cwd, dryRun), dryRun)
-  }
-  else {
+  if (detected === 'both' && !options.engine) {
     result.messages.push(
-      'Tailwind: could not detect v3 vs v4. Add the manifest to Tailwind manually (see README).',
+      'Both Tailwind and UnoCSS detected; defaulting to Tailwind. Pass --engine unocss to configure Uno instead.',
     )
   }
 
-  pushVsCodeMessages(result, patchVsCodeSettings(cwd, language, dryRun), dryRun)
+  pushViteMessages(
+    result,
+    patchViteConfig(cwd, language, dryRun, engine),
+    dryRun,
+  )
+
+  if (engine === 'unocss') {
+    pushUnoMessages(result, patchUnoConfig(cwd, dryRun), dryRun)
+  }
+  else {
+    const flavor = detectTailwindFlavor(cwd)
+    if (flavor === 'v4') {
+      pushTailwindMessages(result, 'v4', patchTailwindV4(cwd, dryRun), dryRun)
+    }
+    else if (flavor === 'v3') {
+      pushTailwindMessages(result, 'v3', patchTailwindV3(cwd, dryRun), dryRun)
+    }
+    else {
+      result.messages.push(
+        'Tailwind: could not detect v3 vs v4. Add the manifest to Tailwind manually (see README).',
+      )
+    }
+
+    // Tailwind IntelliSense patterns still help for class:hover attrs.
+    pushVsCodeMessages(result, patchVsCodeSettings(cwd, language, dryRun), dryRun)
+  }
 
   if (withSkills) {
     pushAgentMessages(

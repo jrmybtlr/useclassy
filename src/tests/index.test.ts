@@ -980,6 +980,33 @@ describe('useClassy plugin', () => {
       expect(result?.code).toMatch(/@import "tailwindcss";\n@source "/)
       expect(result?.code).toContain('body { color: red; }')
     })
+
+    it('should not inject Tailwind @source when engine is unocss', async () => {
+      const plugin = useClassy({
+        engine: 'unocss',
+        manifestRoot: '/project',
+      }) as Plugin
+
+      if (plugin.configResolved) {
+        await plugin.configResolved({
+          command: 'build',
+          root: '/project/app',
+        } as never)
+      }
+
+      const transform = plugin.transform as (
+        code: string,
+        id: string,
+      ) => { code: string } | null
+
+      const css = '@import "tailwindcss";\nbody { color: red; }\n'
+      const result = transform(
+        css,
+        '/project/app/assets/main.css',
+      )
+
+      expect(result).toBeNull()
+    })
   })
 
   describe('File Watcher Integration', () => {

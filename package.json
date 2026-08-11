@@ -19,6 +19,7 @@
     "useclassy",
     "classy",
     "tailwind",
+    "unocss",
     "css",
     "vue",
     "nuxt",
@@ -65,6 +66,11 @@
       "types": "./dist/tailwind.d.ts",
       "import": "./dist/tailwind.js",
       "require": "./dist/tailwind.cjs"
+    },
+    "./unocss": {
+      "types": "./dist/unocss.d.ts",
+      "import": "./dist/unocss.js",
+      "require": "./dist/unocss.cjs"
     }
   },
   "repository": {
