@@ -1,10 +1,10 @@
 import {
   getUseClassyManifestPath,
-  type UseClassyTailwindPathsOptions,
-} from './tailwind'
+  type UseClassyManifestPathsOptions,
+} from './manifest'
 
-/** Options for UnoCSS path helpers (same shape as Tailwind helpers). */
-export type UseClassyUnoPathsOptions = UseClassyTailwindPathsOptions
+/** Options for UnoCSS path helpers (same shape as shared manifest helpers). */
+export type UseClassyUnoPathsOptions = UseClassyManifestPathsOptions
 
 /**
  * UnoCSS `content.filesystem` entry (relative to typical config-at-root layouts).

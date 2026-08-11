@@ -30,9 +30,10 @@ import {
 
 import type { ClassyOptions, ProcessCodeResult, ViteServer } from './types'
 import {
-  getUseClassyManifestPath,
-  getUseClassyTailwindSourceDirective,
-} from './tailwind'
+  invalidateCssEngineModules,
+  invalidateCssEngineModulesForHotUpdate,
+} from './hmr'
+import { injectTailwindSourceIfNeeded } from './tailwind'
 
 /**
  * UseClassy Vite plugin
@@ -91,49 +92,19 @@ export default function useClassy(options: ClassyOptions = {}): PluginOption {
   const injectTailwindSource
     = engine === 'tailwind' && options.injectTailwindSource !== false
 
-  /**
-   * After the class manifest changes on disk, force CSS engine modules to
-   * recompile so newly discovered variants appear during HMR.
-   * Covers Tailwind (`*.css` + `@source`) and UnoCSS (`/__uno.css`,
-   * `virtual:uno.css`). Avoid emitting a FS `change` for the `.html` manifest —
-   * Vite treats that as a full page reload.
-   */
-  function invalidateCssEngineModules(): void {
-    if (!viteServer?.moduleGraph || isBuild)
+  function onManifestWrote(): void {
+    if (!viteServer)
       return
-
-    const updates: Array<{
-      type: 'css-update'
-      path: string
-      acceptedPath: string
-      timestamp: number
-    }> = []
-    const timestamp = Date.now()
-
-    for (const [id, mod] of viteServer.moduleGraph.idToModuleMap) {
-      if (!id || !isCssEngineModuleId(id))
-        continue
-
-      viteServer.moduleGraph.invalidateModule(mod)
-      const url = mod.url || id
-      updates.push({
-        type: 'css-update',
-        path: url,
-        acceptedPath: url,
-        timestamp,
-      })
-    }
-
-    if (updates.length > 0) {
-      viteServer.ws.send({ type: 'update', updates })
-      if (debug)
-        console.log(`🎩 Invalidated ${updates.length} CSS module(s) after manifest write.`)
-    }
+    invalidateCssEngineModules({
+      server: viteServer,
+      isBuild,
+      debug,
+    })
   }
 
   // Per-instance write state — avoids shared module-level cache collisions.
   const { writeDirect, writeDebounced, resetCache } = createOutputFileWriter({
-    onWrote: invalidateCssEngineModules,
+    onWrote: onManifestWrote,
   })
 
   type EnvironmentLike = {
@@ -398,13 +369,7 @@ export default function useClassy(options: ClassyOptions = {}): PluginOption {
       if (!isManifestFile(file))
         return
 
-      const cssModules: import('vite').ModuleNode[] = []
-      for (const [id, mod] of server.moduleGraph.idToModuleMap) {
-        if (!id || !isCssEngineModuleId(id))
-          continue
-        server.moduleGraph.invalidateModule(mod, undefined, timestamp, true)
-        cssModules.push(mod)
-      }
+      const cssModules = invalidateCssEngineModulesForHotUpdate(server, timestamp)
 
       if (debug)
         console.log(`🎩 Manifest changed — updating ${cssModules.length} CSS module(s).`)
@@ -414,7 +379,13 @@ export default function useClassy(options: ClassyOptions = {}): PluginOption {
     },
 
     transform(code: string, id: string) {
-      const tailwindSource = injectTailwindSourceIfNeeded(code, id)
+      const tailwindSource = injectTailwindSourceIfNeeded(code, id, {
+        enabled: injectTailwindSource,
+        manifestRoot,
+        outputDir,
+        outputFileName,
+        debug,
+      })
       if (tailwindSource !== null) {
         return { code: tailwindSource, map: null }
       }
@@ -531,43 +502,6 @@ export default function useClassy(options: ClassyOptions = {}): PluginOption {
     },
   }
 
-  function injectTailwindSourceIfNeeded(code: string, id: string): string | null {
-    const cssPath = id.split('?', 1)[0]?.split('#', 1)[0] ?? id
-    if (!injectTailwindSource || !cssPath.endsWith('.css'))
-      return null
-    if (!/@import\s+["']tailwindcss["']/.test(code))
-      return null
-
-    const manifestPath = getUseClassyManifestPath({
-      outputDir,
-      outputFileName,
-    })
-    if (code.includes(manifestPath) || code.includes(outputFileName))
-      return null
-
-    const directive = getUseClassyTailwindSourceDirective(
-      id,
-      manifestRoot,
-      { outputDir, outputFileName },
-    )
-
-    if (debug)
-      console.log('🎩 Injecting Tailwind @source into:', id)
-
-    return code.replace(
-      /@import\s+["']tailwindcss["'];?\s*\n/,
-      match => `${match}${directive}\n`,
-    )
-  }
-
-  /** Tailwind stylesheets and UnoCSS virtual CSS entries. */
-  function isCssEngineModuleId(id: string): boolean {
-    if (id.includes('.css'))
-      return true
-    // Uno virtual ids occasionally appear without a `.css` suffix in the graph.
-    return /(?:^|[/\\])__uno\b|virtual:uno\b|unocss/i.test(id)
-  }
-
   function setupOutputEndpoint(server: ViteServer) {
     server.middlewares.use(
       '/__useClassy__/generate-output',
@@ -614,18 +548,21 @@ export default function useClassy(options: ClassyOptions = {}): PluginOption {
   }
 }
 
-// Tailwind integration helpers (paths match plugin defaults unless overridden)
+// Manifest + Tailwind / UnoCSS integration helpers
 export {
   USECLASSY_DEFAULT_OUTPUT_DIR,
   USECLASSY_DEFAULT_OUTPUT_FILE,
   getUseClassyManifestPath,
+} from './manifest'
+export type {
+  UseClassyManifestPathsOptions,
+  UseClassyTailwindPathsOptions,
+} from './manifest'
+export {
   getUseClassyTailwindSourceDirective,
   getUseClassyTailwindSourceLineForRootStylesheet,
   getUseClassyTailwindV3ContentEntry,
 } from './tailwind'
-export type { UseClassyTailwindPathsOptions } from './tailwind'
-
-// UnoCSS integration helpers
 export { getUseClassyUnoFilesystemEntry } from './unocss'
 export type { UseClassyUnoPathsOptions } from './unocss'
 

@@ -5,12 +5,15 @@ import {
   USECLASSY_DEFAULT_OUTPUT_DIR,
   USECLASSY_DEFAULT_OUTPUT_FILE,
   getUseClassyManifestPath,
+} from '../manifest'
+import {
   getUseClassyTailwindSourceDirective,
   getUseClassyTailwindSourceLineForRootStylesheet,
   getUseClassyTailwindV3ContentEntry,
+  injectTailwindSourceIfNeeded,
 } from '../tailwind'
 
-describe('tailwind path helpers', () => {
+describe('manifest path helpers', () => {
   it('exposes defaults matching the plugin', () => {
     expect(USECLASSY_DEFAULT_OUTPUT_DIR).toBe('.classy')
     expect(USECLASSY_DEFAULT_OUTPUT_FILE).toBe('output.classy.html')
@@ -25,7 +28,9 @@ describe('tailwind path helpers', () => {
       }),
     ).toBe('custom/out.html')
   })
+})
 
+describe('tailwind path helpers', () => {
   it('getUseClassyTailwindV3ContentEntry prefixes ./', () => {
     expect(getUseClassyTailwindV3ContentEntry()).toBe(
       './.classy/output.classy.html',
@@ -50,5 +55,35 @@ describe('tailwind path helpers', () => {
     const css = path.join(manifestRoot, 'app', 'assets', 'main.css')
     const line = getUseClassyTailwindSourceDirective(css, manifestRoot)
     expect(line).toBe('@source "../../.classy/output.classy.html";')
+  })
+})
+
+describe('injectTailwindSourceIfNeeded', () => {
+  it('injects @source when enabled', () => {
+    const css = '@import "tailwindcss";\nbody { color: red; }\n'
+    const result = injectTailwindSourceIfNeeded(
+      css,
+      '/project/src/main.css',
+      {
+        enabled: true,
+        manifestRoot: '/project',
+        outputDir: '.classy',
+        outputFileName: 'output.classy.html',
+      },
+    )
+    expect(result).toMatch(/@import "tailwindcss";\n@source "/)
+    expect(result).toContain('body { color: red; }')
+  })
+
+  it('returns null when disabled', () => {
+    const css = '@import "tailwindcss";\n'
+    expect(
+      injectTailwindSourceIfNeeded(css, '/project/src/main.css', {
+        enabled: false,
+        manifestRoot: '/project',
+        outputDir: '.classy',
+        outputFileName: 'output.classy.html',
+      }),
+    ).toBeNull()
   })
 })
