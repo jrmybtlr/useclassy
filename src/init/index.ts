@@ -110,10 +110,10 @@ export function runInitSetup(options: {
         'Tailwind: could not detect v3 vs v4. Add the manifest to Tailwind manually (see README).',
       )
     }
-
-    // Tailwind IntelliSense patterns still help for class:hover attrs.
-    pushVsCodeMessages(result, patchVsCodeSettings(cwd, language, dryRun), dryRun)
   }
+
+  // class:hover IntelliSense is editor-side (Tailwind CSS extension patterns).
+  pushVsCodeMessages(result, patchVsCodeSettings(cwd, language, dryRun), dryRun)
 
   if (withSkills) {
     pushAgentMessages(

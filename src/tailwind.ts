@@ -88,7 +88,7 @@ export function injectTailwindSourceIfNeeded(
     return null
 
   const directive = getUseClassyTailwindSourceDirective(
-    id,
+    cssPath,
     options.manifestRoot,
     pathOpts,
   )

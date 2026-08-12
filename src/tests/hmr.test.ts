@@ -17,5 +17,9 @@ describe('isCssEngineModuleId', () => {
   it('rejects unrelated modules', () => {
     expect(isCssEngineModuleId('/src/App.tsx')).toBe(false)
     expect(isCssEngineModuleId('/src/utils.ts')).toBe(false)
+    expect(isCssEngineModuleId('/node_modules/unocss/dist/index.mjs')).toBe(
+      false,
+    )
+    expect(isCssEngineModuleId('/src/unocss.ts')).toBe(false)
   })
 })

@@ -4,10 +4,12 @@ import type { ViteServer } from './types'
 
 /** Tailwind stylesheets and UnoCSS virtual CSS entries. */
 export function isCssEngineModuleId(id: string): boolean {
-  if (id.includes('.css'))
+  if (id.includes('.css') || id.includes('virtual:uno'))
     return true
-  // Uno virtual ids occasionally appear without a `.css` suffix in the graph.
-  return /(?:^|[/\\])__uno\b|virtual:uno\b|unocss/i.test(id)
+  // Vite null-byte virtual ids (no `.css` suffix). Do not match
+  // `node_modules/unocss/...` filesystem paths.
+  return id.startsWith('\0')
+    && (id.includes('unocss') || id.includes('__uno'))
 }
 
 export type InvalidateCssEngineModulesOptions = {

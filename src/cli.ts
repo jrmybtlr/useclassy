@@ -80,18 +80,26 @@ function parseArgs(argv: string[]): {
     }
     if (arg === '--language' || arg === '-l') {
       const value = rest[i + 1]
-      if (value && isInitLanguage(value)) {
-        language = value
-        i++
+      if (!value || !isInitLanguage(value)) {
+        console.error(
+          `Invalid --language. Expected one of: ${INIT_LANGUAGES.join(', ')}`,
+        )
+        process.exit(1)
       }
+      language = value
+      i++
       continue
     }
     if (arg === '--engine' || arg === '-e') {
       const value = rest[i + 1]
-      if (value && isInitEngine(value)) {
-        engine = value
-        i++
+      if (!value || !isInitEngine(value)) {
+        console.error(
+          `Invalid --engine. Expected one of: ${INIT_ENGINES.join(', ')}`,
+        )
+        process.exit(1)
       }
+      engine = value
+      i++
       continue
     }
     if (arg === '-h' || arg === '--help') {
