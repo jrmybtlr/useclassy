@@ -86,4 +86,20 @@ describe('injectTailwindSourceIfNeeded', () => {
       }),
     ).toBeNull()
   })
+
+  it('strips Vite query from the stylesheet path for @source', () => {
+    const css = '@import "tailwindcss";\n'
+    const result = injectTailwindSourceIfNeeded(
+      css,
+      '/project/src/main.css?direct',
+      {
+        enabled: true,
+        manifestRoot: '/project',
+        outputDir: '.classy',
+        outputFileName: 'output.classy.html',
+      },
+    )
+    expect(result).toContain('@source "../.classy/output.classy.html";')
+    expect(result).not.toContain('?direct')
+  })
 })

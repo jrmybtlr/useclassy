@@ -162,6 +162,11 @@ describe('detectCssEngine / resolveInitEngine', () => {
     expect(uno).toContain('./.classy/output.classy.html')
     const vite = fs.readFileSync(path.join(dir, 'vite.config.ts'), 'utf-8')
     expect(vite).toContain('engine: \'unocss\'')
+    expect(result.vscodeSettings).toBe(path.join(dir, '.vscode', 'settings.json'))
+    const vs = JSON.parse(
+      fs.readFileSync(path.join(dir, '.vscode', 'settings.json'), 'utf-8'),
+    ) as { 'tailwindCSS.classAttributes': string[] }
+    expect(vs['tailwindCSS.classAttributes']).toContain('className:[\\w:-]*')
   })
 })
 
