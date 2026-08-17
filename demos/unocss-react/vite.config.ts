@@ -11,7 +11,7 @@ export default defineConfig({
     react(),
   ],
   server: {
-    port: 3004,
+    port: 3003,
   },
   resolve: {
     alias: {

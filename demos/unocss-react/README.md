@@ -13,4 +13,4 @@ Key wiring:
 - `uno.config.ts` — `content.filesystem` includes `.classy/output.classy.html`
 - Entry imports `virtual:uno.css`
 
-This is intentionally variant-attribute oriented (`className:hover`), not attributify-first.
+Variant-attribute oriented (`className:hover`), not attributify-first.
