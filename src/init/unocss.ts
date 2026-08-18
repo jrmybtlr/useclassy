@@ -2,7 +2,7 @@ import fs from 'fs'
 import path from 'path'
 
 import { getUseClassyUnoFilesystemEntry } from '../unocss'
-import { applyTextFilePatch, mergedDependencies, readPackageJson } from './fs'
+import { applyTextFilePatch, mergedDependencies, readPackageJson, referencesUseClassyManifest } from './fs'
 import type { FilePatchResult } from './types'
 
 const UNO_CONFIG_NAMES = [
@@ -48,7 +48,7 @@ export function detectUnoPresent(cwd: string): boolean {
  */
 export function patchUnoConfigContent(content: string): string {
   const entry = getUseClassyUnoFilesystemEntry()
-  if (content.includes('output.classy.html'))
+  if (referencesUseClassyManifest(content))
     return content
 
   if (/filesystem\s*:\s*\[/.test(content)) {

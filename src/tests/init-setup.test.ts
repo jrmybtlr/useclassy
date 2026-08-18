@@ -95,6 +95,26 @@ export default defineConfig({
 `
     expect(patchUnoConfigContent(src)).toBe(src)
   })
+
+  it('is a no-op when helper already referenced', () => {
+    const src = `import { getUseClassyUnoFilesystemEntry } from 'vite-plugin-useclassy/unocss'
+export default defineConfig({
+  content: { filesystem: [getUseClassyUnoFilesystemEntry()] },
+})
+`
+    expect(patchUnoConfigContent(src)).toBe(src)
+  })
+
+  it('still patches when filename only appears in a comment', () => {
+    const src = `export default defineConfig({
+  // scans output.classy.html after transform
+  presets: [],
+})
+`
+    const out = patchUnoConfigContent(src)
+    expect(out).toContain('\'./.classy/output.classy.html\'')
+    expect(out).toContain('scans output.classy.html')
+  })
 })
 
 describe('detectCssEngine / resolveInitEngine', () => {
@@ -183,6 +203,24 @@ describe('patchTailwindV3ConfigContent', () => {
 `
     expect(patchTailwindV3ConfigContent(src)).toBe(src)
   })
+
+  it('is a no-op when helper already referenced', () => {
+    const src = `import { getUseClassyTailwindV3ContentEntry } from 'vite-plugin-useclassy/tailwind'
+export default { content: [getUseClassyTailwindV3ContentEntry()] }
+`
+    expect(patchTailwindV3ConfigContent(src)).toBe(src)
+  })
+
+  it('still patches when filename only appears in a comment', () => {
+    const src = `export default {
+  // later: output.classy.html
+  content: ['./src/**/*.html'],
+}
+`
+    const out = patchTailwindV3ConfigContent(src)
+    expect(out).toContain('./.classy/output.classy.html')
+    expect(out).toContain('./src/**/*.html')
+  })
 })
 
 describe('patchTailwindV4Stylesheet', () => {
@@ -200,6 +238,33 @@ describe('patchTailwindV4Stylesheet', () => {
     const text = fs.readFileSync(cssPath, 'utf-8')
     expect(text).toContain('@source "')
     expect(text).toContain('.classy/output.classy.html')
+  })
+
+  it('is a no-op when @source already points at the manifest', () => {
+    const dir = tempDir()
+    const cssPath = path.join(dir, 'src', 'main.css')
+    fs.mkdirSync(path.dirname(cssPath), { recursive: true })
+    const src = '@import "tailwindcss";\n@source "./.classy/output.classy.html";\n'
+    fs.writeFileSync(cssPath, src, 'utf-8')
+    const r = patchTailwindV4Stylesheet(cssPath, dir, false)
+    expect(r.changed).toBe(false)
+    expect(fs.readFileSync(cssPath, 'utf-8')).toBe(src)
+  })
+
+  it('still patches when filename only appears in a comment', () => {
+    const dir = tempDir()
+    const cssPath = path.join(dir, 'src', 'main.css')
+    fs.mkdirSync(path.dirname(cssPath), { recursive: true })
+    fs.writeFileSync(
+      cssPath,
+      '/* output.classy.html */\n@import "tailwindcss";\n',
+      'utf-8',
+    )
+    const r = patchTailwindV4Stylesheet(cssPath, dir, false)
+    expect(r.changed).toBe(true)
+    const text = fs.readFileSync(cssPath, 'utf-8')
+    expect(text).toContain('@source "')
+    expect(text).toContain('/* output.classy.html */')
   })
 })
 

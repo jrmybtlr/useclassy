@@ -2,7 +2,7 @@ import fs from 'fs'
 import path from 'path'
 
 import { getUseClassyTailwindSourceDirective, getUseClassyTailwindV3ContentEntry } from '../tailwind'
-import { applyTextFilePatch, mergedDependencies, readDirEntries, readPackageJson } from './fs'
+import { applyTextFilePatch, mergedDependencies, readDirEntries, readPackageJson, referencesUseClassyManifest } from './fs'
 import type { FilePatchResult, TailwindFlavor } from './types'
 
 const TAILWIND_CONFIG_NAMES = [
@@ -108,17 +108,13 @@ export function detectTailwindFlavor(cwd: string): TailwindFlavor {
   return 'unknown'
 }
 
-function manifestReferencedIn(text: string): boolean {
-  return text.includes('output.classy.html')
-}
-
 export function patchTailwindV4Stylesheet(
   cssFile: string,
   cwd: string,
   dryRun: boolean,
 ): { path: string, changed: boolean } {
   const original = fs.readFileSync(cssFile, 'utf-8')
-  if (manifestReferencedIn(original))
+  if (referencesUseClassyManifest(original))
     return { path: cssFile, changed: false }
 
   const sourceLine = getUseClassyTailwindSourceDirective(cssFile, cwd)
@@ -164,7 +160,7 @@ export function patchTailwindV4(
 
 export function patchTailwindV3ConfigContent(content: string): string {
   const entry = getUseClassyTailwindV3ContentEntry()
-  if (content.includes('output.classy.html'))
+  if (referencesUseClassyManifest(content))
     return content
 
   if (!/content:\s*\[/.test(content)) {
