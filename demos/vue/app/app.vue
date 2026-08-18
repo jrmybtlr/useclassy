@@ -36,7 +36,7 @@
           class="text-center font-semibold text-2xl motion-preset-blur-up motion-delay-600 text-balance"
           class:md="text-3xl mt-2"
         >
-          Make your Tailwind variants fast, simple, and much more readable.
+          Make your Tailwind and UnoCSS variants fast, simple, and much more readable.
         </p>
 
         <ClassExample
@@ -45,11 +45,17 @@
           class="mt-10"
         />
 
-        <div class="mt-14 flex w-full flex-col items-center gap-2">
+        <div class="mt-14 flex w-full flex-col -space-y-px">
           <SegmentedControl
             v-model="setupMode"
             aria-label="Setup instructions"
             :options="setupModeOptions"
+            class="w-full"
+          />
+          <SegmentedControl
+            v-model="cssEngine"
+            aria-label="CSS engine"
+            :options="cssEngineOptions"
             class="w-full"
           />
         </div>
@@ -113,7 +119,7 @@
           v-if="setupMode === 'manual'"
           :number="2"
           title="Vite"
-          description="Add useClassy before Tailwind or other CSS plugins so transforms run first."
+          description="Add useClassy before Tailwind, UnoCSS, or other CSS plugins so transforms run first."
         >
           <Code class="mt-6 w-full text-zinc-500" showCopy>
             <code>
@@ -126,6 +132,12 @@
                   <div class="ml-4">plugins: [</div>
                   <div class="ml-8 text-white">useClassy({</div>
                   <div class="ml-12 text-white">language: '{{ demoFormat }}',</div>
+                  <div
+                    v-if="cssEngine === 'unocss'"
+                    class="ml-12 text-white"
+                  >
+                    engine: 'unocss',
+                  </div>
                   <div class="ml-8 text-white">}),</div>
                   <div class="ml-8">// ... other plugins</div>
                   <div class="ml-4">],</div>
@@ -138,7 +150,7 @@
 
         <!-- Tailwind CSS -->
         <Step
-          v-if="setupMode === 'manual'"
+          v-if="setupMode === 'manual' && cssEngine === 'tailwind'"
           :number="3"
           title="Tailwind"
           description="Add the UseClassy output to Tailwind's @source directive in your CSS"
@@ -151,12 +163,37 @@
           </Code>
         </Step>
 
+        <!-- UnoCSS -->
+        <Step
+          v-if="setupMode === 'manual' && cssEngine === 'unocss'"
+          :number="3"
+          title="UnoCSS"
+          description="Point Uno at the UseClassy manifest via content.filesystem"
+        >
+          <Code class="mt-6 w-full text-zinc-500" showCopy>
+            <code>
+              <div>import { defineConfig, presetUno } from 'unocss';</div>
+              <div class="text-white">
+                import { getUseClassyUnoFilesystemEntry } from 'vite-plugin-useclassy/unocss';
+              </div>
+              <div class="mt-2">export default defineConfig({</div>
+              <div class="ml-4">presets: [presetUno()],</div>
+              <div class="ml-4">content: {</div>
+              <div class="ml-8">filesystem: [</div>
+              <div class="ml-12 text-white">getUseClassyUnoFilesystemEntry(),</div>
+              <div class="ml-8">],</div>
+              <div class="ml-4">},</div>
+              <div>});</div>
+            </code>
+          </Code>
+        </Step>
+
         <!-- Intellisense -->
         <Step
           v-if="setupMode === 'manual'"
           :number="4"
           title="IntelliSense"
-          description="VS Code: merge into .vscode/settings.json. Omit className lines for Vue-only projects."
+          description="VS Code: merge into .vscode/settings.json (Tailwind CSS IntelliSense). Omit className lines for Vue-only projects."
         >
           <Code class="mt-6 w-full text-zinc-500" showCopy>
             <code>
@@ -201,10 +238,16 @@ import { computed, ref } from "vue";
 import type { DemoFormat } from "./components/ClassExample.vue";
 
 const setupMode = ref<"quick" | "manual">("quick");
+const cssEngine = ref<"tailwind" | "unocss">("tailwind");
 
 const setupModeOptions = [
   { value: "quick", label: "Init CLI" },
   { value: "manual", label: "Manual" },
+] as const;
+
+const cssEngineOptions = [
+  { value: "tailwind", label: "Tailwind" },
+  { value: "unocss", label: "UnoCSS" },
 ] as const;
 
 /** Shared across hero demo, init CLI, and manual Vite snippet. */
@@ -252,6 +295,14 @@ const quickInitTokens = computed((): CliToken[] => {
     { text: " ", class: "text-zinc-600" },
     { text: "init", class: "text-zinc-100" },
   ];
+  if (cssEngine.value === "unocss") {
+    tokens.push(
+      { text: " ", class: "text-zinc-600" },
+      { text: "--engine", class: "text-amber-400" },
+      { text: " ", class: "text-zinc-600" },
+      { text: "unocss", class: "text-orange-300" },
+    );
+  }
   if (format === "vue") {
     return tokens;
   }
@@ -267,15 +318,15 @@ const quickInitTokens = computed((): CliToken[] => {
 useSeoMeta({
   title: "UseClassy",
   description:
-    "Make your Tailwind variant modifiers fast, simple, and much more readable.",
+    "Make your Tailwind and UnoCSS variant modifiers fast, simple, and much more readable.",
   ogTitle: "UseClassy",
   ogDescription:
-    "Make your Tailwind variant modifiers fast, simple, and much more readable.",
+    "Make your Tailwind and UnoCSS variant modifiers fast, simple, and much more readable.",
   ogImage: "https://assets.useclassy.com/og-image.png",
   ogUrl: "https://useclassy.com",
   twitterTitle: "UseClassy",
   twitterDescription:
-    "Make your Tailwind variant modifiers fast, simple, and much more readable.",
+    "Make your Tailwind and UnoCSS variant modifiers fast, simple, and much more readable.",
   twitterImage: "https://assets.useclassy.com/og-image-twitter.png",
   twitterCard: "summary_large_image",
 });
