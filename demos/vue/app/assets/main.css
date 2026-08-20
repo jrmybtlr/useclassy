@@ -9,6 +9,7 @@
   --color-accent: #2853ff;
   --color-canvas: #050505;
   --animate-hat-tip: hat-tip 0.7s cubic-bezier(0.34, 1.35, 0.64, 1);
+  --animate-hat-float: hat-float 3s ease-in-out infinite;
 }
 
 @keyframes hat-tip {
@@ -24,6 +25,16 @@
   }
   72% {
     transform: rotate(16deg);
+  }
+}
+
+@keyframes hat-float {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-6px);
   }
 }
 
@@ -64,4 +75,25 @@ code {
     0 0 8px rgb(125 211 252 / 0.95),
     0 0 18px rgb(56 189 248 / 0.65),
     0 0 32px rgb(40 83 255 / 0.45);
+}
+
+@utility hat-glow {
+  filter:
+    drop-shadow(0 0 4px rgb(125 211 252 / 0.3))
+    drop-shadow(0 0 14px rgb(40 83 255 / 0.2));
+}
+
+@utility hat-glow-hot {
+  filter:
+    drop-shadow(0 0 6px rgb(186 230 253 / 0.55))
+    drop-shadow(0 0 22px rgb(40 83 255 / 0.45));
+}
+
+@utility hat-aura {
+  background: radial-gradient(
+    circle,
+    rgb(186 230 253 / 0.18) 0%,
+    rgb(56 189 248 / 0.12) 45%,
+    transparent 70%
+  );
 }

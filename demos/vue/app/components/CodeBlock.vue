@@ -3,7 +3,10 @@
     class="overflow-hidden text-sm"
     :class="{ 'rounded-lg border border-white/10': !embedded }"
   >
-    <div class="relative flex items-center border-b border-white/10 pr-10 pl-6">
+    <div
+      class="relative flex items-center border-b border-white/10 pr-10"
+      :class="embedded ? 'pl-12' : 'pl-6'"
+    >
       <div class="min-w-0 flex-1 overflow-x-auto">
         <div
           v-if="tabs?.length"
@@ -51,7 +54,10 @@
         <IconCopy v-else />
       </button>
     </div>
-    <div class="overflow-x-auto px-6 py-5 text-neutral-500">
+    <div
+      class="overflow-x-auto py-5 text-neutral-500"
+      :class="embedded ? 'px-12' : 'px-6'"
+    >
       <slot />
     </div>
   </div>

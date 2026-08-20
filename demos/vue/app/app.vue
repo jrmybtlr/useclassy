@@ -6,23 +6,40 @@
 
         <div class="flex flex-col items-center bg-canvas">
           <header class="flex w-full flex-col items-center justify-center py-16 text-center">
-            <span
-              class="inline-block origin-[18%_88%] cursor-default text-7xl leading-none motion-reduce:animate-none"
-              class:sm="text-7xl"
+            <canvas
+              ref="emberCanvasRef"
+              class="pointer-events-none fixed inset-0 z-10 size-full"
               aria-hidden="true"
+            ></canvas>
+            <span
+              ref="hatWrapRef"
+              class="group relative z-20 inline-flex cursor-default items-center justify-center p-4 select-none"
+              aria-hidden="true"
+              @mouseenter="onHatEnter"
             >
-              🎩
+              <span
+                class="pointer-events-none absolute top-1/2 left-1/2 size-24 -translate-x-1/2 -translate-y-[42%] rounded-full opacity-70 blur-2xl transition duration-500 hat-aura"
+                class:sm="size-28"
+                class:group-hover="scale-110 opacity-100"
+              ></span>
+              <span
+                class="relative inline-block origin-[18%_88%] text-7xl leading-none hat-glow transition-[filter] duration-300 motion-safe:animate-hat-float motion-reduce:animate-none"
+                class:sm="text-8xl"
+                class:group-hover="animate-hat-tip hat-glow-hot"
+              >
+                🎩
+              </span>
             </span>
 
             <h1
-              class="text-tight mt-8 w-full text-center font-display text-5xl font-semibold text-balance"
+              class="text-tight mt-4 w-full text-center font-display text-5xl font-semibold text-balance"
+              class:sm="text-[50px]/[55px]"
             >
-              Class attributes without the horizontal scroll.
+              Clever class attributes.
+              <span class="text-white/50">No horizontal scroll.</span>
             </h1>
             <p class="mt-4 max-w-[40ch] text-center text-lg text-pretty text-neutral-400">
-              Smarter attributes. No endless scrolling.
-              <br />
-              Classier code for Tailwind and UnoCSS.
+              Write classier code for Tailwind and UnoCSS and leave your mouse and scrollbar alone.
             </p>
 
             <div class="mt-8 flex flex-wrap items-center justify-center gap-4">
@@ -46,7 +63,7 @@
             </div>
           </header>
 
-          <div class="w-full border-t border-neutral-900">
+          <div class="w-full border-t border-neutral-900 pb-3">
             <ClassExample v-model:format="demoFormat" :examples="classExamples" />
           </div>
         </div>
@@ -58,14 +75,20 @@
         <div class="mx-auto flex max-w-4xl">
           <div class="w-6 shrink-0 border-x border-neutral-900 bg-diagonal-lines"></div>
 
-          <div class="w-full bg-canvas p-12">
-            <h2
-              class="mt-3 max-w-[24ch] font-display text-4xl font-bold tracking-tight text-balance"
-              class:sm="text-5xl"
-            >
-              Tailwind or UnoCSS.
-              <span class="text-white/50">Pick your engine.</span>
-            </h2>
+          <div class="w-full bg-canvas px-12 py-10">
+            <div class="flex flex-col items-start gap-6">
+              <div class="flex items-center gap-3" aria-hidden="true">
+                <IconTailwind />
+                <IconUnoCSS />
+              </div>
+              <h2
+                class="max-w-[24ch] font-display text-4xl font-bold tracking-tight text-balance"
+                class:sm="text-5xl"
+              >
+                Tailwind or UnoCSS.
+                <span class="text-white/50">Pick your engine.</span>
+              </h2>
+            </div>
 
             <div class="mt-10 flex flex-wrap items-end gap-x-12 gap-y-6">
               <div class="flex min-w-0 flex-col gap-2">
@@ -236,13 +259,6 @@
                     <div>}</div>
                   </code>
                 </CodeBlock>
-                <Callout>
-                  Merge into
-                  <span class="font-mono text-neutral-200">.vscode/settings.json</span>
-                  for Tailwind CSS IntelliSense. Omit the
-                  <span class="font-mono text-neutral-200">className</span>
-                  lines for Vue-only projects.
-                </Callout>
               </Step>
             </div>
           </div>
@@ -260,8 +276,160 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref } from 'vue'
+import { computed, onMounted, onUnmounted, ref } from 'vue'
 import type { DemoFormat } from './components/ClassExample.vue'
+
+// ── Ember particle system ─────────────────────────────────────────────────────
+const hatWrapRef = ref<HTMLElement | null>(null)
+const emberCanvasRef = ref<HTMLCanvasElement | null>(null)
+/** True only while the hat-tip animation is playing (0.7s). */
+const sprinkling = ref(false)
+let sprinkleTimer = 0
+const HAT_TIP_MS = 700
+
+interface Ember {
+  x: number
+  y: number
+  vx: number
+  vy: number
+  radius: number
+  alpha: number
+  decay: number
+  hue: number
+  fall: boolean
+}
+
+function useEmbers() {
+  let raf = 0
+  let embers: Ember[] = []
+
+  function brimOrigin() {
+    const hat = hatWrapRef.value
+    if (!hat) return null
+    const r = hat.getBoundingClientRect()
+    return {
+      cx: r.left + r.width / 2,
+      brimY: r.top + r.height * 0.62,
+      spread: r.width * 0.28,
+    }
+  }
+
+  function spawnRise() {
+    const o = brimOrigin()
+    if (!o) return
+    embers.push({
+      x: o.cx + (Math.random() - 0.5) * o.spread * 2.2,
+      y: o.brimY + (Math.random() - 0.5) * 6,
+      vx: (Math.random() - 0.5) * 0.7,
+      vy: -(0.4 + Math.random() * 0.9),
+      radius: 0.8 + Math.random() * 1.1,
+      alpha: 0.5 + Math.random() * 0.35,
+      decay: 0.006 + Math.random() * 0.005,
+      hue: 200 + Math.random() * 40,
+      fall: false,
+    })
+  }
+
+  function spawnFall() {
+    const o = brimOrigin()
+    if (!o) return
+    embers.push({
+      x: o.cx + (Math.random() - 0.5) * o.spread * 2.4,
+      y: o.brimY + (Math.random() - 0.5) * 6,
+      vx: (Math.random() - 0.5) * 1.4,
+      vy: 0.4 + Math.random() * 1.2,
+      radius: 0.9 + Math.random() * 1.3,
+      alpha: 0.55 + Math.random() * 0.35,
+      decay: 0.0025 + Math.random() * 0.0025,
+      hue: 195 + Math.random() * 45,
+      fall: true,
+    })
+  }
+
+  function burstFall(count = 14) {
+    for (let i = 0; i < count; i++) spawnFall()
+  }
+
+  function tick(canvas: HTMLCanvasElement, ctx: CanvasRenderingContext2D) {
+    const w = window.innerWidth
+    const h = window.innerHeight
+    if (canvas.width !== w || canvas.height !== h) {
+      canvas.width = w
+      canvas.height = h
+    }
+
+    ctx.clearRect(0, 0, w, h)
+
+    // Idle: soft rise from the brim (skip while tip-sprinkle is active)
+    if (!sprinkling.value) {
+      if (Math.random() < 0.75) spawnRise()
+      if (Math.random() < 0.35) spawnRise()
+    }
+    // Sprinkle only during the hat-tip window
+    if (sprinkling.value && Math.random() < 0.7) spawnFall()
+
+    for (let i = embers.length - 1; i >= 0; i--) {
+      const e = embers[i]!
+      e.x += e.vx
+      e.y += e.vy
+      e.vx += (Math.random() - 0.5) * (e.fall ? 0.04 : 0.06)
+      if (e.fall) e.vy += 0.035 // gravity
+      e.alpha -= e.decay
+
+      const offscreen = e.y > h + 20 || e.y < -20 || e.x < -20 || e.x > w + 20
+      if (e.alpha <= 0 || offscreen) {
+        embers.splice(i, 1)
+        continue
+      }
+
+      ctx.beginPath()
+      ctx.arc(e.x, e.y, e.radius, 0, Math.PI * 2)
+      ctx.fillStyle = `hsla(${e.hue}, 90%, 80%, ${e.alpha})`
+      ctx.fill()
+    }
+
+    raf = requestAnimationFrame(() => tick(canvas, ctx))
+  }
+
+  function start() {
+    const canvas = emberCanvasRef.value
+    if (!canvas) return
+    const ctx = canvas.getContext('2d')
+    if (!ctx) return
+    tick(canvas, ctx)
+  }
+
+  function stop() {
+    cancelAnimationFrame(raf)
+    embers = []
+  }
+
+  return { start, stop, burstFall }
+}
+
+const { start: startEmbers, stop: stopEmbers, burstFall } = useEmbers()
+
+function onHatEnter() {
+  // Match hat-tip duration — burst + short sprinkle, then stop spawning
+  window.clearTimeout(sprinkleTimer)
+  sprinkling.value = true
+  burstFall(12)
+  sprinkleTimer = window.setTimeout(() => {
+    sprinkling.value = false
+  }, HAT_TIP_MS)
+}
+
+onMounted(() => {
+  if (!window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+    startEmbers()
+  }
+})
+onUnmounted(() => {
+  window.clearTimeout(sprinkleTimer)
+  stopEmbers()
+})
+
+// ── End ember system ──────────────────────────────────────────────────────────
 
 const heroCommand = 'npx vite-plugin-useclassy init'
 
