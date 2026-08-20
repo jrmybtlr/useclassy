@@ -5,6 +5,7 @@ import {
   USECLASSY_DEFAULT_OUTPUT_DIR,
   USECLASSY_DEFAULT_OUTPUT_FILE,
   getUseClassyManifestPath,
+  referencesUseClassyManifest,
 } from '../manifest'
 import {
   getUseClassyTailwindSourceDirective,
@@ -101,5 +102,50 @@ describe('injectTailwindSourceIfNeeded', () => {
     )
     expect(result).toContain('@source "../.classy/output.classy.html";')
     expect(result).not.toContain('?direct')
+  })
+
+  it('returns null when @source already quotes the manifest', () => {
+    const css = '@import "tailwindcss";\n@source "../.classy/output.classy.html";\n'
+    expect(
+      injectTailwindSourceIfNeeded(css, '/project/src/main.css', {
+        enabled: true,
+        manifestRoot: '/project',
+        outputDir: '.classy',
+        outputFileName: 'output.classy.html',
+      }),
+    ).toBeNull()
+  })
+
+  it('still injects when the filename only appears in a comment', () => {
+    const css = '/* output.classy.html */\n@import "tailwindcss";\n'
+    const result = injectTailwindSourceIfNeeded(
+      css,
+      '/project/src/main.css',
+      {
+        enabled: true,
+        manifestRoot: '/project',
+        outputDir: '.classy',
+        outputFileName: 'output.classy.html',
+      },
+    )
+    expect(result).toContain('/* output.classy.html */')
+    expect(result).toContain('@source "../.classy/output.classy.html";')
+  })
+})
+
+describe('referencesUseClassyManifest', () => {
+  it('ignores a bare comment mention', () => {
+    expect(
+      referencesUseClassyManifest('/* output.classy.html */\n@import "tailwindcss";\n'),
+    ).toBe(false)
+  })
+
+  it('matches a quoted path or published helper', () => {
+    expect(
+      referencesUseClassyManifest('@source "../.classy/output.classy.html";'),
+    ).toBe(true)
+    expect(
+      referencesUseClassyManifest('filesystem: [getUseClassyUnoFilesystemEntry()]'),
+    ).toBe(true)
   })
 })

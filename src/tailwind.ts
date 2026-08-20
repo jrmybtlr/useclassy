@@ -2,6 +2,7 @@ import path from 'path'
 
 import {
   getUseClassyManifestPath,
+  referencesUseClassyManifest,
   resolvedOutputDir,
   resolvedOutputFile,
   type UseClassyManifestPathsOptions,
@@ -83,8 +84,7 @@ export function injectTailwindSourceIfNeeded(
     outputDir: options.outputDir,
     outputFileName: options.outputFileName,
   }
-  const manifestPath = getUseClassyManifestPath(pathOpts)
-  if (code.includes(manifestPath) || code.includes(options.outputFileName))
+  if (referencesUseClassyManifest(code, options.outputFileName))
     return null
 
   const directive = getUseClassyTailwindSourceDirective(
