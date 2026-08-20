@@ -3,11 +3,11 @@
     class="overflow-hidden text-sm"
     :class="{ 'rounded-lg border border-white/10': !embedded }"
   >
-    <div class="relative flex items-center border-b border-white/10 pr-10 pl-2">
+    <div class="relative flex items-center border-b border-white/10 pr-10 pl-6">
       <div class="min-w-0 flex-1 overflow-x-auto">
         <div
           v-if="tabs?.length"
-          class="flex w-max min-w-full"
+          class="flex w-max min-w-full gap-6"
           role="tablist"
           :aria-label="ariaLabel"
         >
@@ -16,7 +16,7 @@
             :key="tab.value"
             type="button"
             role="tab"
-            class="inline-flex shrink-0 items-center border-b-2 px-3.5 py-3 text-sm font-medium"
+            class="inline-flex shrink-0 items-center border-b-2 py-3 text-sm font-medium"
             :class="
               modelValue === tab.value
                 ? 'border-white text-white'
@@ -30,7 +30,7 @@
             {{ tab.label }}
           </button>
         </div>
-        <div v-else-if="filename" class="truncate px-3 py-3 text-sm text-neutral-400">
+        <div v-else-if="filename" class="truncate py-3 text-sm text-neutral-400">
           {{ filename }}
         </div>
       </div>
