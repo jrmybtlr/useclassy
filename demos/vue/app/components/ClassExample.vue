@@ -1,5 +1,5 @@
 <template>
-  <div class="overflow-hidden">
+  <div class="min-w-0 max-w-full overflow-hidden">
     <CodeBlock
       v-model="format"
       embedded
@@ -23,7 +23,9 @@
     </CodeBlock>
 
     <CodeBlock
+      v-model:wrap="outputWrap"
       embedded
+      wrap-toggle
       filename="output"
       class="border-t border-white/10"
       :copy-text="combinedCopy"
@@ -33,6 +35,7 @@
         <span class="text-neutral-300">
           <template v-for="(value, key) in examples" :key="key">
             <span
+              :ref="(el) => setOutputSectionRef(key, el)"
               class="mx-1 transition-[opacity,text-shadow] duration-200"
               class:first="ml-0"
               class:last="mr-0"
@@ -54,7 +57,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref } from 'vue'
+import { computed, nextTick, ref, watch, type ComponentPublicInstance } from 'vue'
 
 export type DemoFormat = 'vue' | 'react' | 'svelte' | 'blade'
 
@@ -75,6 +78,36 @@ const formatTabs: {
 ]
 
 const hoveredSection = ref<string | null>(null)
+const outputWrap = ref(false)
+const outputSectionEls = new Map<string, HTMLElement>()
+
+function setOutputSectionRef(key: string, el: Element | ComponentPublicInstance | null) {
+  if (el instanceof HTMLElement) outputSectionEls.set(key, el)
+  else outputSectionEls.delete(key)
+}
+
+function scrollOutputSectionIntoView(key: string) {
+  const el = outputSectionEls.get(key)
+  if (!el) return
+  el.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' })
+}
+
+function resetOutputScroll() {
+  const el = outputSectionEls.values().next().value
+  const pane = el?.closest('.overflow-x-auto')
+  if (!(pane instanceof HTMLElement)) return
+  pane.scrollTo({ left: 0, behavior: 'smooth' })
+}
+
+watch([hoveredSection, outputWrap], async ([key, wrap]) => {
+  if (wrap) return
+  await nextTick()
+  // Wait for nowrap layout after the wrap toggle before measuring.
+  requestAnimationFrame(() => {
+    if (key) scrollOutputSectionIntoView(key)
+    else resetOutputScroll()
+  })
+})
 
 const sectionHighlight = (key: string) => ({
   'opacity-30': hoveredSection.value && hoveredSection.value !== key,

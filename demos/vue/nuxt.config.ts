@@ -25,7 +25,7 @@ export default defineNuxtConfig({
   css: ['~/assets/main.css'],
 
   vite: {
-    plugins: [useClassy({ debug: true, manifestRoot: rootDir }), tailwindcss()],
+    plugins: [useClassy({ manifestRoot: rootDir }), tailwindcss()],
     resolve: {
       alias: {
         'vite-plugin-useclassy': path.resolve(rootDir, '../../src/index.ts'),

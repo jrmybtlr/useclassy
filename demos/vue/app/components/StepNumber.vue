@@ -1,5 +1,8 @@
 <template>
-  <div class="relative z-10 flex shrink-0 flex-col items-center self-stretch">
+  <div
+    class="relative z-10 hidden shrink-0 flex-col items-center self-stretch"
+    class:sm="flex"
+  >
     <div
       class="flex size-6 items-center justify-center rounded-full bg-white/10 text-sm text-neutral-300"
     >

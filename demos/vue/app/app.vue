@@ -1,61 +1,32 @@
 <template>
-  <div class="isolate min-h-dvh bg-gutter-dots text-white">
-    <main>
-      <section class="mx-auto flex max-w-4xl">
-        <div class="w-6 shrink-0 border-x border-neutral-900 bg-diagonal-lines"></div>
+  <div class="isolate min-h-dvh w-full bg-gutter-dots text-white">
+    <main class="w-full">
+      <section class="mx-auto flex w-full max-w-4xl">
+        <GutterRail />
 
-        <div class="flex flex-col items-center bg-canvas">
+        <div class="flex min-w-0 flex-1 flex-col items-center bg-canvas">
           <header
-            ref="heroRef"
-            class="relative flex w-full flex-col items-center justify-center overflow-hidden py-16 text-center"
+            class="relative flex w-full flex-col items-center justify-center overflow-hidden px-6 py-8 text-center"
+            class:sm="py-16"
           >
-            <canvas
-              ref="emberCanvasRef"
-              class="pointer-events-none absolute inset-0 z-10 size-full"
-              aria-hidden="true"
-            ></canvas>
-            <button
-              ref="hatWrapRef"
-              type="button"
-              class="group relative z-20 inline-flex cursor-pointer touch-manipulation appearance-none items-center justify-center border-0 bg-transparent p-4 select-none focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-sky-400/70"
-              aria-label="Tip the hat"
-              @pointerenter="onHatPlay"
-              @click="onHatPlay"
-            >
-              <span
-                class="pointer-events-none absolute top-1/2 left-1/2 size-24 -translate-x-1/2 -translate-y-[42%] rounded-full opacity-70 blur-2xl transition duration-500 hat-aura"
-                class:sm="size-28"
-                class:group-hover="scale-110 opacity-100"
-              ></span>
-              <span
-                class="relative inline-block origin-[18%_88%] text-7xl leading-none hat-glow transition-[filter] duration-300 motion-reduce:animate-none"
-                class:sm="text-8xl"
-                :class="
-                  hatTipping
-                    ? 'motion-safe:animate-hat-tip hat-glow-hot'
-                    : 'motion-safe:animate-hat-float'
-                "
-              >
-                🎩
-              </span>
-            </button>
+            <TipHat />
 
             <h1
-              class="text-tight mt-4 w-full text-center font-display text-5xl font-semibold text-balance"
-              class:sm="text-[50px]/[55px]"
+              class="text-tight mt-4 w-full text-center font-display text-3xl font-semibold text-balance"
+              class:sm="text-4xl"
+              class:md="text-[50px]/[55px]"
             >
-              Clever class attributes.
-              <span class="text-white/50">One state per line.</span>
+              Readable Utility CSS.
+              <span class="text-white/50">No horizontal scroll.</span>
             </h1>
             <p class="mt-4 max-w-[42ch] text-center text-lg text-pretty text-neutral-400">
-              Group hover, focus, and dark for Tailwind and UnoCSS. You and your agent change one
-              variant without rewriting the class string.
+              Write Tailwind and UnoCSS that's easier to read, review, debug, and change.
             </p>
 
             <div class="mt-8 flex flex-wrap items-center justify-center gap-4">
               <a
                 href="#setup"
-                class="inline-flex items-center rounded-full bg-accent px-5 py-2 text-base font-medium text-white"
+                class="inline-flex items-center rounded-full bg-accent px-5 py-2.5 text-base font-medium text-white"
                 class:hover="bg-blue-800"
                 class:focus-visible="outline-2 outline-offset-2 outline-accent"
               >
@@ -63,7 +34,7 @@
               </a>
               <a
                 href="https://github.com/jrmybtlr/useclassy"
-                class="inline-flex items-center gap-2 text-base text-neutral-300"
+                class="inline-flex items-center gap-2 text-base text-neutral-400"
                 class:hover="text-white"
                 class:focus-visible="outline-2 outline-offset-2 outline-accent"
               >
@@ -73,26 +44,26 @@
             </div>
           </header>
 
-          <div class="w-full border-t border-neutral-900 pb-3">
+          <div class="w-full min-w-0 overflow-hidden border-t border-neutral-900 sm:pb-3">
             <ClassExample v-model:format="demoFormat" :examples="classExamples" />
           </div>
         </div>
 
-        <div class="w-6 shrink-0 border-x border-neutral-900 bg-diagonal-lines"></div>
+        <GutterRail />
       </section>
 
       <section id="setup" class="border-t border-neutral-900">
-        <div class="mx-auto flex max-w-4xl">
-          <div class="w-6 shrink-0 border-x border-neutral-900 bg-diagonal-lines"></div>
+        <div class="mx-auto flex w-full max-w-4xl">
+          <GutterRail />
 
-          <div class="w-full bg-canvas px-12 py-10">
+          <div class="min-w-0 flex-1 bg-canvas px-6 py-8" class:sm="px-12 py-10">
             <div class="flex flex-col items-start gap-6">
               <div class="flex items-center gap-3" aria-hidden="true">
                 <IconTailwind />
                 <IconUnoCSS />
               </div>
               <h2
-                class="max-w-[24ch] font-display text-4xl font-bold tracking-tight text-balance"
+                class="max-w-[24ch] font-display text-3xl font-bold tracking-tight text-balance"
                 class:sm="text-5xl"
               >
                 Tailwind or UnoCSS.
@@ -167,13 +138,37 @@
                     <span class="text-emerald-400">useclassy/laravel</span>
                   </code>
                 </CodeBlock>
-                <Callout variant="tip">
-                  Teaching an agent? Append
-                  <span class="font-mono text-neutral-200">--with-skills</span>
-                  so Cursor, Codex, and Copilot keep writing
-                  <span class="font-mono text-neutral-200">class:hover</span>
-                  instead of stuffing variants back into one string.
-                </Callout>
+                <label
+                  class="flex cursor-pointer items-start gap-3 rounded-lg border border-white/10 bg-white/[0.03] px-3.5 py-3 text-base text-neutral-300 select-none"
+                  class:sm="text-sm"
+                  class:hover="border-white/15 bg-white/5"
+                >
+                  <span class="relative mt-0.5 shrink-0">
+                    <input
+                      v-model="withSkills"
+                      type="checkbox"
+                      role="switch"
+                      class="sr-only"
+                      :aria-checked="withSkills"
+                    />
+                    <span
+                      class="relative block h-5 w-9 rounded-full transition-colors"
+                      :class="withSkills ? 'bg-accent' : 'bg-white/10'"
+                      aria-hidden="true"
+                    >
+                      <span
+                        class="absolute top-0.5 left-0.5 size-4 rounded-full shadow-sm transition-[transform,background-color]"
+                        :class="withSkills ? 'translate-x-4 bg-white' : 'bg-neutral-400'"
+                      />
+                    </span>
+                  </span>
+                  <span class="min-w-0 text-pretty">
+                    <span class="font-medium text-neutral-200">With skills.</span>
+                    Installs the UseClassy skill so Cursor, Codex, and Copilot keep writing
+                    <span class="font-mono text-neutral-200">class:hover</span>
+                    instead of stuffing variants back into one string.
+                  </span>
+                </label>
               </Step>
 
               <Step
@@ -279,7 +274,7 @@
               </Step>
             </div>
           </div>
-          <div class="w-6 shrink-0 border-x border-neutral-900 bg-diagonal-lines"></div>
+          <GutterRail />
         </div>
       </section>
 
@@ -293,299 +288,13 @@
 </template>
 
 <script setup lang="ts">
-import { computed, nextTick, onMounted, onUnmounted, ref } from 'vue'
+import { computed, ref } from 'vue'
 import type { DemoFormat } from './components/ClassExample.vue'
-
-// ── Ember particle system ─────────────────────────────────────────────────────
-const heroRef = ref<HTMLElement | null>(null)
-const hatWrapRef = ref<HTMLElement | null>(null)
-const emberCanvasRef = ref<HTMLCanvasElement | null>(null)
-/** True only while the hat-tip animation is playing (0.7s). */
-const sprinkling = ref(false)
-/** Drives `animate-hat-tip` from JS so each tap can restart it (iOS sticky :hover cannot). */
-const hatTipping = ref(false)
-let sprinkleTimer = 0
-let hatTipTimer = 0
-let lastHatPlay = 0
-const HAT_TIP_MS = 700
-/** Collapse iOS first-tap pointerenter + click into one burst. */
-const HAT_PLAY_DEBOUNCE_MS = 80
-
-interface Ember {
-  x: number
-  y: number
-  vx: number
-  vy: number
-  size: number
-  alpha: number
-  decay: number
-  color: string
-  fall: boolean
-}
-
-function isCheapDevice(): boolean {
-  if (window.matchMedia('(pointer: coarse)').matches) return true
-  if (window.matchMedia('(max-width: 640px)').matches) return true
-  const nav = navigator as Navigator & { hardwareConcurrency?: number }
-  return (nav.hardwareConcurrency ?? 8) <= 4
-}
-
-function useEmbers() {
-  let raf = 0
-  let embers: Ember[] = []
-  let lastTs = 0
-  let riseAcc = 0
-  let fallAcc = 0
-  let origin: { cx: number; brimY: number; spread: number } | null = null
-  let cheap = false
-  let risePerSec = 48
-  let fallPerSec = 42
-  let maxEmbers = 80
-  let visible = true
-  let ctx: CanvasRenderingContext2D | null = null
-  let resizeObserver: ResizeObserver | null = null
-  let intersectObserver: IntersectionObserver | null = null
-
-  const GRAVITY = 120
-
-  function applyDeviceProfile() {
-    cheap = isCheapDevice()
-    risePerSec = cheap ? 16 : 48
-    fallPerSec = cheap ? 14 : 42
-    maxEmbers = cheap ? 28 : 80
-  }
-
-  function syncCanvasSize() {
-    const canvas = emberCanvasRef.value
-    if (!canvas || !ctx) return
-    const dpr = cheap ? 1 : Math.min(window.devicePixelRatio || 1, 2)
-    const cssW = Math.max(1, canvas.clientWidth)
-    const cssH = Math.max(1, canvas.clientHeight)
-    const bw = Math.round(cssW * dpr)
-    const bh = Math.round(cssH * dpr)
-    if (canvas.width !== bw || canvas.height !== bh) {
-      canvas.width = bw
-      canvas.height = bh
-    }
-    ctx.setTransform(dpr, 0, 0, dpr, 0, 0)
-  }
-
-  function refreshOrigin() {
-    const hat = hatWrapRef.value
-    const canvas = emberCanvasRef.value
-    if (!hat || !canvas) {
-      origin = null
-      return
-    }
-    const hr = hat.getBoundingClientRect()
-    const cr = canvas.getBoundingClientRect()
-    origin = {
-      cx: hr.left - cr.left + hr.width / 2,
-      brimY: hr.top - cr.top + hr.height * 0.62,
-      spread: hr.width * 0.28,
-    }
-  }
-
-  function spawnRise() {
-    if (!origin || embers.length >= maxEmbers) return
-    embers.push({
-      x: origin.cx + (Math.random() - 0.5) * origin.spread * 2.2,
-      y: origin.brimY + (Math.random() - 0.5) * 6,
-      vx: (Math.random() - 0.5) * 42,
-      vy: -(24 + Math.random() * 54),
-      size: 1.4 + Math.random() * 1.8,
-      alpha: 0.5 + Math.random() * 0.35,
-      decay: 0.36 + Math.random() * 0.3,
-      color: `hsl(${200 + Math.random() * 40} 90% 80%)`,
-      fall: false,
-    })
-  }
-
-  function spawnFall(force = false) {
-    if (!origin) return
-    if (embers.length >= maxEmbers) {
-      if (!force) return
-      embers.shift()
-    }
-    embers.push({
-      x: origin.cx + (Math.random() - 0.5) * origin.spread * 2.4,
-      y: origin.brimY + (Math.random() - 0.5) * 6,
-      vx: (Math.random() - 0.5) * 84,
-      vy: 24 + Math.random() * 72,
-      size: 1.6 + Math.random() * 2.2,
-      alpha: 0.55 + Math.random() * 0.35,
-      decay: 0.15 + Math.random() * 0.15,
-      color: `hsl(${195 + Math.random() * 45} 90% 80%)`,
-      fall: true,
-    })
-  }
-
-  function burstFall(count = 14) {
-    refreshOrigin()
-    const n = cheap ? Math.min(count, 8) : count
-    for (let i = 0; i < n; i++) spawnFall(true)
-  }
-
-  function tick(ts: number) {
-    const canvas = emberCanvasRef.value
-    if (!ctx || !canvas) return
-
-    const rawDt = lastTs ? (ts - lastTs) / 1000 : 1 / 60
-    const dt = Math.min(rawDt, 0.05)
-    lastTs = ts
-
-    const w = canvas.clientWidth
-    const h = canvas.clientHeight
-    ctx.clearRect(0, 0, w, h)
-
-    if (!sprinkling.value) {
-      riseAcc += risePerSec * dt
-      while (riseAcc >= 1) {
-        spawnRise()
-        riseAcc -= 1
-      }
-    } else {
-      riseAcc = 0
-      fallAcc += fallPerSec * dt
-      while (fallAcc >= 1) {
-        spawnFall()
-        fallAcc -= 1
-      }
-    }
-
-    for (let i = embers.length - 1; i >= 0; i--) {
-      const e = embers[i]!
-      e.x += e.vx * dt
-      e.y += e.vy * dt
-      e.vx += (Math.random() - 0.5) * (e.fall ? 24 : 36) * dt
-      if (e.fall) e.vy += GRAVITY * dt
-      e.alpha -= e.decay * dt
-
-      const offscreen = e.y > h + 20 || e.y < -20 || e.x < -20 || e.x > w + 20
-      if (e.alpha <= 0 || offscreen) {
-        embers[i] = embers[embers.length - 1]!
-        embers.pop()
-        continue
-      }
-
-      ctx.globalAlpha = e.alpha
-      ctx.fillStyle = e.color
-      ctx.fillRect(e.x, e.y, e.size, e.size)
-    }
-    ctx.globalAlpha = 1
-
-    raf = requestAnimationFrame(tick)
-  }
-
-  function loopIfNeeded() {
-    if (!visible || document.visibilityState === 'hidden' || raf) return
-    lastTs = 0
-    raf = requestAnimationFrame(tick)
-  }
-
-  function pauseLoop() {
-    cancelAnimationFrame(raf)
-    raf = 0
-  }
-
-  function onVisibility() {
-    if (document.visibilityState === 'hidden') pauseLoop()
-    else loopIfNeeded()
-  }
-
-  function start() {
-    const canvas = emberCanvasRef.value
-    const hero = heroRef.value
-    if (!canvas) return
-    applyDeviceProfile()
-    ctx = canvas.getContext('2d', { alpha: true, desynchronized: true })
-    if (!ctx) return
-    syncCanvasSize()
-    refreshOrigin()
-
-    resizeObserver = new ResizeObserver(() => {
-      syncCanvasSize()
-      refreshOrigin()
-    })
-    resizeObserver.observe(canvas)
-
-    if (hero) {
-      intersectObserver = new IntersectionObserver(
-        ([entry]) => {
-          visible = Boolean(entry?.isIntersecting)
-          if (visible) loopIfNeeded()
-          else pauseLoop()
-        },
-        { threshold: 0.05 },
-      )
-      intersectObserver.observe(hero)
-    }
-
-    document.addEventListener('visibilitychange', onVisibility)
-    visible = true
-    loopIfNeeded()
-  }
-
-  function stop() {
-    pauseLoop()
-    document.removeEventListener('visibilitychange', onVisibility)
-    resizeObserver?.disconnect()
-    intersectObserver?.disconnect()
-    resizeObserver = null
-    intersectObserver = null
-    ctx = null
-    embers = []
-    lastTs = 0
-    riseAcc = 0
-    fallAcc = 0
-  }
-
-  return { start, stop, burstFall }
-}
-
-const { start: startEmbers, stop: stopEmbers, burstFall } = useEmbers()
-
-function onHatPlay() {
-  const now = performance.now()
-  if (now - lastHatPlay < HAT_PLAY_DEBOUNCE_MS) return
-  lastHatPlay = now
-
-  window.clearTimeout(sprinkleTimer)
-  window.clearTimeout(hatTipTimer)
-  sprinkling.value = true
-  burstFall(12)
-
-  hatTipping.value = false
-  void nextTick(() => {
-    hatTipping.value = true
-    hatTipTimer = window.setTimeout(() => {
-      hatTipping.value = false
-    }, HAT_TIP_MS)
-  })
-
-  sprinkleTimer = window.setTimeout(() => {
-    sprinkling.value = false
-  }, HAT_TIP_MS)
-}
-
-onMounted(() => {
-  if (!window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
-    startEmbers()
-  }
-})
-onUnmounted(() => {
-  window.clearTimeout(sprinkleTimer)
-  window.clearTimeout(hatTipTimer)
-  stopEmbers()
-})
-
-// ── End ember system ──────────────────────────────────────────────────────────
-
-const heroCommand = 'npx vite-plugin-useclassy init'
 
 const setupMode = ref<'quick' | 'manual'>('quick')
 const cssEngine = ref<'tailwind' | 'unocss'>('tailwind')
 const packageManager = ref<'npm' | 'pnpm' | 'yarn'>('npm')
+const withSkills = ref(true)
 
 const packageManagerOptions = [
   { value: 'npm', label: 'npm' },
@@ -688,6 +397,12 @@ const quickInitTokens = computed((): CliToken[] => {
     { text: ' ', class: 'text-neutral-600' },
     { text: format, class: 'text-orange-300' },
   )
+  if (withSkills.value) {
+    tokens.push(
+      { text: ' ', class: 'text-neutral-600' },
+      { text: '--with-skills', class: 'text-amber-400' },
+    )
+  }
   return tokens
 })
 

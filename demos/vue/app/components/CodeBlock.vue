@@ -1,11 +1,11 @@
 <template>
   <div
-    class="overflow-hidden text-sm"
+    class="max-w-full min-w-0 overflow-hidden text-sm"
     :class="{ 'rounded-lg border border-white/10': !embedded }"
   >
     <div
-      class="relative flex items-center border-b border-white/10 pr-10"
-      :class="embedded ? 'pl-12' : 'pl-6'"
+      class="flex items-center border-b border-white/10"
+      :class="embedded ? 'pl-6 sm:pl-12' : 'pl-6 sm:pl-8'"
     >
       <div class="min-w-0 flex-1 overflow-x-auto">
         <div
@@ -37,26 +37,49 @@
           {{ filename }}
         </div>
       </div>
-      <button
-        type="button"
-        class="absolute top-1/2 right-1.5 inline-flex size-8 shrink-0 -translate-y-1/2 items-center justify-center rounded-md text-neutral-500"
-        class:hover="bg-white/5 text-neutral-200"
-        class:focus-visible="outline-2 outline-offset-2 outline-accent"
-        :aria-label="copied ? 'Copied' : 'Copy code'"
-        @click="copy"
-      >
-        <span
-          class="absolute top-1/2 left-1/2 size-[max(100%,3rem)] -translate-1/2"
-          class:pointer-fine="hidden"
-          aria-hidden="true"
-        />
-        <IconCheck v-if="copied" />
-        <IconCopy v-else />
-      </button>
+      <div class="flex shrink-0 items-center pr-1.5">
+        <button
+          v-if="wrapToggle"
+          type="button"
+          class="relative inline-flex size-8 shrink-0 items-center justify-center rounded-md"
+          :class="wrap ? 'text-neutral-500' : 'bg-white/5 text-neutral-200'"
+          class:hover="bg-white/5 text-neutral-200"
+          class:focus-visible="outline-2 outline-offset-2 outline-accent"
+          :aria-pressed="!wrap"
+          :aria-label="wrap ? 'Show on one line' : 'Wrap lines'"
+          @click="wrap = !wrap"
+        >
+          <span
+            class="absolute top-1/2 left-1/2 size-[max(100%,3rem)] -translate-1/2"
+            class:pointer-fine="hidden"
+            aria-hidden="true"
+          />
+          <IconWrap />
+        </button>
+        <button
+          type="button"
+          class="relative inline-flex size-8 shrink-0 items-center justify-center rounded-md text-neutral-500"
+          class:hover="bg-white/5 text-neutral-200"
+          class:focus-visible="outline-2 outline-offset-2 outline-accent"
+          :aria-label="copied ? 'Copied' : 'Copy code'"
+          @click="copy"
+        >
+          <span
+            class="absolute top-1/2 left-1/2 size-[max(100%,3rem)] -translate-1/2"
+            class:pointer-fine="hidden"
+            aria-hidden="true"
+          />
+          <IconCheck v-if="copied" />
+          <IconCopy v-else />
+        </button>
+      </div>
     </div>
     <div
-      class="overflow-x-auto py-5 text-neutral-500"
-      :class="embedded ? 'px-12' : 'px-6'"
+      class="scrollbar-faint max-w-full min-w-0 overflow-x-auto py-5 text-neutral-500"
+      :class="[
+        embedded ? 'px-6 sm:px-12' : 'px-6 sm:px-8',
+        { 'whitespace-nowrap [&>code]:inline-block [&>code]:w-max': !wrap },
+      ]"
     >
       <slot />
     </div>
@@ -72,9 +95,11 @@ const props = defineProps<{
   tabs?: readonly { value: string; label: string }[]
   ariaLabel?: string
   embedded?: boolean
+  wrapToggle?: boolean
 }>()
 
 const modelValue = defineModel<string>()
+const wrap = defineModel<boolean>('wrap', { default: false })
 const copied = ref(false)
 let copyReset: ReturnType<typeof setTimeout> | undefined
 
