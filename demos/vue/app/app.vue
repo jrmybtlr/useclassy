@@ -302,12 +302,24 @@ interface Ember {
 function useEmbers() {
   let raf = 0
   let embers: Ember[] = []
+  let lastTs = 0
+  let riseAcc = 0
+  let fallAcc = 0
+  let origin: { cx: number; brimY: number; spread: number } | null = null
 
-  function brimOrigin() {
+  // Velocities / decay are per-second so motion stays even when FPS dips
+  const RISE_PER_SEC = 48
+  const FALL_PER_SEC = 42
+  const GRAVITY = 120
+
+  function refreshOrigin() {
     const hat = hatWrapRef.value
-    if (!hat) return null
+    if (!hat) {
+      origin = null
+      return
+    }
     const r = hat.getBoundingClientRect()
-    return {
+    origin = {
       cx: r.left + r.width / 2,
       brimY: r.top + r.height * 0.62,
       spread: r.width * 0.28,
@@ -315,42 +327,46 @@ function useEmbers() {
   }
 
   function spawnRise() {
-    const o = brimOrigin()
-    if (!o) return
+    if (!origin) return
     embers.push({
-      x: o.cx + (Math.random() - 0.5) * o.spread * 2.2,
-      y: o.brimY + (Math.random() - 0.5) * 6,
-      vx: (Math.random() - 0.5) * 0.7,
-      vy: -(0.4 + Math.random() * 0.9),
+      x: origin.cx + (Math.random() - 0.5) * origin.spread * 2.2,
+      y: origin.brimY + (Math.random() - 0.5) * 6,
+      vx: (Math.random() - 0.5) * 42,
+      vy: -(24 + Math.random() * 54),
       radius: 0.8 + Math.random() * 1.1,
       alpha: 0.5 + Math.random() * 0.35,
-      decay: 0.006 + Math.random() * 0.005,
+      decay: 0.36 + Math.random() * 0.3,
       hue: 200 + Math.random() * 40,
       fall: false,
     })
   }
 
   function spawnFall() {
-    const o = brimOrigin()
-    if (!o) return
+    if (!origin) return
     embers.push({
-      x: o.cx + (Math.random() - 0.5) * o.spread * 2.4,
-      y: o.brimY + (Math.random() - 0.5) * 6,
-      vx: (Math.random() - 0.5) * 1.4,
-      vy: 0.4 + Math.random() * 1.2,
+      x: origin.cx + (Math.random() - 0.5) * origin.spread * 2.4,
+      y: origin.brimY + (Math.random() - 0.5) * 6,
+      vx: (Math.random() - 0.5) * 84,
+      vy: 24 + Math.random() * 72,
       radius: 0.9 + Math.random() * 1.3,
       alpha: 0.55 + Math.random() * 0.35,
-      decay: 0.0025 + Math.random() * 0.0025,
+      decay: 0.15 + Math.random() * 0.15,
       hue: 195 + Math.random() * 45,
       fall: true,
     })
   }
 
   function burstFall(count = 14) {
+    refreshOrigin()
     for (let i = 0; i < count; i++) spawnFall()
   }
 
-  function tick(canvas: HTMLCanvasElement, ctx: CanvasRenderingContext2D) {
+  function tick(canvas: HTMLCanvasElement, ctx: CanvasRenderingContext2D, ts: number) {
+    const rawDt = lastTs ? (ts - lastTs) / 1000 : 1 / 60
+    // Cap so a long hitch does not fling particles across the screen
+    const dt = Math.min(rawDt, 0.05)
+    lastTs = ts
+
     const w = window.innerWidth
     const h = window.innerHeight
     if (canvas.width !== w || canvas.height !== h) {
@@ -360,21 +376,31 @@ function useEmbers() {
 
     ctx.clearRect(0, 0, w, h)
 
-    // Idle: soft rise from the brim (skip while tip-sprinkle is active)
+    // One layout read per frame (not per particle) — avoids forced reflow jank
+    refreshOrigin()
+
     if (!sprinkling.value) {
-      if (Math.random() < 0.75) spawnRise()
-      if (Math.random() < 0.35) spawnRise()
+      riseAcc += RISE_PER_SEC * dt
+      while (riseAcc >= 1) {
+        spawnRise()
+        riseAcc -= 1
+      }
+    } else {
+      riseAcc = 0
+      fallAcc += FALL_PER_SEC * dt
+      while (fallAcc >= 1) {
+        spawnFall()
+        fallAcc -= 1
+      }
     }
-    // Sprinkle only during the hat-tip window
-    if (sprinkling.value && Math.random() < 0.7) spawnFall()
 
     for (let i = embers.length - 1; i >= 0; i--) {
       const e = embers[i]!
-      e.x += e.vx
-      e.y += e.vy
-      e.vx += (Math.random() - 0.5) * (e.fall ? 0.04 : 0.06)
-      if (e.fall) e.vy += 0.035 // gravity
-      e.alpha -= e.decay
+      e.x += e.vx * dt
+      e.y += e.vy * dt
+      e.vx += (Math.random() - 0.5) * (e.fall ? 24 : 36) * dt
+      if (e.fall) e.vy += GRAVITY * dt
+      e.alpha -= e.decay * dt
 
       const offscreen = e.y > h + 20 || e.y < -20 || e.x < -20 || e.x > w + 20
       if (e.alpha <= 0 || offscreen) {
@@ -388,7 +414,7 @@ function useEmbers() {
       ctx.fill()
     }
 
-    raf = requestAnimationFrame(() => tick(canvas, ctx))
+    raf = requestAnimationFrame((next) => tick(canvas, ctx, next))
   }
 
   function start() {
@@ -396,12 +422,16 @@ function useEmbers() {
     if (!canvas) return
     const ctx = canvas.getContext('2d')
     if (!ctx) return
-    tick(canvas, ctx)
+    lastTs = 0
+    raf = requestAnimationFrame((ts) => tick(canvas, ctx, ts))
   }
 
   function stop() {
     cancelAnimationFrame(raf)
     embers = []
+    lastTs = 0
+    riseAcc = 0
+    fallAcc = 0
   }
 
   return { start, stop, burstFall }
