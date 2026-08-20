@@ -6,8 +6,11 @@ import tailwindcss from '@tailwindcss/vite'
 const rootDir = path.dirname(fileURLToPath(import.meta.url))
 
 export default defineNuxtConfig({
-
   modules: ['@nuxt/fonts', '@nuxthub/core', '@nuxt/icon'],
+
+  fonts: {
+    families: [{ name: 'Switzer', provider: 'fontshare', weights: [700] }],
+  },
 
   icon: {
     serverBundle: {
@@ -22,10 +25,7 @@ export default defineNuxtConfig({
   css: ['~/assets/main.css'],
 
   vite: {
-    plugins: [
-      useClassy({ debug: true, manifestRoot: rootDir }),
-      tailwindcss(),
-    ],
+    plugins: [useClassy({ debug: true, manifestRoot: rootDir }), tailwindcss()],
     resolve: {
       alias: {
         'vite-plugin-useclassy': path.resolve(rootDir, '../../src/index.ts'),

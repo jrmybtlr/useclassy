@@ -31,7 +31,7 @@ Use UseClassy to separate Tailwind variants from base utilities:
 | React | `className="…"` | `className:hover="…"` (also accepts `class:…`); JSX expressions allowed |
 | Svelte | `class="…"` | Quoted only: `class:hover="…"` |
 
-Modifier names may contain letters, numbers, `_`, `-`, and `:`.
+Modifier names may contain letters, numbers, `_`, `-`, `:`, `/` (named groups such as `group-hover/item`), and `@` (container queries such as `@md`). Arbitrary variants (`[&>*]`, `data-[state=open]`) cannot be attribute names — leave those tokens on the base class. In React JSX, `/` in an attribute name is invalid, so named groups must stay on `className`.
 
 - **Vue / Blade / Svelte / HTML:** modifier values must be double-quoted static class strings.
 - **React:** prefer double-quoted static strings. JSX expressions are also supported when string literals inside the expression should receive the variant prefix, e.g. `className:hover={on ? 'bg-blue-500' : 'bg-gray-200'}`.

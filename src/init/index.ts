@@ -112,8 +112,16 @@ export function runInitSetup(options: {
     }
   }
 
-  // class:hover IntelliSense is editor-side (Tailwind CSS extension patterns).
-  pushVsCodeMessages(result, patchVsCodeSettings(cwd, language, dryRun), dryRun)
+  // Uno IntelliSense comes from the UnoCSS extension + uno.config, not the
+  // Tailwind CSS `classAttributes` setting.
+  if (engine === 'unocss') {
+    result.messages.push(
+      'VS Code: skipped Tailwind CSS IntelliSense (UnoCSS uses the Uno extension).',
+    )
+  }
+  else {
+    pushVsCodeMessages(result, patchVsCodeSettings(cwd, language, dryRun), dryRun)
+  }
 
   if (withSkills) {
     pushAgentMessages(

@@ -1,29 +1,21 @@
 <template>
-  <div
-    class="flex w-full border border-white/10 bg-zinc-900/30 divide-x divide-white/10"
-    role="tablist"
-    :aria-label="ariaLabel"
-  >
+  <div class="flex gap-6 border-b border-white/10" role="tablist" :aria-label="ariaLabel">
     <button
       v-for="opt in options"
       :key="opt.value"
       type="button"
       role="tab"
-      class="min-w-0 flex-1 inline-flex items-center justify-center gap-1.5 px-2 py-4 text-center text-sm font-medium transition-colors focus-visible:relative focus-visible:z-10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/25 sm:px-4"
+      class="border-b-2 py-3 text-sm font-medium"
       :class="
         modelValue === opt.value
-          ? 'bg-white text-zinc-950'
-          : 'text-zinc-400 hover:bg-zinc-900/50 hover:text-zinc-200'
+          ? 'border-white text-white'
+          : 'border-transparent text-neutral-500'
       "
+      class:hover="text-neutral-200"
+      class:focus-visible="outline-2 outline-offset-2 outline-accent"
       :aria-selected="modelValue === opt.value"
       @click="emit('update:modelValue', opt.value)"
     >
-      <Icon
-        v-if="opt.icon"
-        :name="opt.icon"
-        class="size-4 shrink-0 grayscale opacity-70"
-        :class="modelValue === opt.value ? 'opacity-90' : ''"
-      />
       {{ opt.label }}
     </button>
   </div>
@@ -32,7 +24,7 @@
 <script setup lang="ts">
 defineProps<{
   modelValue: string
-  options: readonly { value: string; label: string; icon?: string }[]
+  options: readonly { value: string; label: string }[]
   ariaLabel: string
 }>()
 

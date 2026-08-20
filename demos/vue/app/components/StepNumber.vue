@@ -1,11 +1,16 @@
 <template>
-  <div class="flex flex-col items-center">
+  <div class="relative z-10 flex shrink-0 flex-col items-center self-stretch">
     <div
-      class="flex text-sm items-center justify-center size-6 rounded-full bg-zinc-800 mt-1"
+      class="flex size-6 items-center justify-center rounded-full bg-white/10 text-sm text-neutral-300"
     >
-      <slot></slot>
+      <slot />
     </div>
+    <div v-if="!last" class="mt-1 w-px flex-1 bg-white/10" />
   </div>
 </template>
 
-<script setup lang="ts"></script>
+<script setup lang="ts">
+defineProps<{
+  last?: boolean
+}>()
+</script>

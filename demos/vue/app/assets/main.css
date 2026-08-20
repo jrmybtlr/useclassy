@@ -1,46 +1,71 @@
-@import "tailwindcss";
+@import 'tailwindcss';
 @plugin "tailwindcss-motion";
 
+@theme {
+  --font-sans: 'Inter', ui-sans-serif, system-ui, sans-serif;
+  --font-sans--font-feature-settings: 'cv02', 'cv03', 'cv04', 'cv11', 'ss01', 'ss03';
+  --font-display: 'Switzer', ui-sans-serif, system-ui, sans-serif;
+  --font-mono: 'IBM Plex Mono', ui-monospace, monospace;
+  --color-accent: #2853ff;
+  --color-canvas: #050505;
+  --animate-hat-tip: hat-tip 0.7s cubic-bezier(0.34, 1.35, 0.64, 1);
+}
+
+@keyframes hat-tip {
+  0%,
+  100% {
+    transform: rotate(0deg);
+  }
+  35% {
+    transform: rotate(24deg);
+  }
+  55% {
+    transform: rotate(10deg);
+  }
+  72% {
+    transform: rotate(16deg);
+  }
+}
+
+html {
+  @apply antialiased scheme-only-dark;
+}
+
 body {
-  @apply bg-zinc-950 text-white;
+  @apply bg-canvas font-sans text-white;
 }
 
-.font-serif {
-  font-family: "Playfair Display", serif;
+/* Gutter wallpaper: 1px dots, solid column punch-through. */
+@utility bg-gutter-dots {
+  background-color: var(--color-canvas);
+  background-image: radial-gradient(
+    circle,
+    rgb(255 255 255 / 0.05) 1px,
+    transparent 1.25px
+  );
+  background-size: 10px 10px;
 }
 
-.font-sans {
-  font-family: "Inter", sans-serif;
-}
-
-.font-mono {
-  font-family: "Fira Code", monospace;
+/* Spacer hatch: 1px diagonals on the canvas. */
+@utility bg-diagonal-lines {
+  background-color: var(--color-canvas);
+  background-image: repeating-linear-gradient(
+    -45deg,
+    transparent,
+    transparent 7px,
+    rgb(255 255 255 / 0.06) 7px,
+    rgb(255 255 255 / 0.06) 8px
+  );
 }
 
 code {
-  @apply block text-sm/[1.9em] font-mono px-5 py-4;
+  @apply block font-mono text-sm/[1.9em];
 }
 
-/* A better container */
-.container {
-  width: 100%;
-  max-width: 720px;
-  margin-left: auto;
-  margin-right: auto;
-  padding-left: calc(env(safe-area-inset-left, 0rem) + 1.1rem);
-  padding-right: calc(env(safe-area-inset-right, 0rem) + 1.1rem);
-}
-
-@media screen and (min-width: 768px) {
-  .container {
-    padding-left: calc(env(safe-area-inset-left, 0rem) + 2rem);
-    padding-right: calc(env(safe-area-inset-right, 0rem) + 2rem);
-  }
-}
-
-@media screen and (min-width: 1280px) {
-  .container {
-    padding-left: calc(env(safe-area-inset-left, 0rem) + 3rem);
-    padding-right: calc(env(safe-area-inset-right, 0rem) + 3rem);
-  }
+@utility text-glow {
+  text-shadow:
+    0 0 2px rgb(255 255 255 / 0.9),
+    0 0 8px rgb(125 211 252 / 0.95),
+    0 0 18px rgb(56 189 248 / 0.65),
+    0 0 32px rgb(40 83 255 / 0.45);
 }

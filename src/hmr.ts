@@ -2,14 +2,31 @@ import type { ModuleNode } from 'vite'
 
 import type { ViteServer } from './types'
 
-/** Tailwind stylesheets and UnoCSS virtual CSS entries. */
+const STYLESHEET_RE = /\.css(?:$|\?|#)/i
+const CSS_MODULE_RE = /\.module\.css(?:$|\?|#)/i
+
+/**
+ * Tailwind root stylesheets and UnoCSS virtual CSS entries.
+ * Matches `.css` as a file extension, not a path substring, and skips CSS
+ * modules / `node_modules` so a manifest write does not invalidate every sheet.
+ */
 export function isCssEngineModuleId(id: string): boolean {
-  if (id.includes('.css') || id.includes('virtual:uno'))
+  if (!id)
+    return false
+
+  if (id.includes('virtual:uno'))
+    return true
+  if (id.includes('/__uno.css') || id.endsWith('__uno.css'))
     return true
   // Vite null-byte virtual ids (no `.css` suffix). Do not match
   // `node_modules/unocss/...` filesystem paths.
-  return id.startsWith('\0')
-    && (id.includes('unocss') || id.includes('__uno'))
+  if (id.startsWith('\0') && (id.includes('unocss') || id.includes('__uno')))
+    return true
+
+  if (id.includes('node_modules') || CSS_MODULE_RE.test(id))
+    return false
+
+  return STYLESHEET_RE.test(id)
 }
 
 export type InvalidateCssEngineModulesOptions = {

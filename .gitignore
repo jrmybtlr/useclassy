@@ -23,7 +23,9 @@ logs
 node_modules/.pnpm/@babel+compat-data@7.26.8/node_modules/@babel/compat-data/plugin-bugfixes.js
 
 # VSCode / Cursor
-.vscode
+.vscode/*
+!.vscode/settings.json
+!.vscode/extensions.json
 .cursor/
 
 # Generated Classy files

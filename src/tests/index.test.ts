@@ -182,6 +182,35 @@ describe('useClassy plugin', () => {
       expect(plugin.name).toBe('useClassy')
       expect(plugin.enforce).toBe('pre')
     })
+
+    it('rewrites chained JSX modifiers during Vite 8 dep scan', () => {
+      const plugin = useClassy({ language: 'react' }) as Plugin
+      expect(typeof plugin.config).toBe('function')
+
+      const config = (
+        plugin.config as (config: object, env: object) => {
+          optimizeDeps: {
+            rolldownOptions: {
+              plugins: Array<{
+                name: string
+                transform: { handler: (code: string) => string | null }
+              }>
+            }
+          }
+        }
+      )({}, { command: 'serve', mode: 'development' })
+
+      const scanPlugin = config.optimizeDeps.rolldownOptions.plugins.find(
+        candidate => candidate.name === 'useClassy:dep-scan',
+      )
+      expect(scanPlugin).toBeDefined()
+
+      const rewritten = scanPlugin!.transform.handler(
+        '<div className:sm:hover="underline">X</div>',
+      )
+      expect(rewritten).toContain('sm:hover:underline')
+      expect(rewritten).not.toContain('className:sm:hover')
+    })
   })
 
   describe('Basic transformations', () => {

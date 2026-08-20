@@ -182,11 +182,13 @@ describe('detectCssEngine / resolveInitEngine', () => {
     expect(uno).toContain('./.classy/output.classy.html')
     const vite = fs.readFileSync(path.join(dir, 'vite.config.ts'), 'utf-8')
     expect(vite).toContain('engine: \'unocss\'')
-    expect(result.vscodeSettings).toBe(path.join(dir, '.vscode', 'settings.json'))
-    const vs = JSON.parse(
-      fs.readFileSync(path.join(dir, '.vscode', 'settings.json'), 'utf-8'),
-    ) as { 'tailwindCSS.classAttributes': string[] }
-    expect(vs['tailwindCSS.classAttributes']).toContain('className:[\\w:-]*')
+    expect(result.vscodeSettings).toBeUndefined()
+    expect(
+      result.messages.some(m => m.includes('skipped Tailwind CSS IntelliSense')),
+    ).toBe(true)
+    expect(
+      fs.existsSync(path.join(dir, '.vscode', 'settings.json')),
+    ).toBe(false)
   })
 })
 
@@ -297,19 +299,19 @@ describe('mergeTailwindClassAttributes', () => {
   it('merges vue patterns', () => {
     const out = mergeTailwindClassAttributes(['class'], 'vue')
     expect(out).toContain('class')
-    expect(out).toContain('class:[\\w:-]*')
+    expect(out).toContain('class:[\\w:/@-]*')
   })
 
   it('adds className for react', () => {
     const out = mergeTailwindClassAttributes([], 'react')
     expect(out).toContain('className')
-    expect(out).toContain('className:[\\w:-]*')
+    expect(out).toContain('className:[\\w:/@-]*')
   })
 
   it('uses vue-style patterns for svelte', () => {
     const out = mergeTailwindClassAttributes(['class'], 'svelte')
     expect(out).toContain('class')
-    expect(out).toContain('class:[\\w:-]*')
+    expect(out).toContain('class:[\\w:/@-]*')
     expect(out).not.toContain('className')
   })
 })

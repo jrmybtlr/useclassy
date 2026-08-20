@@ -28,6 +28,8 @@
     <p class="max-w-xl text-sm text-zinc-400">
       Smoke coverage for quoted UseClassy modifiers, nested variants, and
       coexistence with native <code class="text-zinc-300">class:name</code> directives.
+      Chained <code class="text-zinc-300">class:sm:hover</code> is additive — not
+      Tailwind variant composition.
     </p>
   </header>
 
@@ -59,6 +61,34 @@
   </section>
 
   <div class="w-full max-w-3xl flex flex-col gap-8" class:md="gap-10">
+    <!-- Additive vs exact chains -->
+    <section class="flex flex-col gap-3">
+      <div>
+        <h2 class="text-base font-semibold text-zinc-100">Additive chain</h2>
+        <p class="text-xs text-zinc-500">
+          class:sm:hover="underline" also emits sm:underline and hover:underline
+        </p>
+      </div>
+      <p
+        class="rounded-lg border border-zinc-700 bg-zinc-900 px-5 py-3 text-zinc-100"
+        class:sm:hover="underline"
+      >
+        Underline on hover at any width, at sm without hover, and at sm+hover.
+      </p>
+    </section>
+
+    <section class="flex flex-col gap-3">
+      <div>
+        <h2 class="text-base font-semibold text-zinc-100">Exact chain on class</h2>
+        <p class="text-xs text-zinc-500">
+          sm:hover:underline on the base class — underline only when sm AND hover
+        </p>
+      </div>
+      <p class="sm:hover:underline rounded-lg border border-zinc-700 bg-zinc-900 px-5 py-3 text-zinc-100">
+        Same resize/hover — underline only at sm + hover.
+      </p>
+    </section>
+
     <!-- Quoted static + nested -->
     <section class="flex flex-col gap-3">
       <div>
@@ -66,7 +96,7 @@
           Quoted modifiers + nested
         </h2>
         <p class="text-xs text-zinc-500">
-          class:hover / class:sm:hover / class:md — UseClassy quoted values only
+          class:hover / class:sm:hover (additive) / class:md — quoted UseClassy values only
         </p>
       </div>
       <div

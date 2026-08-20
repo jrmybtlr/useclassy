@@ -14,8 +14,10 @@ export interface ClassyOptions {
   /**
    * CSS engine that consumes the generated class manifest.
    * - `tailwind` (default): may inject `@source` into Tailwind CSS
-   * - `unocss`: skips Tailwind inject; register the manifest via Uno
-   *   `content.filesystem` (see `vite-plugin-useclassy/unocss`)
+   * - `unocss`: skips Tailwind inject. Place UseClassy before `unocss/vite`
+   *   so the pipeline sees rewritten `hover:…` classes. Also register the
+   *   manifest via `content.filesystem` (see `vite-plugin-useclassy/unocss`)
+   *   as a backstop for files Uno does not extract from the pipeline.
    * @default "tailwind"
    */
   engine?: ClassyEngine

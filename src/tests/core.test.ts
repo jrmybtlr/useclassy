@@ -369,6 +369,40 @@ describe('core module', () => {
       expect(classes.has('hover:text-blue-500')).toBeTruthy()
     })
 
+    it('transforms named-group and container-query modifier names', () => {
+      const code
+        = '<div class:group-hover/item="bg-red-500" class:@md="p-4">Content</div>'
+      const classes = new Set<string>()
+
+      const result = transformClassModifiers(
+        code,
+        classes,
+        CLASS_MODIFIER_REGEX,
+        'class',
+      )
+
+      expect(result).toContain('class="group-hover/item:bg-red-500"')
+      expect(result).toContain('class="@md:p-4"')
+      expect(classes.has('group-hover/item:bg-red-500')).toBeTruthy()
+      expect(classes.has('@md:p-4')).toBeTruthy()
+    })
+
+    it('leaves arbitrary variant prefixes in the base class string', () => {
+      const code = '<div class="[&>*]:mt-2" class:hover="underline">Content</div>'
+      const classes = new Set<string>()
+
+      const result = transformClassModifiers(
+        code,
+        classes,
+        CLASS_MODIFIER_REGEX,
+        'class',
+      )
+
+      expect(result).toContain('class="[&>*]:mt-2"')
+      expect(result).toContain('class="hover:underline"')
+      expect(result).not.toMatch(/class:\[&\>\*\]/)
+    })
+
     it('should transform multiple class modifiers', () => {
       const code
         = '<div class:hover="text-blue-500" class:focus="outline-none">Content</div>'

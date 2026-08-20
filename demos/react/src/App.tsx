@@ -32,7 +32,8 @@ function App() {
         </h1>
         <p className="max-w-xl text-sm text-zinc-400">
           Smoke coverage for quoted modifiers, conditionals, comparison
-          operands, nested braces, and multi-modifier merges.
+          operands, nested braces, and chained modifiers. Chained attributes
+          are additive (not Tailwind variant composition).
         </p>
       </header>
 
@@ -171,10 +172,32 @@ function App() {
           </div>
         </Case>
 
+        {/* Additive vs exact chains */}
+        <Case
+          title="Additive chain"
+          detail='className:sm:hover="underline" also emits sm:underline and hover:underline — UseClassy-specific, not Tailwind composition.'
+        >
+          <p
+            className="rounded-lg border border-zinc-700 bg-zinc-900 px-5 py-3 text-zinc-100"
+            className:sm:hover="underline"
+          >
+            Underline on hover at any width, at sm without hover, and at sm+hover.
+          </p>
+        </Case>
+
+        <Case
+          title="Exact chain on className"
+          detail="sm:hover:underline on the base string: underline only when sm AND hover."
+        >
+          <p className="sm:hover:underline rounded-lg border border-zinc-700 bg-zinc-900 px-5 py-3 text-zinc-100">
+            Same resize/hover — underline only at sm + hover.
+          </p>
+        </Case>
+
         {/* Nested modifiers */}
         <Case
-          title="Nested modifiers"
-          detail="className:sm:hover expands full chain + partials for Tailwind"
+          title="Nested modifiers (also additive)"
+          detail="className:sm:hover expands full chain + each segment"
         >
           <div
             className="px-5 py-3 rounded-lg bg-zinc-900"

@@ -1,0 +1,39 @@
+{
+  "$schema": "./node_modules/oxlint/configuration_schema.json",
+  "plugins": ["typescript", "unicorn", "oxc"],
+  "categories": {
+    "correctness": "error",
+    "suspicious": "warn"
+  },
+  "env": {
+    "es2022": true,
+    "node": true
+  },
+  "ignorePatterns": [
+    "dist/**",
+    "node_modules/**",
+    ".output/**",
+    "**/.output/**",
+    "**/.nuxt/**",
+    "**/.classy/**",
+    "**/vendor/**",
+    "demos/laravel/**",
+    "pnpm-lock.yaml"
+  ],
+  "overrides": [
+    {
+      "files": ["demos/vue/**/*.{vue,ts}"],
+      "plugins": ["vue", "typescript", "unicorn", "oxc"],
+      "env": {
+        "browser": true
+      }
+    },
+    {
+      "files": ["demos/react/**/*.{ts,tsx}", "demos/unocss-react/**/*.{ts,tsx}"],
+      "plugins": ["react", "typescript", "unicorn", "oxc"],
+      "env": {
+        "browser": true
+      }
+    }
+  ]
+}

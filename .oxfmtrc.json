@@ -1,0 +1,19 @@
+{
+  "$schema": "./node_modules/oxfmt/configuration_schema.json",
+  "semi": false,
+  "singleQuote": true,
+  "sortTailwindcss": {
+    "stylesheet": "./demos/vue/app/assets/main.css"
+  },
+  "ignorePatterns": [
+    "dist/**",
+    "node_modules/**",
+    ".output/**",
+    "**/.output/**",
+    "**/.nuxt/**",
+    "**/.classy/**",
+    "**/vendor/**",
+    "demos/laravel/**",
+    "pnpm-lock.yaml"
+  ]
+}

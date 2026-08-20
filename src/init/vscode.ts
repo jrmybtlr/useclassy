@@ -3,8 +3,8 @@ import path from 'path'
 
 import type { FilePatchResult, InitLanguage, InitSetupResult } from './types'
 
-const VSCODE_CLASS_PATTERNS_VUE = ['class:[\\w:-]*']
-const VSCODE_CLASS_PATTERNS_REACT = ['class:[\\w:-]*', 'className:[\\w:-]*']
+const VSCODE_CLASS_PATTERNS_VUE = ['class:[\\w:/@-]*']
+const VSCODE_CLASS_PATTERNS_REACT = ['class:[\\w:/@-]*', 'className:[\\w:/@-]*']
 
 export function mergeTailwindClassAttributes(
   existing: unknown,

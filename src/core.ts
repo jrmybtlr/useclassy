@@ -14,17 +14,34 @@ export const SUPPORTED_FILES = [
 
 const MAX_MODIFIER_DEPTH = 4
 
+/**
+ * Variant names in `class:…` / `className:…`.
+ * Includes `/` (named groups like `group-hover/item`) and `@` (container
+ * queries like `@md`). Arbitrary variants (`[&>*]`, `data-[open]`) still cannot
+ * be attribute names — `[` / `]` / `&` are not allowed, and JSX cannot parse
+ * `/` in `className:group-hover/item` (keep those tokens on the base class).
+ */
+export const CLASS_MODIFIER_NAME_PATTERN = String.raw`[\w/:@-]+`
+
 /** Base (Vue) class attribute regexes */
 export const CLASS_REGEX = /(?<![:\w])class="([^"]*)"(?![^>]*:class)/g
-export const CLASS_MODIFIER_REGEX = /(?<![:\w])class:([\w-:]+)="([^"]*)"/g
+export const CLASS_MODIFIER_REGEX = new RegExp(
+  String.raw`(?<![:\w])class:(${CLASS_MODIFIER_NAME_PATTERN})="([^"]*)"`,
+  'g',
+)
 
 /** React `className` / `class` regexes */
 export const REACT_CLASS_REGEX = /(?<![:\w])className=(?:"([^"]*)"|{([^}]*)})(?![^>]*:)/g
-export const REACT_CLASS_MODIFIER_REGEX
-  = /(?<![:\w])(?:className|class):([\w-:]+)="([^"]*)"/g
+export const REACT_CLASS_MODIFIER_REGEX = new RegExp(
+  String.raw`(?<![:\w])(?:className|class):(${CLASS_MODIFIER_NAME_PATTERN})="([^"]*)"`,
+  'g',
+)
 
 /** Start of a JSX expression modifier: `className:hover={` or `class:sm:hover = {` */
-const JSX_MODIFIER_START_REGEX = /(?<![:\w])(?:className|class):([\w-:]+)\s*=\s*\{/g
+const JSX_MODIFIER_START_REGEX = new RegExp(
+  String.raw`(?<![:\w])(?:className|class):(${CLASS_MODIFIER_NAME_PATTERN})\s*=\s*\{`,
+  'g',
+)
 
 /**
  * Svelte `class` regexes.
@@ -34,8 +51,10 @@ const JSX_MODIFIER_START_REGEX = /(?<![:\w])(?:className|class):([\w-:]+)\s*=\s*
  * Unlike Vue, there is no `:class` binding lookahead.
  */
 export const SVELTE_CLASS_REGEX = /(?<![:\w])class=(?:"([^"]*)"|{([^}]*)})/g
-export const SVELTE_CLASS_MODIFIER_REGEX
-  = /(?<![:\w])class:([\w-:]+)="([^"]*)"/g
+export const SVELTE_CLASS_MODIFIER_REGEX = new RegExp(
+  String.raw`(?<![:\w])class:(${CLASS_MODIFIER_NAME_PATTERN})="([^"]*)"`,
+  'g',
+)
 
 /**
  * Generates a hash string from the input string

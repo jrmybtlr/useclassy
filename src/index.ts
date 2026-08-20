@@ -300,9 +300,50 @@ export default function useClassy(options: ClassyOptions = {}): PluginOption {
     )
   }
 
+  /**
+   * Vite 8's Rolldown dep scanner parses `.tsx` / `.jsx` without running
+   * Vite `transform` hooks. Namespaced JSX allows one colon (`className:hover`),
+   * so chained modifiers (`className:sm:hover`) fail at parse time.
+   * Inject a Rolldown plugin that rewrites source first.
+   */
+  function rewriteJsxForDepScan(code: string): string | null {
+    if (!code.includes('className:') && !code.includes('class:'))
+      return null
+
+    try {
+      const { transformedCode } = processCode(code)
+      return transformedCode === code ? null : transformedCode
+    }
+    catch {
+      return null
+    }
+  }
+
+  const jsxDepScanPlugin = {
+    name: 'useClassy:dep-scan',
+    transform: {
+      filter: { id: /\.[cm]?[jt]sx$/ },
+      handler(code: string) {
+        return rewriteJsxForDepScan(code)
+      },
+    },
+  }
+
   return {
     name: 'useClassy',
     enforce: 'pre',
+
+    config() {
+      const optimizeDeps = {
+        rolldownOptions: {
+          plugins: [jsxDepScanPlugin],
+        },
+      }
+      return {
+        optimizeDeps,
+        ssr: { optimizeDeps },
+      }
+    },
 
     configResolved(config) {
       isBuild = config.command === 'build'
