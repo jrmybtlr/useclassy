@@ -28,22 +28,18 @@
 }
 
 html {
-  @apply antialiased scheme-only-dark;
+  @apply overscroll-none antialiased scheme-only-dark;
 }
 
 body {
-  @apply bg-canvas font-sans text-white;
+  @apply overscroll-none bg-canvas font-sans text-white;
 }
 
 /* Gutter wallpaper: 1px dots, solid column punch-through. */
 @utility bg-gutter-dots {
   background-color: var(--color-canvas);
-  background-image: radial-gradient(
-    circle,
-    rgb(255 255 255 / 0.05) 1px,
-    transparent 1.25px
-  );
-  background-size: 10px 10px;
+  background-image: radial-gradient(circle, rgb(255 255 255 / 0.05) 0.5px, transparent 1.25px);
+  background-size: 6px 6px;
 }
 
 /* Spacer hatch: 1px diagonals on the canvas. */

@@ -1,13 +1,11 @@
 <template>
   <div class="isolate min-h-dvh bg-gutter-dots text-white">
     <main>
-      <section class="flex max-w-3xl mx-auto">
-        <div class="border-x border-neutral-900 shrink-0 bg-diagonal-lines w-6"></div>
+      <section class="mx-auto flex max-w-3xl">
+        <div class="w-6 shrink-0 border-x border-neutral-900 bg-diagonal-lines"></div>
 
-        <div class=" flex flex-col items-center bg-canvas">
-          <header
-            class="flex w-full flex-col items-center justify-center py-16 text-center"
-          >
+        <div class="flex flex-col items-center bg-canvas">
+          <header class="flex w-full flex-col items-center justify-center py-16 text-center">
             <span
               class="inline-block origin-[18%_88%] cursor-default text-7xl leading-none motion-reduce:animate-none"
               class:sm="text-8xl"
@@ -17,14 +15,12 @@
             </span>
 
             <h1
-              class="mt-8 w-full text-center font-display text-tight text-5xl font-semibold text-balance"
+              class="text-tight mt-8 w-full text-center font-display text-5xl font-semibold text-balance"
               class:sm="text-[52px]"
             >
               Class attributes without the horizontal scroll.
             </h1>
-            <p
-              class="mt-4 max-w-[40ch] text-center text-lg text-pretty text-neutral-400"
-            >
+            <p class="mt-4 max-w-[40ch] text-center text-lg text-pretty text-neutral-400">
               Smarter attributes. No endless scrolling.
               <br />
               Classier code for Tailwind and UnoCSS.
@@ -52,25 +48,19 @@
           </header>
 
           <div class="w-full border-t border-white/10">
-            <ClassExample
-              v-model:format="demoFormat"
-              :examples="classExamples"
-            />
+            <ClassExample v-model:format="demoFormat" :examples="classExamples" />
           </div>
         </div>
 
-        <div class="border-x border-neutral-900 shrink-0 bg-diagonal-lines w-6"></div>
+        <div class="w-6 shrink-0 border-x border-neutral-900 bg-diagonal-lines"></div>
       </section>
 
-      <section id="setup" class="border-t border-white/10 flex max-w-3xl mx-auto">
-        <div class="border-x border-neutral-900 shrink-0 bg-diagonal-lines w-6"></div>
+      <section id="setup" class="border-t border-white/10">
+        <div class="mx-auto flex max-w-3xl">
+          <div class="w-6 shrink-0 border-x border-neutral-900 bg-diagonal-lines"></div>
 
-        <div class="bg-canvas p-12">
-          <p
-            class="font-mono text-sm tracking-wider text-neutral-500 uppercase"
-          >
-            [ Setup ]
-          </p>
+          <div class="bg-canvas p-12">
+          <p class="font-mono text-sm tracking-wider text-neutral-500 uppercase">[ Setup ]</p>
           <h2
             class="mt-3 max-w-[24ch] font-display text-4xl font-bold tracking-tight text-balance"
             class:sm="text-5xl"
@@ -81,9 +71,7 @@
 
           <div class="mt-10 flex flex-wrap items-end gap-x-12 gap-y-6">
             <div class="flex min-w-0 flex-col gap-2">
-              <p class="text-sm text-neutral-400" class:sm="text-xs">
-                Setup method
-              </p>
+              <p class="text-sm text-neutral-400" class:sm="text-xs">Setup method</p>
               <SegmentedControl
                 v-model="setupMode"
                 aria-label="Setup instructions"
@@ -91,9 +79,7 @@
               />
             </div>
             <div class="flex min-w-0 flex-col gap-2">
-              <p class="text-sm text-neutral-400" class:sm="text-xs">
-                CSS engine
-              </p>
+              <p class="text-sm text-neutral-400" class:sm="text-xs">CSS engine</p>
               <SegmentedControl
                 v-model="cssEngine"
                 aria-label="CSS engine"
@@ -115,12 +101,9 @@
                 :copy-text="installCopy"
               >
                 <code>
-                  <span
-                    v-for="(t, i) in installTokens"
-                    :key="`install-${i}`"
-                    :class="t.class"
-                    >{{ t.text }}</span
-                  >
+                  <span v-for="(t, i) in installTokens" :key="`install-${i}`" :class="t.class">{{
+                    t.text
+                  }}</span>
                 </code>
               </CodeBlock>
             </Step>
@@ -139,23 +122,17 @@
                 :copy-text="quickInitCopy"
               >
                 <code>
-                  <span
-                    v-for="(t, i) in quickInitTokens"
-                    :key="`init-${i}`"
-                    :class="t.class"
-                    >{{ t.text }}</span
-                  >
+                  <span v-for="(t, i) in quickInitTokens" :key="`init-${i}`" :class="t.class">{{
+                    t.text
+                  }}</span>
                 </code>
               </CodeBlock>
-              <CodeBlock
-                v-if="demoFormat === 'blade'"
-                :copy-text="composerCopy"
-              >
+              <CodeBlock v-if="demoFormat === 'blade'" :copy-text="composerCopy">
                 <code>
                   <span class="text-sky-300">composer</span>
-                  <span class="text-neutral-600">{{ " " }}</span>
+                  <span class="text-neutral-600">{{ ' ' }}</span>
                   <span class="text-neutral-100">require</span>
-                  <span class="text-neutral-600">{{ " " }}</span>
+                  <span class="text-neutral-600">{{ ' ' }}</span>
                   <span class="text-emerald-400">useclassy/laravel</span>
                 </code>
               </CodeBlock>
@@ -169,15 +146,11 @@
             >
               <CodeBlock filename="vite.config.ts" :copy-text="viteCopy">
                 <code>
-                  <div class="text-white">
-                    import useClassy from 'vite-plugin-useclassy';
-                  </div>
+                  <div class="text-white">import useClassy from 'vite-plugin-useclassy';</div>
                   <div class="mt-2">export default {</div>
                   <div class="ml-4">plugins: [</div>
                   <div class="ml-8 text-white">useClassy({</div>
-                  <div class="ml-12 text-white">
-                    language: '{{ demoFormat }}',
-                  </div>
+                  <div class="ml-12 text-white">language: '{{ demoFormat }}',</div>
                   <div v-if="cssEngine === 'unocss'" class="ml-12 text-white">
                     engine: 'unocss',
                   </div>
@@ -188,8 +161,7 @@
                 </code>
               </CodeBlock>
               <Callout variant="tip">
-                Place it before Tailwind, UnoCSS, or other CSS plugins.
-                UseClassy rewrites
+                Place it before Tailwind, UnoCSS, or other CSS plugins. UseClassy rewrites
                 <span class="font-mono text-neutral-200">class:hover</span>
                 into
                 <span class="font-mono text-neutral-200">hover:…</span>
@@ -206,9 +178,7 @@
               <CodeBlock filename="app.css" :copy-text="tailwindCopy">
                 <code>
                   <div>@import "tailwindcss";</div>
-                  <div class="mt-2 text-white">
-                    @source "./.classy/output.classy.html";
-                  </div>
+                  <div class="mt-2 text-white">@source "./.classy/output.classy.html";</div>
                 </code>
               </CodeBlock>
             </Step>
@@ -224,16 +194,13 @@
                 <code>
                   <div>import { defineConfig, presetUno } from 'unocss';</div>
                   <div class="text-white">
-                    import { getUseClassyUnoFilesystemEntry } from
-                    'vite-plugin-useclassy/unocss';
+                    import { getUseClassyUnoFilesystemEntry } from 'vite-plugin-useclassy/unocss';
                   </div>
                   <div class="mt-2">export default defineConfig({</div>
                   <div class="ml-4">presets: [presetUno()],</div>
                   <div class="ml-4">content: {</div>
                   <div class="ml-8">filesystem: [</div>
-                  <div class="ml-12 text-white">
-                    getUseClassyUnoFilesystemEntry(),
-                  </div>
+                  <div class="ml-12 text-white">getUseClassyUnoFilesystemEntry(),</div>
                   <div class="ml-8">],</div>
                   <div class="ml-4">},</div>
                   <div>});</div>
@@ -242,13 +209,13 @@
               <Callout>
                 Vite’s Uno pipeline already sees rewritten
                 <span class="font-mono text-neutral-200">hover:…</span>
-                classes when UseClassy runs first. The HTML manifest is a
-                backstop for files Uno does not extract (plain
+                classes when UseClassy runs first. The HTML manifest is a backstop for files Uno
+                does not extract (plain
                 <span class="font-mono text-neutral-200">.ts</span>
                 /
                 <span class="font-mono text-neutral-200">.js</span>
-                by default, plus Blade or HTML that never enter Vite). This is
-                not an Uno extractor, attributify, or Wind4 preset.
+                by default, plus Blade or HTML that never enter Vite). This is not an Uno extractor,
+                attributify, or Wind4 preset.
               </Callout>
             </Step>
 
@@ -259,10 +226,7 @@
               badge="Optional"
               last
             >
-              <CodeBlock
-                filename=".vscode/settings.json"
-                :copy-text="intelCopy"
-              >
+              <CodeBlock filename=".vscode/settings.json" :copy-text="intelCopy">
                 <code>
                   <div>{</div>
                   <div class="ml-4">"tailwindCSS.classAttributes": [</div>
@@ -276,158 +240,147 @@
               </CodeBlock>
               <Callout>
                 Merge into
-                <span class="font-mono text-neutral-200"
-                  >.vscode/settings.json</span
-                >
+                <span class="font-mono text-neutral-200">.vscode/settings.json</span>
                 for Tailwind CSS IntelliSense. Omit the
                 <span class="font-mono text-neutral-200">className</span>
                 lines for Vue-only projects.
               </Callout>
             </Step>
           </div>
+          </div>
+          <div class="w-6 shrink-0 border-x border-neutral-900 bg-diagonal-lines"></div>
         </div>
-        <div class="border-x border-neutral-900 shrink-0 bg-diagonal-lines w-6"></div>
       </section>
 
-      
       <footer
-        class="border-t border-white/10 py-6 flex bg-black justify-center items-center text-sm text-neutral-500"
+        class="flex items-center justify-center border-t border-white/10 bg-black py-6 text-sm text-neutral-500"
       >
         MIT License © {{ new Date().getFullYear() }} Jeremy Butler
       </footer>
-      <section
-        class="border-t border-white/10 bg-diagonal-lines py-2"
-      ></section>
     </main>
   </div>
 </template>
 
 <script setup lang="ts">
-import { computed, ref } from "vue";
-import type { DemoFormat } from "./components/ClassExample.vue";
+import { computed, ref } from 'vue'
+import type { DemoFormat } from './components/ClassExample.vue'
 
-const heroCommand = "npx vite-plugin-useclassy init";
+const heroCommand = 'npx vite-plugin-useclassy init'
 
-const setupMode = ref<"quick" | "manual">("quick");
-const cssEngine = ref<"tailwind" | "unocss">("tailwind");
-const packageManager = ref<"npm" | "pnpm" | "yarn">("npm");
+const setupMode = ref<'quick' | 'manual'>('quick')
+const cssEngine = ref<'tailwind' | 'unocss'>('tailwind')
+const packageManager = ref<'npm' | 'pnpm' | 'yarn'>('npm')
 
 const packageManagerOptions = [
-  { value: "npm", label: "npm" },
-  { value: "pnpm", label: "pnpm" },
-  { value: "yarn", label: "yarn" },
-] as const;
+  { value: 'npm', label: 'npm' },
+  { value: 'pnpm', label: 'pnpm' },
+  { value: 'yarn', label: 'yarn' },
+] as const
 
 const setupModeOptions = [
-  { value: "quick", label: "Init CLI" },
-  { value: "manual", label: "Manual" },
-] as const;
+  { value: 'quick', label: 'Init CLI' },
+  { value: 'manual', label: 'Manual' },
+] as const
 
 const cssEngineOptions = [
-  { value: "tailwind", label: "Tailwind" },
-  { value: "unocss", label: "UnoCSS" },
-] as const;
+  { value: 'tailwind', label: 'Tailwind' },
+  { value: 'unocss', label: 'UnoCSS' },
+] as const
 
 /** Shared across hero demo, init CLI, and manual Vite snippet. */
-const demoFormat = ref<DemoFormat>("vue");
+const demoFormat = ref<DemoFormat>('vue')
 
-type InitFrameworkId = "vue" | "svelte" | "react" | "laravel";
+type InitFrameworkId = 'vue' | 'svelte' | 'react' | 'laravel'
 
 const initFramework = computed({
-  get: (): InitFrameworkId =>
-    demoFormat.value === "blade" ? "laravel" : demoFormat.value,
+  get: (): InitFrameworkId => (demoFormat.value === 'blade' ? 'laravel' : demoFormat.value),
   set: (value: InitFrameworkId) => {
-    demoFormat.value = value === "laravel" ? "blade" : value;
+    demoFormat.value = value === 'laravel' ? 'blade' : value
   },
-});
+})
 
 const initFrameworkOptions: {
-  value: InitFrameworkId;
-  label: string;
+  value: InitFrameworkId
+  label: string
 }[] = [
-  { value: "vue", label: "Vue" },
-  { value: "svelte", label: "Svelte" },
-  { value: "react", label: "React" },
-  { value: "laravel", label: "Laravel" },
-];
+  { value: 'vue', label: 'Vue' },
+  { value: 'svelte', label: 'Svelte' },
+  { value: 'react', label: 'React' },
+  { value: 'laravel', label: 'Laravel' },
+]
 
-type CliToken = { text: string; class: string };
+type CliToken = { text: string; class: string }
 
-const space: CliToken = { text: " ", class: "text-neutral-600" };
+const space: CliToken = { text: ' ', class: 'text-neutral-600' }
 
 const installTokens = computed((): CliToken[] => {
-  if (packageManager.value === "pnpm") {
+  if (packageManager.value === 'pnpm') {
     return [
-      { text: "pnpm", class: "text-sky-300" },
+      { text: 'pnpm', class: 'text-sky-300' },
       space,
-      { text: "add", class: "text-neutral-100" },
+      { text: 'add', class: 'text-neutral-100' },
       space,
-      { text: "vite-plugin-useclassy", class: "text-emerald-400" },
+      { text: 'vite-plugin-useclassy', class: 'text-emerald-400' },
       space,
-      { text: "-D", class: "text-amber-400" },
-    ];
+      { text: '-D', class: 'text-amber-400' },
+    ]
   }
-  if (packageManager.value === "yarn") {
+  if (packageManager.value === 'yarn') {
     return [
-      { text: "yarn", class: "text-sky-300" },
+      { text: 'yarn', class: 'text-sky-300' },
       space,
-      { text: "add", class: "text-neutral-100" },
+      { text: 'add', class: 'text-neutral-100' },
       space,
-      { text: "vite-plugin-useclassy", class: "text-emerald-400" },
+      { text: 'vite-plugin-useclassy', class: 'text-emerald-400' },
       space,
-      { text: "-D", class: "text-amber-400" },
-    ];
+      { text: '-D', class: 'text-amber-400' },
+    ]
   }
   return [
-    { text: "npm", class: "text-sky-300" },
+    { text: 'npm', class: 'text-sky-300' },
     space,
-    { text: "install", class: "text-neutral-100" },
+    { text: 'install', class: 'text-neutral-100' },
     space,
-    { text: "vite-plugin-useclassy", class: "text-emerald-400" },
+    { text: 'vite-plugin-useclassy', class: 'text-emerald-400' },
     space,
-    { text: "--save-dev", class: "text-amber-400" },
-  ];
-});
+    { text: '--save-dev', class: 'text-amber-400' },
+  ]
+})
 
-const installCopy = computed(() =>
-  installTokens.value.map((t) => t.text).join(""),
-);
+const installCopy = computed(() => installTokens.value.map((t) => t.text).join(''))
 
 const quickInitTokens = computed((): CliToken[] => {
-  const format = demoFormat.value;
+  const format = demoFormat.value
   const tokens: CliToken[] = [
-    { text: "npx", class: "text-sky-300" },
-    { text: " ", class: "text-neutral-600" },
-    { text: "vite-plugin-useclassy", class: "text-emerald-400" },
-    { text: " ", class: "text-neutral-600" },
-    { text: "init", class: "text-neutral-100" },
-  ];
-  if (cssEngine.value === "unocss") {
+    { text: 'npx', class: 'text-sky-300' },
+    { text: ' ', class: 'text-neutral-600' },
+    { text: 'vite-plugin-useclassy', class: 'text-emerald-400' },
+    { text: ' ', class: 'text-neutral-600' },
+    { text: 'init', class: 'text-neutral-100' },
+  ]
+  if (cssEngine.value === 'unocss') {
     tokens.push(
-      { text: " ", class: "text-neutral-600" },
-      { text: "--engine", class: "text-amber-400" },
-      { text: " ", class: "text-neutral-600" },
-      { text: "unocss", class: "text-orange-300" },
-    );
+      { text: ' ', class: 'text-neutral-600' },
+      { text: '--engine', class: 'text-amber-400' },
+      { text: ' ', class: 'text-neutral-600' },
+      { text: 'unocss', class: 'text-orange-300' },
+    )
   }
   tokens.push(
-    { text: " ", class: "text-neutral-600" },
-    { text: "--language", class: "text-amber-400" },
-    { text: " ", class: "text-neutral-600" },
-    { text: format, class: "text-orange-300" },
-  );
-  return tokens;
-});
+    { text: ' ', class: 'text-neutral-600' },
+    { text: '--language', class: 'text-amber-400' },
+    { text: ' ', class: 'text-neutral-600' },
+    { text: format, class: 'text-orange-300' },
+  )
+  return tokens
+})
 
-const quickInitCopy = computed(() =>
-  quickInitTokens.value.map((t) => t.text).join(""),
-);
+const quickInitCopy = computed(() => quickInitTokens.value.map((t) => t.text).join(''))
 
-const composerCopy = "composer require useclassy/laravel";
+const composerCopy = 'composer require useclassy/laravel'
 
 const viteCopy = computed(() => {
-  const engineLine =
-    cssEngine.value === "unocss" ? `\n      engine: 'unocss',` : "";
+  const engineLine = cssEngine.value === 'unocss' ? `\n      engine: 'unocss',` : ''
   return `import useClassy from 'vite-plugin-useclassy';
 
 export default {
@@ -438,12 +391,12 @@ export default {
     // ... other plugins
   ],
 };
-`;
-});
+`
+})
 
 const tailwindCopy = `@import "tailwindcss";
 @source "./.classy/output.classy.html";
-`;
+`
 
 const unoCopy = `import { defineConfig, presetUno } from 'unocss';
 import { getUseClassyUnoFilesystemEntry } from 'vite-plugin-useclassy/unocss';
@@ -456,7 +409,7 @@ export default defineConfig({
     ],
   },
 });
-`;
+`
 
 const intelCopy = `{
   "tailwindCSS.classAttributes": [
@@ -466,65 +419,62 @@ const intelCopy = `{
     "className:[\\\\w:/@-]*"
   ]
 }
-`;
+`
 
 useSeoMeta({
-  title: "UseClassy",
-  description:
-    "Variant attributes for Tailwind and UnoCSS. One rewrite. Every engine.",
-  ogTitle: "UseClassy",
-  ogDescription:
-    "Variant attributes for Tailwind and UnoCSS. One rewrite. Every engine.",
-  ogImage: "https://assets.useclassy.com/og-image.png",
-  ogUrl: "https://useclassy.com",
-  twitterTitle: "UseClassy",
-  twitterDescription:
-    "Variant attributes for Tailwind and UnoCSS. One rewrite. Every engine.",
-  twitterImage: "https://assets.useclassy.com/og-image-twitter.png",
-  twitterCard: "summary_large_image",
-});
+  title: 'UseClassy',
+  description: 'Variant attributes for Tailwind and UnoCSS. One rewrite. Every engine.',
+  ogTitle: 'UseClassy',
+  ogDescription: 'Variant attributes for Tailwind and UnoCSS. One rewrite. Every engine.',
+  ogImage: 'https://assets.useclassy.com/og-image.png',
+  ogUrl: 'https://useclassy.com',
+  twitterTitle: 'UseClassy',
+  twitterDescription: 'Variant attributes for Tailwind and UnoCSS. One rewrite. Every engine.',
+  twitterImage: 'https://assets.useclassy.com/og-image-twitter.png',
+  twitterCard: 'summary_large_image',
+})
 
 useHead({
   htmlAttrs: {
-    lang: "en",
-    class: "scheme-only-dark",
+    lang: 'en',
+    class: 'scheme-only-dark',
   },
   link: [
     {
-      rel: "icon",
-      type: "image/png",
-      href: "/favicon.png",
+      rel: 'icon',
+      type: 'image/png',
+      href: '/favicon.png',
     },
   ],
-});
+})
 
 const classExamples = {
   // Base styles
-  base: "p-6 bg-white rounded-xl shadow-lg border",
+  base: 'p-6 bg-white rounded-xl shadow-lg border',
 
   // Interactive states
-  hover: "bg-blue-50 scale-105 shadow-xl",
-  focus: "ring-2 ring-blue-500 ring-offset-2",
+  hover: 'bg-blue-50 scale-105 shadow-xl',
+  focus: 'ring-2 ring-blue-500 ring-offset-2',
 
   // Dark mode
-  dark: "bg-zinc-800 text-white border-zinc-700",
+  dark: 'bg-zinc-800 text-white border-zinc-700',
 
   // Responsive design
-  lg: "p-6 text-base mt-4",
+  lg: 'p-6 text-base mt-4',
 
   // Additive chain (also emits sm:underline and hover:underline)
-  "sm:hover": "underline",
+  'sm:hover': 'underline',
 
   // Group interactions
-  "group-hover": "bg-blue-100 shadow-lg border-blue-200",
-  "focus-within": "ring-2 ring-blue-500",
+  'group-hover': 'bg-blue-100 shadow-lg border-blue-200',
+  'focus-within': 'ring-2 ring-blue-500',
 
   // Arbitrary values
   // '[&>svg]': 'size-6 fill-blue-700 stroke-blue-700',
-  "dark:[&>svg]": "fill-blue-200 stroke-blue-200",
+  'dark:[&>svg]': 'fill-blue-200 stroke-blue-200',
 
   // Complex selectors
   // '[&:has(>svg)]': 'pl-10 pr-2 fill-blue-500',
-  "[&:not(:has(>svg))]": "pl-4 pr-3 text-zinc-100 underline",
-};
+  '[&:not(:has(>svg))]': 'pl-4 pr-3 text-zinc-100 underline',
+}
 </script>
