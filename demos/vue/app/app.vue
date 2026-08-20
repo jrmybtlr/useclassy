@@ -1,7 +1,7 @@
 <template>
   <div class="isolate min-h-dvh bg-gutter-dots text-white">
     <main>
-      <section class="mx-auto flex max-w-3xl">
+      <section class="mx-auto flex max-w-4xl">
         <div class="w-6 shrink-0 border-x border-neutral-900 bg-diagonal-lines"></div>
 
         <div class="flex flex-col items-center bg-canvas">
@@ -55,10 +55,10 @@
       </section>
 
       <section id="setup" class="border-t border-neutral-900">
-        <div class="mx-auto flex max-w-3xl">
+        <div class="mx-auto flex max-w-4xl">
           <div class="w-6 shrink-0 border-x border-neutral-900 bg-diagonal-lines"></div>
 
-          <div class="bg-canvas p-12">
+          <div class="w-full bg-canvas p-12">
             <h2
               class="mt-3 max-w-[24ch] font-display text-4xl font-bold tracking-tight text-balance"
               class:sm="text-5xl"
