@@ -14,11 +14,13 @@
               class="pointer-events-none absolute inset-0 z-10 size-full"
               aria-hidden="true"
             ></canvas>
-            <span
+            <button
               ref="hatWrapRef"
-              class="group relative z-20 inline-flex cursor-default items-center justify-center p-4 select-none"
-              aria-hidden="true"
-              @mouseenter="onHatEnter"
+              type="button"
+              class="group relative z-20 inline-flex cursor-pointer touch-manipulation appearance-none items-center justify-center border-0 bg-transparent p-4 select-none focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-sky-400/70"
+              aria-label="Tip the hat"
+              @pointerenter="onHatPlay"
+              @click="onHatPlay"
             >
               <span
                 class="pointer-events-none absolute top-1/2 left-1/2 size-24 -translate-x-1/2 -translate-y-[42%] rounded-full opacity-70 blur-2xl transition duration-500 hat-aura"
@@ -26,13 +28,17 @@
                 class:group-hover="scale-110 opacity-100"
               ></span>
               <span
-                class="relative inline-block origin-[18%_88%] text-7xl leading-none hat-glow transition-[filter] duration-300 motion-safe:animate-hat-float motion-reduce:animate-none"
+                class="relative inline-block origin-[18%_88%] text-7xl leading-none hat-glow transition-[filter] duration-300 motion-reduce:animate-none"
                 class:sm="text-8xl"
-                class:group-hover="animate-hat-tip hat-glow-hot"
+                :class="
+                  hatTipping
+                    ? 'motion-safe:animate-hat-tip hat-glow-hot'
+                    : 'motion-safe:animate-hat-float'
+                "
               >
                 🎩
               </span>
-            </span>
+            </button>
 
             <h1
               class="text-tight mt-4 w-full text-center font-display text-5xl font-semibold text-balance"
@@ -279,7 +285,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, onUnmounted, ref } from 'vue'
+import { computed, nextTick, onMounted, onUnmounted, ref } from 'vue'
 import type { DemoFormat } from './components/ClassExample.vue'
 
 // ── Ember particle system ─────────────────────────────────────────────────────
@@ -288,8 +294,14 @@ const hatWrapRef = ref<HTMLElement | null>(null)
 const emberCanvasRef = ref<HTMLCanvasElement | null>(null)
 /** True only while the hat-tip animation is playing (0.7s). */
 const sprinkling = ref(false)
+/** Drives `animate-hat-tip` from JS so each tap can restart it (iOS sticky :hover cannot). */
+const hatTipping = ref(false)
 let sprinkleTimer = 0
+let hatTipTimer = 0
+let lastHatPlay = 0
 const HAT_TIP_MS = 700
+/** Collapse iOS first-tap pointerenter + click into one burst. */
+const HAT_PLAY_DEBOUNCE_MS = 80
 
 interface Ember {
   x: number
@@ -381,8 +393,12 @@ function useEmbers() {
     })
   }
 
-  function spawnFall() {
-    if (!origin || embers.length >= maxEmbers) return
+  function spawnFall(force = false) {
+    if (!origin) return
+    if (embers.length >= maxEmbers) {
+      if (!force) return
+      embers.shift()
+    }
     embers.push({
       x: origin.cx + (Math.random() - 0.5) * origin.spread * 2.4,
       y: origin.brimY + (Math.random() - 0.5) * 6,
@@ -399,7 +415,7 @@ function useEmbers() {
   function burstFall(count = 14) {
     refreshOrigin()
     const n = cheap ? Math.min(count, 8) : count
-    for (let i = 0; i < n; i++) spawnFall()
+    for (let i = 0; i < n; i++) spawnFall(true)
   }
 
   function tick(ts: number) {
@@ -521,11 +537,24 @@ function useEmbers() {
 
 const { start: startEmbers, stop: stopEmbers, burstFall } = useEmbers()
 
-function onHatEnter() {
-  // Match hat-tip duration — burst + short sprinkle, then stop spawning
+function onHatPlay() {
+  const now = performance.now()
+  if (now - lastHatPlay < HAT_PLAY_DEBOUNCE_MS) return
+  lastHatPlay = now
+
   window.clearTimeout(sprinkleTimer)
+  window.clearTimeout(hatTipTimer)
   sprinkling.value = true
   burstFall(12)
+
+  hatTipping.value = false
+  void nextTick(() => {
+    hatTipping.value = true
+    hatTipTimer = window.setTimeout(() => {
+      hatTipping.value = false
+    }, HAT_TIP_MS)
+  })
+
   sprinkleTimer = window.setTimeout(() => {
     sprinkling.value = false
   }, HAT_TIP_MS)
@@ -538,6 +567,7 @@ onMounted(() => {
 })
 onUnmounted(() => {
   window.clearTimeout(sprinkleTimer)
+  window.clearTimeout(hatTipTimer)
   stopEmbers()
 })
 
