@@ -45,10 +45,11 @@
               class:sm="text-[50px]/[55px]"
             >
               Clever class attributes.
-              <span class="text-white/50">No horizontal scroll.</span>
+              <span class="text-white/50">One state per line.</span>
             </h1>
-            <p class="mt-4 max-w-[40ch] text-center text-lg text-pretty text-neutral-400">
-              Write classier code for Tailwind and UnoCSS and leave your mouse and scrollbar alone.
+            <p class="mt-4 max-w-[42ch] text-center text-lg text-pretty text-neutral-400">
+              Group hover, focus, and dark for Tailwind and UnoCSS. You and your agent change one
+              variant without rewriting the class string.
             </p>
 
             <div class="mt-8 flex flex-wrap items-center justify-center gap-4">
@@ -166,6 +167,13 @@
                     <span class="text-emerald-400">useclassy/laravel</span>
                   </code>
                 </CodeBlock>
+                <Callout variant="tip">
+                  Teaching an agent? Append
+                  <span class="font-mono text-neutral-200">--with-skills</span>
+                  so Cursor, Codex, and Copilot keep writing
+                  <span class="font-mono text-neutral-200">class:hover</span>
+                  instead of stuffing variants back into one string.
+                </Callout>
               </Step>
 
               <Step
@@ -731,9 +739,9 @@ const intelCopy = `{
 
 useSeoMeta({
   title: 'UseClassy',
-  description: 'Variant attributes for Tailwind and UnoCSS. One rewrite. Every engine.',
+  description: 'Variant attributes for Tailwind and UnoCSS. One state per line.',
   ogTitle: 'UseClassy',
-  ogDescription: 'Variant attributes for Tailwind and UnoCSS. One rewrite. Every engine.',
+  ogDescription: 'Variant attributes for Tailwind and UnoCSS. One state per line.',
   ogImage: 'https://assets.useclassy.com/og-image.png',
   ogUrl: 'https://useclassy.com',
   twitterTitle: 'UseClassy',
