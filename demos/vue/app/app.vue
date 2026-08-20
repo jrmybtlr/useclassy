@@ -8,7 +8,7 @@
           <header class="flex w-full flex-col items-center justify-center py-16 text-center">
             <span
               class="inline-block origin-[18%_88%] cursor-default text-7xl leading-none motion-reduce:animate-none"
-              class:sm="text-8xl"
+              class:sm="text-7xl"
               aria-hidden="true"
             >
               🎩
@@ -16,7 +16,6 @@
 
             <h1
               class="text-tight mt-8 w-full text-center font-display text-5xl font-semibold text-balance"
-              class:sm="text-[52px]"
             >
               Class attributes without the horizontal scroll.
             </h1>
@@ -47,7 +46,7 @@
             </div>
           </header>
 
-          <div class="w-full border-t border-white/10">
+          <div class="w-full border-t border-neutral-900">
             <ClassExample v-model:format="demoFormat" :examples="classExamples" />
           </div>
         </div>
@@ -55,205 +54,204 @@
         <div class="w-6 shrink-0 border-x border-neutral-900 bg-diagonal-lines"></div>
       </section>
 
-      <section id="setup" class="border-t border-white/10">
+      <section id="setup" class="border-t border-neutral-900">
         <div class="mx-auto flex max-w-3xl">
           <div class="w-6 shrink-0 border-x border-neutral-900 bg-diagonal-lines"></div>
 
           <div class="bg-canvas p-12">
-          <p class="font-mono text-sm tracking-wider text-neutral-500 uppercase">[ Setup ]</p>
-          <h2
-            class="mt-3 max-w-[24ch] font-display text-4xl font-bold tracking-tight text-balance"
-            class:sm="text-5xl"
-          >
-            Tailwind or UnoCSS.
-            <span class="text-white/50">Pick your engine.</span>
-          </h2>
+            <h2
+              class="mt-3 max-w-[24ch] font-display text-4xl font-bold tracking-tight text-balance"
+              class:sm="text-5xl"
+            >
+              Tailwind or UnoCSS.
+              <span class="text-white/50">Pick your engine.</span>
+            </h2>
 
-          <div class="mt-10 flex flex-wrap items-end gap-x-12 gap-y-6">
-            <div class="flex min-w-0 flex-col gap-2">
-              <p class="text-sm text-neutral-400" class:sm="text-xs">Setup method</p>
-              <SegmentedControl
-                v-model="setupMode"
-                aria-label="Setup instructions"
-                :options="setupModeOptions"
-              />
+            <div class="mt-10 flex flex-wrap items-end gap-x-12 gap-y-6">
+              <div class="flex min-w-0 flex-col gap-2">
+                <p class="text-sm text-neutral-400" class:sm="text-xs">Setup method</p>
+                <SegmentedControl
+                  v-model="setupMode"
+                  aria-label="Setup instructions"
+                  :options="setupModeOptions"
+                />
+              </div>
+              <div class="flex min-w-0 flex-col gap-2">
+                <p class="text-sm text-neutral-400" class:sm="text-xs">CSS engine</p>
+                <SegmentedControl
+                  v-model="cssEngine"
+                  aria-label="CSS engine"
+                  :options="cssEngineOptions"
+                />
+              </div>
             </div>
-            <div class="flex min-w-0 flex-col gap-2">
-              <p class="text-sm text-neutral-400" class:sm="text-xs">CSS engine</p>
-              <SegmentedControl
-                v-model="cssEngine"
-                aria-label="CSS engine"
-                :options="cssEngineOptions"
-              />
+
+            <div class="mt-10 min-w-0">
+              <Step
+                :number="1"
+                title="Install"
+                description="Install the Vite plugin as a dev dependency."
+              >
+                <CodeBlock
+                  v-model="packageManager"
+                  :tabs="packageManagerOptions"
+                  aria-label="Package manager"
+                  :copy-text="installCopy"
+                >
+                  <code>
+                    <span v-for="(t, i) in installTokens" :key="`install-${i}`" :class="t.class">{{
+                      t.text
+                    }}</span>
+                  </code>
+                </CodeBlock>
+              </Step>
+
+              <Step
+                v-if="setupMode === 'quick'"
+                :number="2"
+                title="Quick setup"
+                description="Run init from your app root. It patches Vite and Tailwind or UnoCSS. For Tailwind, it also merges VS Code IntelliSense settings when it can."
+                last
+              >
+                <CodeBlock
+                  v-model="initFramework"
+                  :tabs="initFrameworkOptions"
+                  aria-label="Framework for init command"
+                  :copy-text="quickInitCopy"
+                >
+                  <code>
+                    <span v-for="(t, i) in quickInitTokens" :key="`init-${i}`" :class="t.class">{{
+                      t.text
+                    }}</span>
+                  </code>
+                </CodeBlock>
+                <CodeBlock v-if="demoFormat === 'blade'" :copy-text="composerCopy">
+                  <code>
+                    <span class="text-sky-300">composer</span>
+                    <span class="text-neutral-600">{{ ' ' }}</span>
+                    <span class="text-neutral-100">require</span>
+                    <span class="text-neutral-600">{{ ' ' }}</span>
+                    <span class="text-emerald-400">useclassy/laravel</span>
+                  </code>
+                </CodeBlock>
+              </Step>
+
+              <Step
+                v-if="setupMode === 'manual'"
+                :number="2"
+                title="Vite"
+                description="Add useClassy to your Vite config."
+              >
+                <CodeBlock filename="vite.config.ts" :copy-text="viteCopy">
+                  <code>
+                    <div class="text-white">import useClassy from 'vite-plugin-useclassy';</div>
+                    <div class="mt-2">export default {</div>
+                    <div class="ml-4">plugins: [</div>
+                    <div class="ml-8 text-white">useClassy({</div>
+                    <div class="ml-12 text-white">language: '{{ demoFormat }}',</div>
+                    <div v-if="cssEngine === 'unocss'" class="ml-12 text-white">
+                      engine: 'unocss',
+                    </div>
+                    <div class="ml-8 text-white">}),</div>
+                    <div class="ml-8">// ... other plugins</div>
+                    <div class="ml-4">],</div>
+                    <div>};</div>
+                  </code>
+                </CodeBlock>
+                <Callout variant="tip">
+                  Place it before Tailwind, UnoCSS, or other CSS plugins. UseClassy rewrites
+                  <span class="font-mono text-neutral-200">class:hover</span>
+                  into
+                  <span class="font-mono text-neutral-200">hover:…</span>
+                  so the engine’s scanner sees normal utilities.
+                </Callout>
+              </Step>
+
+              <Step
+                v-if="setupMode === 'manual' && cssEngine === 'tailwind'"
+                :number="3"
+                title="Tailwind"
+                description="Point Tailwind at the generated class manifest."
+              >
+                <CodeBlock filename="app.css" :copy-text="tailwindCopy">
+                  <code>
+                    <div>@import "tailwindcss";</div>
+                    <div class="mt-2 text-white">@source "./.classy/output.classy.html";</div>
+                  </code>
+                </CodeBlock>
+              </Step>
+
+              <Step
+                v-if="setupMode === 'manual' && cssEngine === 'unocss'"
+                :number="3"
+                title="UnoCSS"
+                description="Point Uno at the UseClassy manifest as a filesystem backstop. Vite pipeline extract is the primary path when UseClassy runs first."
+                last
+              >
+                <CodeBlock filename="uno.config.ts" :copy-text="unoCopy">
+                  <code>
+                    <div>import { defineConfig, presetUno } from 'unocss';</div>
+                    <div class="text-white">
+                      import { getUseClassyUnoFilesystemEntry } from 'vite-plugin-useclassy/unocss';
+                    </div>
+                    <div class="mt-2">export default defineConfig({</div>
+                    <div class="ml-4">presets: [presetUno()],</div>
+                    <div class="ml-4">content: {</div>
+                    <div class="ml-8">filesystem: [</div>
+                    <div class="ml-12 text-white">getUseClassyUnoFilesystemEntry(),</div>
+                    <div class="ml-8">],</div>
+                    <div class="ml-4">},</div>
+                    <div>});</div>
+                  </code>
+                </CodeBlock>
+                <Callout>
+                  Vite’s Uno pipeline already sees rewritten
+                  <span class="font-mono text-neutral-200">hover:…</span>
+                  classes when UseClassy runs first. The HTML manifest is a backstop for files Uno
+                  does not extract (plain
+                  <span class="font-mono text-neutral-200">.ts</span>
+                  /
+                  <span class="font-mono text-neutral-200">.js</span>
+                  by default, plus Blade or HTML that never enter Vite). This is not an Uno
+                  extractor, attributify, or Wind4 preset.
+                </Callout>
+              </Step>
+
+              <Step
+                v-if="setupMode === 'manual' && cssEngine === 'tailwind'"
+                :number="4"
+                title="IntelliSense"
+                badge="Optional"
+                last
+              >
+                <CodeBlock filename=".vscode/settings.json" :copy-text="intelCopy">
+                  <code>
+                    <div>{</div>
+                    <div class="ml-4">"tailwindCSS.classAttributes": [</div>
+                    <div class="ml-8">"class",</div>
+                    <div class="ml-8 text-white">"class:[\\w:/@-]*",</div>
+                    <div class="ml-8">"className",</div>
+                    <div class="ml-8 text-white">"className:[\\w:/@-]*"</div>
+                    <div class="ml-4">]</div>
+                    <div>}</div>
+                  </code>
+                </CodeBlock>
+                <Callout>
+                  Merge into
+                  <span class="font-mono text-neutral-200">.vscode/settings.json</span>
+                  for Tailwind CSS IntelliSense. Omit the
+                  <span class="font-mono text-neutral-200">className</span>
+                  lines for Vue-only projects.
+                </Callout>
+              </Step>
             </div>
-          </div>
-
-          <div class="mt-10 min-w-0">
-            <Step
-              :number="1"
-              title="Install"
-              description="Install the Vite plugin as a dev dependency."
-            >
-              <CodeBlock
-                v-model="packageManager"
-                :tabs="packageManagerOptions"
-                aria-label="Package manager"
-                :copy-text="installCopy"
-              >
-                <code>
-                  <span v-for="(t, i) in installTokens" :key="`install-${i}`" :class="t.class">{{
-                    t.text
-                  }}</span>
-                </code>
-              </CodeBlock>
-            </Step>
-
-            <Step
-              v-if="setupMode === 'quick'"
-              :number="2"
-              title="Quick setup"
-              description="Run init from your app root. It patches Vite and Tailwind or UnoCSS. For Tailwind, it also merges VS Code IntelliSense settings when it can."
-              last
-            >
-              <CodeBlock
-                v-model="initFramework"
-                :tabs="initFrameworkOptions"
-                aria-label="Framework for init command"
-                :copy-text="quickInitCopy"
-              >
-                <code>
-                  <span v-for="(t, i) in quickInitTokens" :key="`init-${i}`" :class="t.class">{{
-                    t.text
-                  }}</span>
-                </code>
-              </CodeBlock>
-              <CodeBlock v-if="demoFormat === 'blade'" :copy-text="composerCopy">
-                <code>
-                  <span class="text-sky-300">composer</span>
-                  <span class="text-neutral-600">{{ ' ' }}</span>
-                  <span class="text-neutral-100">require</span>
-                  <span class="text-neutral-600">{{ ' ' }}</span>
-                  <span class="text-emerald-400">useclassy/laravel</span>
-                </code>
-              </CodeBlock>
-            </Step>
-
-            <Step
-              v-if="setupMode === 'manual'"
-              :number="2"
-              title="Vite"
-              description="Add useClassy to your Vite config."
-            >
-              <CodeBlock filename="vite.config.ts" :copy-text="viteCopy">
-                <code>
-                  <div class="text-white">import useClassy from 'vite-plugin-useclassy';</div>
-                  <div class="mt-2">export default {</div>
-                  <div class="ml-4">plugins: [</div>
-                  <div class="ml-8 text-white">useClassy({</div>
-                  <div class="ml-12 text-white">language: '{{ demoFormat }}',</div>
-                  <div v-if="cssEngine === 'unocss'" class="ml-12 text-white">
-                    engine: 'unocss',
-                  </div>
-                  <div class="ml-8 text-white">}),</div>
-                  <div class="ml-8">// ... other plugins</div>
-                  <div class="ml-4">],</div>
-                  <div>};</div>
-                </code>
-              </CodeBlock>
-              <Callout variant="tip">
-                Place it before Tailwind, UnoCSS, or other CSS plugins. UseClassy rewrites
-                <span class="font-mono text-neutral-200">class:hover</span>
-                into
-                <span class="font-mono text-neutral-200">hover:…</span>
-                so the engine’s scanner sees normal utilities.
-              </Callout>
-            </Step>
-
-            <Step
-              v-if="setupMode === 'manual' && cssEngine === 'tailwind'"
-              :number="3"
-              title="Tailwind"
-              description="Point Tailwind at the generated class manifest."
-            >
-              <CodeBlock filename="app.css" :copy-text="tailwindCopy">
-                <code>
-                  <div>@import "tailwindcss";</div>
-                  <div class="mt-2 text-white">@source "./.classy/output.classy.html";</div>
-                </code>
-              </CodeBlock>
-            </Step>
-
-            <Step
-              v-if="setupMode === 'manual' && cssEngine === 'unocss'"
-              :number="3"
-              title="UnoCSS"
-              description="Point Uno at the UseClassy manifest as a filesystem backstop. Vite pipeline extract is the primary path when UseClassy runs first."
-              last
-            >
-              <CodeBlock filename="uno.config.ts" :copy-text="unoCopy">
-                <code>
-                  <div>import { defineConfig, presetUno } from 'unocss';</div>
-                  <div class="text-white">
-                    import { getUseClassyUnoFilesystemEntry } from 'vite-plugin-useclassy/unocss';
-                  </div>
-                  <div class="mt-2">export default defineConfig({</div>
-                  <div class="ml-4">presets: [presetUno()],</div>
-                  <div class="ml-4">content: {</div>
-                  <div class="ml-8">filesystem: [</div>
-                  <div class="ml-12 text-white">getUseClassyUnoFilesystemEntry(),</div>
-                  <div class="ml-8">],</div>
-                  <div class="ml-4">},</div>
-                  <div>});</div>
-                </code>
-              </CodeBlock>
-              <Callout>
-                Vite’s Uno pipeline already sees rewritten
-                <span class="font-mono text-neutral-200">hover:…</span>
-                classes when UseClassy runs first. The HTML manifest is a backstop for files Uno
-                does not extract (plain
-                <span class="font-mono text-neutral-200">.ts</span>
-                /
-                <span class="font-mono text-neutral-200">.js</span>
-                by default, plus Blade or HTML that never enter Vite). This is not an Uno extractor,
-                attributify, or Wind4 preset.
-              </Callout>
-            </Step>
-
-            <Step
-              v-if="setupMode === 'manual' && cssEngine === 'tailwind'"
-              :number="4"
-              title="IntelliSense"
-              badge="Optional"
-              last
-            >
-              <CodeBlock filename=".vscode/settings.json" :copy-text="intelCopy">
-                <code>
-                  <div>{</div>
-                  <div class="ml-4">"tailwindCSS.classAttributes": [</div>
-                  <div class="ml-8">"class",</div>
-                  <div class="ml-8 text-white">"class:[\\w:/@-]*",</div>
-                  <div class="ml-8">"className",</div>
-                  <div class="ml-8 text-white">"className:[\\w:/@-]*"</div>
-                  <div class="ml-4">]</div>
-                  <div>}</div>
-                </code>
-              </CodeBlock>
-              <Callout>
-                Merge into
-                <span class="font-mono text-neutral-200">.vscode/settings.json</span>
-                for Tailwind CSS IntelliSense. Omit the
-                <span class="font-mono text-neutral-200">className</span>
-                lines for Vue-only projects.
-              </Callout>
-            </Step>
-          </div>
           </div>
           <div class="w-6 shrink-0 border-x border-neutral-900 bg-diagonal-lines"></div>
         </div>
       </section>
 
       <footer
-        class="flex items-center justify-center border-t border-white/10 bg-black py-6 text-sm text-neutral-500"
+        class="flex items-center justify-center border-t border-neutral-900 bg-black py-6 text-sm text-neutral-500"
       >
         MIT License © {{ new Date().getFullYear() }} Jeremy Butler
       </footer>
