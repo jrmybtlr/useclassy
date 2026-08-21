@@ -20,7 +20,7 @@
               <span class="text-white/50">No horizontal scroll.</span>
             </h1>
             <p class="mt-4 max-w-[42ch] text-center text-lg text-pretty text-neutral-400">
-              Write Tailwind and UnoCSS that's easier to read, review amd debug. Made for agents and
+              Write Tailwind and UnoCSS that's easier to read, review and debug. Made for agents and
               humans.
             </p>
 
