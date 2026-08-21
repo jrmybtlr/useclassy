@@ -1,10 +1,10 @@
 <template>
   <div
     class="max-w-full min-w-0 overflow-hidden text-sm"
-    :class="{ 'rounded-lg border border-white/10': !embedded }"
+    :class="{ 'rounded-lg border border-neutral-900': !embedded }"
   >
     <div
-      class="flex items-center border-b border-white/10"
+      class="flex items-center border-b border-neutral-900"
       :class="embedded ? 'pl-6 sm:pl-12' : 'pl-6'"
     >
       <div class="min-w-0 flex-1 overflow-x-auto">
@@ -19,21 +19,21 @@
             :key="tab.value"
             type="button"
             role="tab"
-            class="inline-flex shrink-0 items-center border-b-2 py-3 text-sm font-medium"
+            class="inline-flex shrink-0 items-center border-b-2 py-3 font-display text-sm"
+            class:hover="text-neutral-200"
+            class:focus-visible="outline-2 outline-offset-2 outline-accent"
             :class="
               modelValue === tab.value
                 ? 'border-white text-white'
                 : 'border-transparent text-neutral-500'
             "
-            class:hover="text-neutral-200"
-            class:focus-visible="outline-2 outline-offset-2 outline-accent"
             :aria-selected="modelValue === tab.value"
             @click="modelValue = tab.value"
           >
             {{ tab.label }}
           </button>
         </div>
-        <div v-else-if="filename" class="truncate py-3 text-sm text-neutral-400">
+        <div v-else-if="filename" class="truncate py-3 font-display text-sm text-neutral-400">
           {{ filename }}
         </div>
       </div>

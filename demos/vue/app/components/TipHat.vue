@@ -109,6 +109,10 @@ function useEmbers() {
 
   const GRAVITY = 120
 
+  function emberColor() {
+    return `hsl(${Math.random() * 360} 95% ${62 + Math.random() * 16}%)`
+  }
+
   function applyDeviceProfile() {
     cheap = isCheapDevice()
     risePerSec = cheap ? 16 : 48
@@ -157,7 +161,7 @@ function useEmbers() {
       size: 1.4 + Math.random() * 1.8,
       alpha: 0.5 + Math.random() * 0.35,
       decay: 0.36 + Math.random() * 0.3,
-      color: `hsl(${200 + Math.random() * 40} 90% 80%)`,
+      color: emberColor(),
       fall: false,
     })
   }
@@ -176,7 +180,7 @@ function useEmbers() {
       size: 1.6 + Math.random() * 2.2,
       alpha: 0.55 + Math.random() * 0.35,
       decay: 0.15 + Math.random() * 0.15,
-      color: `hsl(${195 + Math.random() * 45} 90% 80%)`,
+      color: emberColor(),
       fall: true,
     })
   }

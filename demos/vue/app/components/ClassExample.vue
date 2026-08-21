@@ -27,7 +27,7 @@
       embedded
       wrap-toggle
       filename="output"
-      class="border-t border-white/10"
+      class="border-t border-neutral-900"
       :copy-text="combinedCopy"
     >
       <code>

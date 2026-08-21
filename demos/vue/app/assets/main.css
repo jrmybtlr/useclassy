@@ -1,10 +1,26 @@
 @import 'tailwindcss';
 @plugin "tailwindcss-motion";
 
+@font-face {
+  font-family: 'Gilroy';
+  src: url('/fonts/gilroy/Semibold/Gilroy-SemiBold.woff') format('woff');
+  font-weight: 600;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Gilroy';
+  src: url('/fonts/gilroy/Bold/Gilroy-Bold.woff') format('woff');
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+
 @theme {
   --font-sans: 'Inter', ui-sans-serif, system-ui, sans-serif;
   --font-sans--font-feature-settings: 'cv02', 'cv03', 'cv04', 'cv11', 'ss01', 'ss03';
-  --font-display: 'Switzer', ui-sans-serif, system-ui, sans-serif;
+  --font-display: 'Gilroy', ui-sans-serif, system-ui, sans-serif;
   --font-mono: 'IBM Plex Mono', ui-monospace, monospace;
   --color-accent: #2853ff;
   --color-canvas: #050505;
@@ -38,8 +54,57 @@
   }
 }
 
+@keyframes glass-pulse {
+  0%,
+  100% {
+    box-shadow:
+      0 0 28px rgb(40 83 255 / 0.45),
+      inset 0 1px 0 0 rgb(255 255 255 / 0.5),
+      inset 0 -1px 0 0 rgb(40 83 255 / 0.3),
+      inset 0 0 28px 0 rgb(40 83 255 / 0.45);
+  }
+  50% {
+    box-shadow:
+      0 0 44px rgb(40 83 255 / 0.75),
+      inset 0 1px 0 0 rgb(255 255 255 / 0.7),
+      inset 0 -1px 0 0 rgb(40 83 255 / 0.45),
+      inset 0 0 44px 0 rgb(40 83 255 / 0.7);
+  }
+}
+
+@utility glass-cta {
+  isolation: isolate;
+
+  &::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    z-index: 0;
+    border-radius: inherit;
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.35s ease;
+    box-shadow:
+      0 0 28px rgb(40 83 255 / 0.45),
+      inset 0 1px 0 0 rgb(255 255 255 / 0.5),
+      inset 0 -1px 0 0 rgb(40 83 255 / 0.3),
+      inset 0 0 28px 0 rgb(40 83 255 / 0.45);
+  }
+
+  &:hover::after,
+  &:focus-visible::after {
+    opacity: 1;
+  }
+
+  @media (prefers-reduced-motion: no-preference) {
+    &::after {
+      animation: glass-pulse 1.8s ease-in-out infinite;
+    }
+  }
+}
+
 html {
-  @apply overscroll-none antialiased scheme-only-dark;
+  @apply overscroll-none scroll-smooth antialiased scheme-only-dark;
 }
 
 body {
@@ -48,8 +113,8 @@ body {
 
 /* Gutter wallpaper: 1px dots, solid column punch-through. */
 @utility bg-gutter-dots {
-  background-color: var(--color-canvas);
-  background-image: radial-gradient(circle, rgb(255 255 255 / 0.05) 0.5px, transparent 1.25px);
+  background-color: var(--color-neutral-950);
+  background-image: radial-gradient(circle, rgb(255 255 255 / 0.03) 0.5px, transparent 1.25px);
   background-size: 6px 6px;
 }
 

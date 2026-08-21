@@ -5,11 +5,9 @@
       :key="opt.value"
       type="button"
       role="tab"
-      class="border-b-2 py-3 text-sm font-medium"
+      class="text-md border-b-2 py-3 font-display font-medium"
       :class="
-        modelValue === opt.value
-          ? 'border-white text-white'
-          : 'border-transparent text-neutral-500'
+        modelValue === opt.value ? 'border-white text-white' : 'border-transparent text-neutral-500'
       "
       class:hover="text-neutral-200"
       class:focus-visible="outline-2 outline-offset-2 outline-accent"

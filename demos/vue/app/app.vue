@@ -4,7 +4,7 @@
       <section class="mx-auto flex w-full max-w-4xl bg-neutral-950">
         <GutterRail />
 
-        <div class="flex min-w-0 flex-1 flex-col items-center">
+        <div class="flex min-w-0 flex-1 flex-col items-center bg-white/1">
           <header
             class="relative flex w-full flex-col items-center justify-center overflow-hidden px-6 py-8 text-center"
             class:sm="py-16"
@@ -12,9 +12,9 @@
             <TipHat />
 
             <h1
-              class="text-tight mt-4 w-full text-center font-display text-3xl font-semibold text-balance"
+              class="text-tight mt-4 w-full text-center font-display text-3xl font-semibold tracking-tight text-balance"
               class:sm="text-4xl"
-              class:md="text-[50px]/[55px]"
+              class:md="text-6xl"
             >
               Readable Utility CSS.
               <span class="text-white/50">No horizontal scroll.</span>
@@ -27,15 +27,15 @@
             <div class="mt-8 flex flex-wrap items-center justify-center gap-4">
               <a
                 href="#setup"
-                class="inline-flex items-center rounded-full bg-accent px-5 py-2.5 text-base font-medium text-white"
-                class:hover="bg-blue-800"
+                class="glass-cta relative inline-flex items-center rounded-full border border-white/20 bg-linear-to-b from-accent/45 to-accent/15 px-6 py-2.5 font-display text-lg font-semibold text-white shadow-[0_0_24px_rgb(40_83_255/0.35),inset_0_1px_0_0_rgb(255_255_255/0.45),inset_0_-1px_0_0_rgb(40_83_255/0.25),inset_0_0_24px_0_rgb(40_83_255/0.4)] backdrop-blur-xl backdrop-saturate-150 transition-[border-color,background-color] duration-200 ease-out"
+                class:hover="border-white/30 from-accent/55 to-accent/25"
                 class:focus-visible="outline-2 outline-offset-2 outline-accent"
               >
-                Get started
+                <span class="relative z-10">Get started</span>
               </a>
               <a
                 href="https://github.com/jrmybtlr/useclassy"
-                class="inline-flex items-center gap-2 text-base text-neutral-400"
+                class="inline-flex items-center gap-2 font-display text-lg text-neutral-400"
                 class:hover="text-white"
                 class:focus-visible="outline-2 outline-offset-2 outline-accent"
               >
@@ -57,7 +57,7 @@
         <div class="mx-auto flex w-full max-w-4xl bg-neutral-950">
           <GutterRail />
 
-          <div class="min-w-0 flex-1 px-6 py-8" class:sm="px-12 py-10">
+          <div class="min-w-0 flex-1 bg-white/1 px-6 py-8" class:sm="px-12 py-10">
             <div class="flex flex-col items-start gap-6">
               <div class="flex items-center gap-3" aria-hidden="true">
                 <IconTailwind />
@@ -74,7 +74,6 @@
 
             <div class="mt-10 flex flex-wrap items-end gap-x-12 gap-y-6">
               <div class="flex min-w-0 flex-col gap-2">
-                <p class="text-sm text-neutral-400" class:sm="text-xs">Setup method</p>
                 <SegmentedControl
                   v-model="setupMode"
                   aria-label="Setup instructions"
@@ -82,7 +81,6 @@
                 />
               </div>
               <div class="flex min-w-0 flex-col gap-2">
-                <p class="text-sm text-neutral-400" class:sm="text-xs">CSS engine</p>
                 <SegmentedControl
                   v-model="cssEngine"
                   aria-label="CSS engine"
@@ -92,11 +90,7 @@
             </div>
 
             <div class="mt-10 min-w-0">
-              <Step
-                :number="1"
-                title="Install"
-                description="Install the Vite plugin as a dev dependency."
-              >
+              <Step :number="1" title="Install">
                 <CodeBlock
                   v-model="packageManager"
                   :tabs="packageManagerOptions"
@@ -111,13 +105,7 @@
                 </CodeBlock>
               </Step>
 
-              <Step
-                v-if="setupMode === 'quick'"
-                :number="2"
-                title="Quick setup"
-                description="Run init from your app root. It patches Vite and Tailwind or UnoCSS. For Tailwind, it also merges VS Code IntelliSense settings when it can."
-                last
-              >
+              <Step v-if="setupMode === 'quick'" :number="2" title="Quick setup" last>
                 <CodeBlock
                   v-model="initFramework"
                   :tabs="initFrameworkOptions"
