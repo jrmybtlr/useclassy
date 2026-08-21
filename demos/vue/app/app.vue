@@ -20,7 +20,8 @@
               <span class="text-white/50">No horizontal scroll.</span>
             </h1>
             <p class="mt-4 max-w-[42ch] text-center text-lg text-pretty text-neutral-400">
-              Write Tailwind and UnoCSS that's easier to read, review, debug, and change.
+              Write Tailwind and UnoCSS that's easier to read, review amd debug. Made for agents and
+              humans.
             </p>
 
             <div class="mt-8 flex flex-wrap items-center justify-center gap-4">
@@ -286,7 +287,8 @@
                       v-for="(t, i) in skillsInitTokens"
                       :key="`skills-${i}`"
                       :class="t.class"
-                    >{{ t.text }}</span>
+                      >{{ t.text }}</span
+                    >
                   </code>
                 </CodeBlock>
               </Step>
