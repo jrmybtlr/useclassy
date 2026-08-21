@@ -5,7 +5,7 @@ UseClassy transforms variant attributes (`class:hover="..."`) into standard atom
 ## Features
 
 - Transforms attributes like `class:hover="text-blue-500"` to standard `class="hover:text-blue-500"`.
-- Supports chaining modifiers like `class:dark:hover="text-blue-500"` (additive: also emits `dark:` and `hover:` alone).
+- Supports chaining modifiers like `class:dark:hover="text-blue-500"` → `dark:hover:text-blue-500` (same composition as Tailwind / UnoCSS).
 - Supports React conditional variants: `className:hover={isActive ? 'bg-blue-500' : 'bg-gray-200'}`.
 - Works seamlessly with React (`className`), Vue/HTML (`class`), and Svelte (`class`).
 - Integrates with Vite's build process and dev server. No runtime overhead.
@@ -196,25 +196,15 @@ useClassy({
 
 Quoted UseClassy modifiers (`class:hover="..."`) are transformed. Native Svelte class directives (`class:active={isActive}` or shorthand `class:active`) are left unchanged.
 
-## Chained modifiers (additive)
+## Chained modifiers
 
-UseClassy chained attributes are **not** the same as Tailwind or Uno variant composition.
-
-In those engines, `sm:hover:underline` means underline only when **sm and hover**. UseClassy `class:sm:hover="underline"` also emits the pieces:
+`class:sm:hover="underline"` is the same as putting `sm:hover:underline` on the class string: underline only when **sm and hover**.
 
 ```html
 <!-- Input -->
 <p class:sm:hover="underline">
 
 <!-- Output -->
-<p class="sm:hover:underline sm:underline hover:underline">
-```
-
-So the text underlines on hover at any width, at `sm` even without hover, and at `sm` + hover.
-
-To match engine semantics, keep the exact chain on the base class:
-
-```html
 <p class="sm:hover:underline">
 ```
 
@@ -375,7 +365,7 @@ npx vite-plugin-useclassy init --engine unocss --language react
 
 When both Tailwind and UnoCSS are installed, init defaults to Tailwind unless you pass `--engine unocss`. Init does **not** write `tailwindCSS.classAttributes` for Uno projects — use the [UnoCSS VS Code extension](https://unocss.dev/integrations/vscode).
 
-See `demos/unocss-react` for a working canary. The marketing site (`demos/vue`) has a live additive-vs-exact example.
+See `demos/unocss-react` for a working canary. The marketing site (`demos/vue`) shows chained modifiers in the live example.
 
 ## Tailwind IntelliSense
 
@@ -416,7 +406,7 @@ Claude Code does not read `.agents/skills`. If you use Claude Code, also pass **
 
 The skill is a single portable `SKILL.md` using the standard `name` + `description` frontmatter. Re-running is idempotent: matching files are left alone, the fenced `AGENTS.md` block (`<!-- useclassy:start -->` … `<!-- useclassy:end -->`) is refreshed to the latest template text without touching content outside the markers, and skill/rule files with local edits are **skipped** unless you pass **`--force`**. `--with-cursor` is an alias for `--with-skills`.
 
-The **skill focuses on writing new UseClassy markup and safely refactoring existing Tailwind variant classes** across Vue, React, Svelte, Blade, and HTML. It teaches grouping by modifier, preserving dynamic classes, handling Svelte directives, and avoiding behavior changes from chained modifiers. Installation and Tailwind/Vite wiring stay in the separate setup rule.
+The **skill focuses on writing new UseClassy markup and safely refactoring existing Tailwind variant classes** across Vue, React, Svelte, Blade, and HTML. It teaches grouping by modifier, preserving dynamic classes, handling Svelte directives, and converting chained variants such as `sm:hover:underline` to `class:sm:hover="underline"`. Installation and Tailwind/Vite wiring stay in the separate setup rule.
 
 Source templates live in [`templates/`](templates/) if you prefer to copy them manually.
 

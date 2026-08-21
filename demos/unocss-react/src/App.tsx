@@ -35,8 +35,8 @@ function App() {
         <p className="max-w-xl text-sm text-zinc-400">
           Prefer <code className="text-zinc-200">className:hover</code> over
           attributify. UseClassy rewrites source before Uno’s Vite pipeline;
-          the HTML manifest is a filesystem backstop. Chained modifiers are
-          additive — not Uno variant composition.
+          the HTML manifest is a filesystem backstop. Chained modifiers match
+          Uno variant composition.
         </p>
       </header>
 
@@ -165,8 +165,8 @@ function App() {
         </Case>
 
         <Case
-          title="Additive chain"
-          detail='className:sm:hover="underline" emits sm:hover:underline + sm:underline + hover:underline. Underline on hover at any width, at sm without hover, and at sm+hover.'
+          title="Chained modifier"
+          detail='className:sm:hover="underline" emits sm:hover:underline. Underline only when sm AND hover.'
         >
           <p
             className="rounded-lg border border-zinc-700 bg-zinc-900 px-5 py-3 text-zinc-100"
@@ -177,17 +177,8 @@ function App() {
         </Case>
 
         <Case
-          title="Exact chain on className"
-          detail="Leave sm:hover:underline on the base string to match Uno/Tailwind: underline only when sm AND hover."
-        >
-          <p className="sm:hover:underline rounded-lg border border-zinc-700 bg-zinc-900 px-5 py-3 text-zinc-100">
-            Same resize/hover — underline only at sm + hover.
-          </p>
-        </Case>
-
-        <Case
-          title="Nested modifiers (also additive)"
-          detail="className:sm:hover and className:lg:focus-within each expand the full chain plus each segment."
+          title="Nested modifiers"
+          detail="className:sm:hover and className:lg:focus-within each prefix the full chain."
         >
           <div
             className="px-5 py-3 rounded-lg bg-zinc-900"
@@ -220,7 +211,7 @@ function App() {
 
         <Case
           title="Mixed static + dual conditionals"
-          detail="className:sm:hover=&quot;underline&quot; on this button is additive, same as the case above."
+          detail='className:sm:hover="underline" on this button is sm:hover:underline only.'
         >
           <button
             type="button"

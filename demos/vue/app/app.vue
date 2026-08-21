@@ -20,7 +20,7 @@
               <span class="text-white/50">No horizontal scroll.</span>
             </h1>
             <p class="mt-4 max-w-[42ch] text-center text-lg text-pretty text-neutral-400">
-              Write Tailwind and UnoCSS that's easier to read, review amd debug. Made for agents and
+              Write Tailwind and UnoCSS that's easier to read, review and debug. Made for agents and
               humans.
             </p>
 
@@ -510,10 +510,10 @@ const classExamples = {
   // Dark mode
   dark: 'bg-zinc-800 text-white border-zinc-700',
 
-  // Responsive design
-  lg: 'p-6 text-base mt-4',
+  // Container query
+  '@md': 'p-6 text-base mt-4',
 
-  // Additive chain (also emits sm:underline and hover:underline)
+  // Chained modifier (emits sm:hover:underline only)
   'sm:hover': 'underline',
 
   // Group interactions

@@ -132,24 +132,11 @@ const combinedCopy = computed(() => {
   return `${attrName.value}="${parts.join(' ')}"`
 })
 
-/** Same charset as UseClassy modifier names (`[\w/:@-]+`). */
-const ADDITIVE_MODIFIER_NAME = /^[\w/:@-]+$/
-
 /**
- * Matches the plugin: a chained modifier like `sm:hover` emits the full chain
- * plus each segment alone. Arbitrary names (`[&>svg]`) stay prefix-only.
+ * Matches the plugin: prefix each token with the full modifier chain.
  */
 const formatCombinedClasses = (key: string, value: string): string => {
   const tokens = value.split(/\s+/).filter(Boolean)
-  const additive = key.includes(':') && ADDITIVE_MODIFIER_NAME.test(key)
-  const parts = additive ? key.split(':').filter(Boolean) : []
-
-  return tokens
-    .flatMap((token) => {
-      const out = [`${key}:${token}`]
-      for (const part of parts) out.push(`${part}:${token}`)
-      return out
-    })
-    .join(' ')
+  return tokens.map((token) => `${key}:${token}`).join(' ')
 }
 </script>

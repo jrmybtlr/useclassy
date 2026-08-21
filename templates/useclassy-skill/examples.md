@@ -19,13 +19,14 @@
 >
 ```
 
-Leave exact chained variants in the base attribute unless additive chained behavior is wanted:
+Chained variants move onto a matching chained attribute:
 
 ```html
 <div
-  class="rounded-lg sm:hover:shadow-xl"
+  class="rounded-lg"
   class:hover="shadow-lg"
   class:sm="p-6"
+  class:sm:hover="shadow-xl"
 >
 ```
 
@@ -116,20 +117,15 @@ Leave expressions without string literals unchanged (e.g. `className:hover={hove
 </a>
 ```
 
-## Chained modifiers are additive
+## Chained modifiers match Tailwind composition
 
 ```html
-<!-- This is intentionally additive, not equivalent to only dark:focus:ring-sky-400 -->
+<!-- Equivalent to class="dark:focus:ring-sky-400" -->
 <input class:dark:focus="ring-sky-400" />
-
-<!-- Generated classes include: -->
-<input class="dark:focus:ring-sky-400 dark:ring-sky-400 focus:ring-sky-400" />
 ```
 
-To preserve an existing exact chained variant, keep it in the base string:
-
 ```html
-<input class="border dark:focus:ring-sky-400" class:focus="outline-none ring-2" />
+<input class="border" class:dark:focus="ring-sky-400" class:focus="outline-none ring-2" />
 ```
 
 ## Unsupported arbitrary variant prefix

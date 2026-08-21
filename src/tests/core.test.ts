@@ -107,14 +107,14 @@ describe('core module', () => {
         CLASS_MODIFIER_REGEX,
       )
 
-      expect(allClasses.size).toBe(3)
-      expect(modifierClasses.size).toBe(3)
+      expect(allClasses.size).toBe(1)
+      expect(modifierClasses.size).toBe(1)
       expect(allClasses.has('sm:hover:text-blue-500')).toBeTruthy()
-      expect(allClasses.has('sm:text-blue-500')).toBeTruthy()
-      expect(allClasses.has('hover:text-blue-500')).toBeTruthy()
+      expect(allClasses.has('sm:text-blue-500')).toBeFalsy()
+      expect(allClasses.has('hover:text-blue-500')).toBeFalsy()
       expect(modifierClasses.has('sm:hover:text-blue-500')).toBeTruthy()
-      expect(modifierClasses.has('sm:text-blue-500')).toBeTruthy()
-      expect(modifierClasses.has('hover:text-blue-500')).toBeTruthy()
+      expect(modifierClasses.has('sm:text-blue-500')).toBeFalsy()
+      expect(modifierClasses.has('hover:text-blue-500')).toBeFalsy()
     })
 
     it('should extract multiple classes from React code', () => {
@@ -191,8 +191,8 @@ describe('core module', () => {
       )
 
       expect(allClasses.has('sm:hover:text-lg')).toBeTruthy()
-      expect(allClasses.has('sm:text-lg')).toBeTruthy()
-      expect(allClasses.has('hover:text-lg')).toBeTruthy()
+      expect(allClasses.has('sm:text-lg')).toBeFalsy()
+      expect(allClasses.has('hover:text-lg')).toBeFalsy()
       expect(allClasses.has('sm:hover:text-sm')).toBeTruthy()
       expect(modifierClasses.has('sm:hover:text-lg')).toBeTruthy()
     })
@@ -362,11 +362,11 @@ describe('core module', () => {
       )
 
       expect(result).toBe(
-        '<div class="sm:hover:text-blue-500 sm:text-blue-500 hover:text-blue-500">Content</div>',
+        '<div class="sm:hover:text-blue-500">Content</div>',
       )
       expect(classes.has('sm:hover:text-blue-500')).toBeTruthy()
-      expect(classes.has('sm:text-blue-500')).toBeTruthy()
-      expect(classes.has('hover:text-blue-500')).toBeTruthy()
+      expect(classes.has('sm:text-blue-500')).toBeFalsy()
+      expect(classes.has('hover:text-blue-500')).toBeFalsy()
     })
 
     it('transforms named-group and container-query modifier names', () => {
@@ -580,10 +580,10 @@ describe('core module', () => {
       )
 
       expect(result).toBe(
-        `<div className={on ? 'sm:hover:text-lg sm:text-lg hover:text-lg' : 'sm:hover:text-sm sm:text-sm hover:text-sm'}>X</div>`,
+        `<div className={on ? 'sm:hover:text-lg' : 'sm:hover:text-sm'}>X</div>`,
       )
       expect(classes.has('sm:hover:text-lg')).toBeTruthy()
-      expect(classes.has('hover:text-sm')).toBeTruthy()
+      expect(classes.has('hover:text-sm')).toBeFalsy()
     })
 
     it('should leave className:modifier variable expressions unchanged', () => {
@@ -702,7 +702,7 @@ describe('core module', () => {
       expect(classes.size).toBe(0)
     })
 
-    it('should limit modifier depth to prevent exponential growth', () => {
+    it('should emit only the full modifier chain for long nested names', () => {
       const code = `
         <div class:sm:md:lg:xl:2xl:hover:focus:active:disabled="text-blue-500">
           Content
@@ -719,18 +719,14 @@ describe('core module', () => {
         CLASS_MODIFIER_REGEX,
       )
 
-      // Full chain + first 4 partials only (MAX_MODIFIER_DEPTH)
-      expect(modifierClasses.size).toBe(5)
+      expect(modifierClasses.size).toBe(1)
       expect(modifierClasses.has('sm:md:lg:xl:2xl:hover:focus:active:disabled:text-blue-500')).toBeTruthy()
-      expect(modifierClasses.has('sm:text-blue-500')).toBeTruthy()
-      expect(modifierClasses.has('md:text-blue-500')).toBeTruthy()
-      expect(modifierClasses.has('lg:text-blue-500')).toBeTruthy()
-      expect(modifierClasses.has('xl:text-blue-500')).toBeTruthy()
-      expect(modifierClasses.has('2xl:text-blue-500')).toBeFalsy()
+      expect(modifierClasses.has('sm:text-blue-500')).toBeFalsy()
+      expect(modifierClasses.has('md:text-blue-500')).toBeFalsy()
       expect(modifierClasses.has('hover:text-blue-500')).toBeFalsy()
     })
 
-    it('should apply the same modifier depth cap to JSX expression modifiers', () => {
+    it('should emit only the full modifier chain for long JSX expression names', () => {
       const code = `
         <div className:sm:md:lg:xl:2xl:hover={on ? 'text-blue-500' : 'text-red-500'}>
           Content
@@ -745,16 +741,15 @@ describe('core module', () => {
         'className',
       )
 
-      // Full chain + first 4 partials per branch value (not 2xl:/hover:)
+      expect(classes.size).toBe(2)
       expect(classes.has('sm:md:lg:xl:2xl:hover:text-blue-500')).toBeTruthy()
-      expect(classes.has('sm:text-blue-500')).toBeTruthy()
-      expect(classes.has('xl:text-blue-500')).toBeTruthy()
-      expect(classes.has('2xl:text-blue-500')).toBeFalsy()
+      expect(classes.has('sm:md:lg:xl:2xl:hover:text-red-500')).toBeTruthy()
+      expect(classes.has('sm:text-blue-500')).toBeFalsy()
       expect(classes.has('hover:text-blue-500')).toBeFalsy()
       expect(result).toContain(
-        'sm:md:lg:xl:2xl:hover:text-blue-500 sm:text-blue-500 md:text-blue-500 lg:text-blue-500 xl:text-blue-500',
+        `{on ? 'sm:md:lg:xl:2xl:hover:text-blue-500' : 'sm:md:lg:xl:2xl:hover:text-red-500'}`,
       )
-      expect(result).not.toMatch(/(?:^|[\s'])2xl:text-blue-500(?:$|[\s'])/)
+      expect(result).not.toMatch(/(?:^|[\s'])sm:text-blue-500(?:$|[\s'])/)
       expect(result).not.toMatch(/(?:^|[\s'])hover:text-blue-500(?:$|[\s'])/)
     })
 
@@ -1270,7 +1265,7 @@ describe('core module', () => {
       const result = mergeClassAttributes(afterModifiers, 'class')
 
       expect(result).toContain(
-        'class="px-4 py-2 hover:bg-blue-700 sm:hover:scale-105 sm:scale-105 hover:scale-105"',
+        'class="px-4 py-2 hover:bg-blue-700 sm:hover:scale-105"',
       )
       expect(result.match(/(?<![:\w])class="/g)).toHaveLength(1)
       expect(result).not.toContain('class:hover')
