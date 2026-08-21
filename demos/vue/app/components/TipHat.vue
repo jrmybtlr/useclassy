@@ -7,7 +7,8 @@
   <button
     ref="hatWrapRef"
     type="button"
-    class="group relative z-20 inline-flex cursor-pointer touch-manipulation appearance-none items-center justify-center border-0 bg-transparent p-4 select-none focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-sky-400/70"
+    class="group relative z-20 inline-flex touch-manipulation appearance-none items-center justify-center border-0 bg-transparent p-4 select-none focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-sky-400/70"
+    :style="wandCursorStyle"
     aria-label="Tip the hat"
     @pointerenter="onHatPlay"
     @click="onHatPlay"
@@ -36,6 +37,8 @@ import { nextTick, onMounted, onUnmounted, ref } from 'vue'
 
 const hatWrapRef = ref<HTMLElement | null>(null)
 const emberCanvasRef = ref<HTMLCanvasElement | null>(null)
+/** Canvas-baked 🪄 PNG cursor (SVG emoji cursors are unreliable). */
+const wandCursorStyle = ref<{ cursor: string }>({ cursor: 'pointer' })
 /** True only while the hat-tip animation is playing (0.7s). */
 const sprinkling = ref(false)
 /** Drives `animate-hat-tip` from JS so each tap can restart it (iOS sticky :hover cannot). */
@@ -46,6 +49,28 @@ let lastHatPlay = 0
 const HAT_TIP_MS = 700
 /** Collapse iOS first-tap pointerenter + click into one burst. */
 const HAT_PLAY_DEBOUNCE_MS = 80
+const WAND_CURSOR_SIZE = 64
+
+function bakeWandCursor() {
+  const size = WAND_CURSOR_SIZE
+  const canvas = document.createElement('canvas')
+  canvas.width = size
+  canvas.height = size
+  const ctx = canvas.getContext('2d')
+  if (!ctx) return
+
+  ctx.translate(size, 0)
+  ctx.scale(-1, 1)
+  ctx.font = `${Math.round(size * 0.88)}px system-ui, "Apple Color Emoji", "Segoe UI Emoji", sans-serif`
+  ctx.textAlign = 'center'
+  ctx.textBaseline = 'middle'
+  ctx.fillText('🪄', size / 2, size / 2 + 2)
+
+  const hotspot = Math.round(size / 2)
+  wandCursorStyle.value = {
+    cursor: `url(${canvas.toDataURL('image/png')}) ${hotspot} ${hotspot}, pointer`,
+  }
+}
 
 interface Ember {
   x: number
@@ -303,6 +328,7 @@ function onHatPlay() {
 }
 
 onMounted(() => {
+  bakeWandCursor()
   if (!window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
     startEmbers()
   }
