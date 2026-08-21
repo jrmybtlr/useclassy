@@ -55,7 +55,7 @@ body {
 
 /* Spacer hatch: 1px diagonals on the canvas. */
 @utility bg-diagonal-lines {
-  background-color: var(--color-canvas);
+  background-color: var(--color-neutral-950);
   background-image: repeating-linear-gradient(
     -45deg,
     transparent,
@@ -78,15 +78,11 @@ code {
 }
 
 @utility hat-glow {
-  filter:
-    drop-shadow(0 0 4px rgb(125 211 252 / 0.3))
-    drop-shadow(0 0 14px rgb(40 83 255 / 0.2));
+  filter: drop-shadow(0 0 4px rgb(125 211 252 / 0.3)) drop-shadow(0 0 14px rgb(40 83 255 / 0.2));
 }
 
 @utility hat-glow-hot {
-  filter:
-    drop-shadow(0 0 6px rgb(186 230 253 / 0.55))
-    drop-shadow(0 0 22px rgb(40 83 255 / 0.45));
+  filter: drop-shadow(0 0 6px rgb(186 230 253 / 0.55)) drop-shadow(0 0 22px rgb(40 83 255 / 0.45));
 }
 
 @utility hat-aura {

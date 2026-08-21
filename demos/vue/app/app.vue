@@ -1,10 +1,10 @@
 <template>
   <div class="isolate min-h-dvh w-full bg-gutter-dots text-white">
     <main class="w-full">
-      <section class="mx-auto flex w-full max-w-4xl">
+      <section class="mx-auto flex w-full max-w-4xl bg-neutral-950">
         <GutterRail />
 
-        <div class="flex min-w-0 flex-1 flex-col items-center bg-canvas">
+        <div class="flex min-w-0 flex-1 flex-col items-center">
           <header
             class="relative flex w-full flex-col items-center justify-center overflow-hidden px-6 py-8 text-center"
             class:sm="py-16"
@@ -54,10 +54,10 @@
       </section>
 
       <section id="setup" class="border-t border-neutral-900">
-        <div class="mx-auto flex w-full max-w-4xl">
+        <div class="mx-auto flex w-full max-w-4xl bg-neutral-950">
           <GutterRail />
 
-          <div class="min-w-0 flex-1 bg-canvas px-6 py-8" class:sm="px-12 py-10">
+          <div class="min-w-0 flex-1 px-6 py-8" class:sm="px-12 py-10">
             <div class="flex flex-col items-start gap-6">
               <div class="flex items-center gap-3" aria-hidden="true">
                 <IconTailwind />
@@ -299,7 +299,7 @@
       </section>
 
       <footer
-        class="flex items-center justify-center border-t border-neutral-900 bg-black py-6 text-sm text-neutral-500"
+        class="flex items-center justify-center border-t border-neutral-900 bg-neutral-950 py-6 font-mono text-sm tracking-wide text-neutral-500 uppercase"
       >
         MIT License © {{ new Date().getFullYear() }} Jeremy Butler
       </footer>
