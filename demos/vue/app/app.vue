@@ -27,7 +27,7 @@
             <div class="mt-8 flex flex-wrap items-center justify-center gap-4">
               <a
                 href="#setup"
-                class="glass-cta relative inline-flex items-center rounded-full border border-white/20 bg-linear-to-b from-accent/45 to-accent/15 px-6 py-2.5 font-display text-lg font-semibold text-white shadow-[0_0_24px_rgb(40_83_255/0.35),inset_0_1px_0_0_rgb(255_255_255/0.45),inset_0_-1px_0_0_rgb(40_83_255/0.25),inset_0_0_24px_0_rgb(40_83_255/0.4)] backdrop-blur-xl backdrop-saturate-150 transition-[border-color,background-color] duration-200 ease-out"
+                class="glass-cta relative inline-flex items-center rounded-full border border-white/20 bg-linear-to-b from-accent/45 to-accent/15 px-8 py-3 font-display text-lg font-semibold text-white shadow-[0_0_24px_rgb(40_83_255/0.35),inset_0_1px_0_0_rgb(255_255_255/0.45),inset_0_-1px_0_0_rgb(40_83_255/0.25),inset_0_0_24px_0_rgb(40_83_255/0.4)] backdrop-blur-xl backdrop-saturate-150 transition-[border-color,background-color] duration-200 ease-out"
                 class:hover="border-white/30 from-accent/55 to-accent/25"
                 class:focus-visible="outline-2 outline-offset-2 outline-accent"
               >
@@ -286,10 +286,12 @@
         </div>
       </section>
 
-      <footer
-        class="flex items-center justify-center border-t border-neutral-900 bg-neutral-950 py-6 font-mono text-sm tracking-wide text-neutral-500 uppercase"
-      >
-        MIT License © {{ new Date().getFullYear() }} Jeremy Butler
+      <footer class="border-t border-neutral-900 bg-neutral-950">
+        <div
+          class="flex items-center justify-center bg-white/1 py-6 font-mono text-sm tracking-wide text-neutral-500 uppercase"
+        >
+          MIT License © {{ new Date().getFullYear() }} Jeremy Butler
+        </div>
       </footer>
     </main>
   </div>

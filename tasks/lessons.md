@@ -11,6 +11,12 @@
 - `className:hover` is valid namespaced JSX (one colon). `className:sm:hover` is not, and Rolldown fails the scan.
 - Rewrite chained modifiers via `optimizeDeps.rolldownOptions.plugins` (and `ssr.optimizeDeps`) so the scanner sees merged `className` attributes.
 
+## ClassExample autoplay pause target (2026-08-22)
+
+- Pause the hero line tour only while the pointer is over the `<code>` panes, not the whole ClassExample.
+- Tab clicks focus Vue/React/Svelte/Blade buttons. Container-level `pointerenter` / `focusin` froze the cycle after a format switch.
+- Do not treat chrome (tabs, copy, wrap) as “inside the demo.”
+
 ## Hero CodeBlock tabs are left-aligned (2026-08-20)
 
 - Vue / React / Svelte / Blade tabs in the hero example sit left, not centered. Do not add `justify-center` on the CodeBlock tablist.

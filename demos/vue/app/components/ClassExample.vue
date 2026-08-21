@@ -1,5 +1,5 @@
 <template>
-  <div class="min-w-0 max-w-full overflow-hidden">
+  <div ref="rootEl" class="min-w-0 max-w-full overflow-hidden">
     <CodeBlock
       v-model="format"
       embedded
@@ -7,14 +7,13 @@
       aria-label="Markup format"
       :copy-text="expandedCopy"
     >
-      <code>
+      <code @pointerenter="pointerInside = true" @pointerleave="onPointerLeave">
         <div
           v-for="(value, key) in examples"
           :key="key"
           class="cursor-pointer transition-[opacity,text-shadow] duration-200"
           :class="sectionHighlight(key)"
-          @mouseenter="hoveredSection = key"
-          @mouseleave="hoveredSection = null"
+          @pointerenter="hoveredSection = key"
         >
           <span class="text-sky-300"> {{ attrName }}{{ key === 'base' ? '' : ':' + key }} </span>
           <span class="text-neutral-300">="{{ value }}"</span>
@@ -30,7 +29,7 @@
       class="border-t border-neutral-900"
       :copy-text="combinedCopy"
     >
-      <code>
+      <code @pointerenter="pointerInside = true" @pointerleave="onPointerLeave">
         <span class="text-sky-300">{{ attrName }}="</span>
         <span class="text-neutral-300">
           <template v-for="(value, key) in examples" :key="key">
@@ -57,9 +56,19 @@
 </template>
 
 <script setup lang="ts">
-import { computed, nextTick, ref, watch, type ComponentPublicInstance } from 'vue'
+import {
+  computed,
+  nextTick,
+  onMounted,
+  onUnmounted,
+  ref,
+  watch,
+  type ComponentPublicInstance,
+} from 'vue'
 
 export type DemoFormat = 'vue' | 'react' | 'svelte' | 'blade'
+
+const CYCLE_MS = 1800
 
 const props = defineProps<{
   examples: Record<string, string>
@@ -77,9 +86,39 @@ const formatTabs: {
   { value: 'blade', label: 'Blade' },
 ]
 
+const rootEl = ref<HTMLElement | null>(null)
 const hoveredSection = ref<string | null>(null)
+const pointerInside = ref(false)
+const cycledIndex = ref(0)
+const inView = ref(true)
+const pageHidden = ref(false)
+const reduceMotion = ref(false)
 const outputWrap = ref(false)
 const outputSectionEls = new Map<string, HTMLElement>()
+
+const exampleKeys = computed(() => Object.keys(props.examples))
+
+const paused = computed(
+  () => pointerInside.value || reduceMotion.value || !inView.value || pageHidden.value,
+)
+
+const activeSection = computed(() => {
+  if (hoveredSection.value) return hoveredSection.value
+  if (reduceMotion.value) return null
+  const keys = exampleKeys.value
+  if (!keys.length) return null
+  return keys[cycledIndex.value % keys.length] ?? null
+})
+
+function onPointerLeave() {
+  const hovered = hoveredSection.value
+  if (hovered) {
+    const index = exampleKeys.value.indexOf(hovered)
+    if (index !== -1) cycledIndex.value = index
+  }
+  pointerInside.value = false
+  hoveredSection.value = null
+}
 
 function setOutputSectionRef(key: string, el: Element | ComponentPublicInstance | null) {
   if (el instanceof HTMLElement) outputSectionEls.set(key, el)
@@ -99,7 +138,7 @@ function resetOutputScroll() {
   pane.scrollTo({ left: 0, behavior: 'smooth' })
 }
 
-watch([hoveredSection, outputWrap], async ([key, wrap]) => {
+watch([activeSection, outputWrap], async ([key, wrap]) => {
   if (wrap) return
   await nextTick()
   // Wait for nowrap layout after the wrap toggle before measuring.
@@ -110,8 +149,66 @@ watch([hoveredSection, outputWrap], async ([key, wrap]) => {
 })
 
 const sectionHighlight = (key: string) => ({
-  'opacity-30': hoveredSection.value && hoveredSection.value !== key,
-  'text-glow': hoveredSection.value === key,
+  'opacity-30': activeSection.value && activeSection.value !== key,
+  'text-glow': activeSection.value === key,
+})
+
+let cycleTimer: ReturnType<typeof setInterval> | undefined
+let motionQuery: MediaQueryList | undefined
+let inViewObserver: IntersectionObserver | undefined
+
+function stopCycle() {
+  clearInterval(cycleTimer)
+  cycleTimer = undefined
+}
+
+function startCycle() {
+  if (cycleTimer !== undefined) return
+  cycleTimer = setInterval(() => {
+    const count = exampleKeys.value.length
+    if (!count) return
+    cycledIndex.value = (cycledIndex.value + 1) % count
+  }, CYCLE_MS)
+}
+
+function onMotionChange() {
+  reduceMotion.value = motionQuery?.matches ?? false
+}
+
+function onVisibilityChange() {
+  pageHidden.value = document.hidden
+}
+
+watch(paused, (isPaused) => {
+  if (!import.meta.client) return
+  if (isPaused) stopCycle()
+  else startCycle()
+})
+
+onMounted(() => {
+  motionQuery = window.matchMedia('(prefers-reduced-motion: reduce)')
+  motionQuery.addEventListener('change', onMotionChange)
+  onMotionChange()
+
+  document.addEventListener('visibilitychange', onVisibilityChange)
+  onVisibilityChange()
+
+  inViewObserver = new IntersectionObserver(
+    ([entry]) => {
+      inView.value = entry?.isIntersecting ?? false
+    },
+    { threshold: 0 },
+  )
+  if (rootEl.value) inViewObserver.observe(rootEl.value)
+
+  if (!paused.value) startCycle()
+})
+
+onUnmounted(() => {
+  motionQuery?.removeEventListener('change', onMotionChange)
+  document.removeEventListener('visibilitychange', onVisibilityChange)
+  inViewObserver?.disconnect()
+  stopCycle()
 })
 
 const attrName = computed(() => (format.value === 'react' ? 'className' : 'class'))
