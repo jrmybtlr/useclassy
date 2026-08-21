@@ -12,8 +12,6 @@ export const SUPPORTED_FILES = [
   '.blade.php',
 ]
 
-const MAX_MODIFIER_DEPTH = 4
-
 /**
  * Variant names in `class:…` / `className:…`.
  * Includes `/` (named groups like `group-hover/item`) and `@` (container
@@ -199,9 +197,10 @@ export function readBalancedJsxExpression(
 }
 
 /**
- * Builds the prefixed class list for a modifier (full chain + partials).
- * Partials are capped by `MAX_MODIFIER_DEPTH` so long chains stay bounded,
- * matching the historical `extractClasses` behavior.
+ * Prefixes each class token with the full modifier chain.
+ * `class:sm:hover="underline"` emits `sm:hover:underline` only — the same
+ * composition Tailwind and UnoCSS use — not the individual `sm:` / `hover:`
+ * pieces.
  */
 function buildModifiedClasses(
   classes: string,
@@ -210,19 +209,10 @@ function buildModifiedClasses(
   if (!modifiers.trim())
     return []
 
-  const modifierParts = modifiers.split(':')
   const modifiedClassesArr: string[] = []
-  const maxDepth = Math.min(modifierParts.length, MAX_MODIFIER_DEPTH)
 
   tokenize(classes, (value) => {
     modifiedClassesArr.push(`${modifiers}:${value}`)
-    if (modifierParts.length > 1) {
-      for (let j = 0; j < maxDepth; j++) {
-        const part = modifierParts[j]
-        if (part)
-          modifiedClassesArr.push(`${part}:${value}`)
-      }
-    }
   })
 
   return modifiedClassesArr

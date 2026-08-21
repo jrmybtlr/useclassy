@@ -525,7 +525,7 @@ const classExamples = {
   // Responsive design
   lg: 'p-6 text-base mt-4',
 
-  // Additive chain (also emits sm:underline and hover:underline)
+  // Chained modifier (emits sm:hover:underline only)
   'sm:hover': 'underline',
 
   // Group interactions
