@@ -5,7 +5,7 @@
   >
     <div
       class="flex items-center border-b border-white/10"
-      :class="embedded ? 'pl-6 sm:pl-12' : 'pl-6 sm:pl-8'"
+      :class="embedded ? 'pl-6 sm:pl-12' : 'pl-6'"
     >
       <div class="min-w-0 flex-1 overflow-x-auto">
         <div
@@ -77,7 +77,7 @@
     <div
       class="scrollbar-faint max-w-full min-w-0 overflow-x-auto py-5 text-neutral-500"
       :class="[
-        embedded ? 'px-6 sm:px-12' : 'px-6 sm:px-8',
+        embedded ? 'px-6 sm:px-12' : 'px-6',
         { 'whitespace-nowrap [&>code]:inline-block [&>code]:w-max': !wrap },
       ]"
     >

@@ -11,7 +11,8 @@
         </h3>
         <p
           v-if="description"
-          class="mt-1.5 max-w-[48ch] text-base text-pretty text-neutral-400"
+          class="mt-1.5 text-base text-pretty text-neutral-400"
+          :class="wideDescription ? undefined : 'max-w-[48ch]'"
           class:sm="text-sm"
         >
           {{ description }}
@@ -31,6 +32,7 @@ defineProps<{
   number: number
   title: string
   description?: string
+  wideDescription?: boolean
   badge?: string
   last?: boolean
 }>()

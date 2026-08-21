@@ -44,7 +44,7 @@
             </div>
           </header>
 
-          <div class="w-full min-w-0 overflow-hidden border-t border-neutral-900 sm:pb-3">
+          <div class="w-full min-w-0 overflow-hidden border-t border-neutral-900">
             <ClassExample v-model:format="demoFormat" :examples="classExamples" />
           </div>
         </div>
@@ -139,7 +139,7 @@
                   </code>
                 </CodeBlock>
                 <label
-                  class="flex cursor-pointer items-start gap-3 rounded-lg border border-white/10 bg-white/[0.03] px-3.5 py-3 text-base text-neutral-300 select-none"
+                  class="flex cursor-pointer items-start gap-3 rounded-lg border border-white/10 px-3.5 py-3 text-base text-neutral-300 select-none"
                   class:sm="text-sm"
                   class:hover="border-white/15 bg-white/5"
                 >
@@ -221,7 +221,6 @@
                 :number="3"
                 title="UnoCSS"
                 description="Point Uno at the UseClassy manifest as a filesystem backstop. Vite pipeline extract is the primary path when UseClassy runs first."
-                last
               >
                 <CodeBlock filename="uno.config.ts" :copy-text="unoCopy">
                   <code>
@@ -257,7 +256,6 @@
                 :number="4"
                 title="IntelliSense"
                 badge="Optional"
-                last
               >
                 <CodeBlock filename=".vscode/settings.json" :copy-text="intelCopy">
                   <code>
@@ -269,6 +267,26 @@
                     <div class="ml-8 text-white">"className:[\\w:/@-]*"</div>
                     <div class="ml-4">]</div>
                     <div>}</div>
+                  </code>
+                </CodeBlock>
+              </Step>
+
+              <Step
+                v-if="setupMode === 'manual'"
+                :number="cssEngine === 'tailwind' ? 5 : 4"
+                title="Skills"
+                badge="Optional"
+                description="So Cursor, Codex, and Copilot keep writing class:hover."
+                wide-description
+                last
+              >
+                <CodeBlock :copy-text="skillsInitCopy">
+                  <code>
+                    <span
+                      v-for="(t, i) in skillsInitTokens"
+                      :key="`skills-${i}`"
+                      :class="t.class"
+                    >{{ t.text }}</span>
                   </code>
                 </CodeBlock>
               </Step>
@@ -407,6 +425,18 @@ const quickInitTokens = computed((): CliToken[] => {
 })
 
 const quickInitCopy = computed(() => quickInitTokens.value.map((t) => t.text).join(''))
+
+const skillsInitTokens: CliToken[] = [
+  { text: 'npx', class: 'text-sky-300' },
+  space,
+  { text: 'vite-plugin-useclassy', class: 'text-emerald-400' },
+  space,
+  { text: 'init', class: 'text-neutral-100' },
+  space,
+  { text: '--with-skills', class: 'text-amber-400' },
+]
+
+const skillsInitCopy = skillsInitTokens.map((t) => t.text).join('')
 
 const composerCopy = 'composer require useclassy/laravel'
 
