@@ -522,8 +522,8 @@ const classExamples = {
   // Dark mode
   dark: 'bg-zinc-800 text-white border-zinc-700',
 
-  // Responsive design
-  lg: 'p-6 text-base mt-4',
+  // Container query
+  '@md': 'p-6 text-base mt-4',
 
   // Chained modifier (emits sm:hover:underline only)
   'sm:hover': 'underline',
