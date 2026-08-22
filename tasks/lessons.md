@@ -1,5 +1,21 @@
 # Lessons
 
+## Horizontal scroller must not use scrollIntoView (2026-08-22)
+
+- `scrollIntoView({ inline: 'center', block: 'nearest' })` still scrolls the window vertically when the active token is off-screen or only partly visible.
+- Pan the overflow-x pane with `scrollLeft` / `pane.scrollTo({ left })` only. Never let the autoplay tour steal page scroll.
+
+## Canvas backing store vs layout size (2026-08-22)
+
+- Never size a canvas buffer from `clientWidth` inside a `ResizeObserver` on that same canvas unless CSS `width`/`height` are set.
+- `canvas.width` / `canvas.height` are intrinsic size. Without `w-dvw h-dvh` (or `size-full`), the element grows with the buffer, the observer fires again, and the tab OOMs (white crash / sad-tab).
+- Size from `window.innerWidth` / `innerHeight`, lock CSS size, and listen to `window.resize` instead.
+
+## Particle bursts must stack, not evict (2026-08-22)
+
+- Never `shift()` live particles to make room for a new click burst. That looks like the effect “resets.”
+- Raise the cap and skip new spawns when full. Existing embers should keep flying until they fade or leave the screen.
+
 ## Vue template whitespace-only spans (2026-08-20)
 
 - Vue’s default `whitespace: 'condense'` strips space-only text nodes, including `<span> </span>`.

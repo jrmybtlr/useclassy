@@ -2,7 +2,7 @@
   <section class="w-full">
     <div class="flex items-start" class:sm="gap-4">
       <StepNumber :last="last">{{ number }}</StepNumber>
-      <div class="min-w-0 flex-1" :class="last ? 'pb-0' : 'pb-8 sm:pb-10'">
+      <div class="min-w-0 flex-1" :class="last ? 'pb-0' : 'pb-12 sm:pb-16'">
         <h3 class="flex items-baseline gap-2 font-display text-lg font-bold">
           {{ title }}
           <span v-if="badge" class="text-sm font-medium text-neutral-500" class:sm="text-xs">{{
@@ -17,7 +17,7 @@
         >
           {{ description }}
         </p>
-        <div class="mt-4 flex flex-col gap-3">
+        <div class="mt-5 flex flex-col gap-4" class:sm="mt-6 gap-5">
           <slot />
         </div>
       </div>

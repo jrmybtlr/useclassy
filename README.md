@@ -225,6 +225,7 @@ composer require useclassy/laravel
 ```ts
 useClassy({
   language: "blade",
+  // engine: "unocss", // when using UnoCSS instead of Tailwind
 });
 ```
 
@@ -241,13 +242,14 @@ The package transforms these during Blade compilation:
 - `class:lg="text-3xl"` becomes `lg:text-3xl`
 - `class:hover="text-blue-600"` becomes `hover:text-blue-600`
 - `class:dark="bg-gray-800 text-white"` becomes `dark:bg-gray-800 dark:text-white`
+- `class:@md="p-6"` becomes `@md:p-6`
 
-These transformed classes are merged with any existing `class` attributes.
+These transformed classes are merged with any existing `class` attributes. Blade files sit outside Vite's module graph, so keep the plugin manifest registered with Tailwind (`@source` / `content`) or UnoCSS (`content.filesystem`).
 
 ### Requirements
 
-- PHP ^8.1
-- Laravel ^10.0|^11.0|^12.0
+- PHP ^8.2
+- Laravel ^11.0|^12.0|^13.0
 
 ## How engines find the classes
 

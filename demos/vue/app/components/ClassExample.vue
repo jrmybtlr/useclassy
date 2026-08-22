@@ -128,7 +128,18 @@ function setOutputSectionRef(key: string, el: Element | ComponentPublicInstance 
 function scrollOutputSectionIntoView(key: string) {
   const el = outputSectionEls.get(key)
   if (!el) return
-  el.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' })
+  const pane = el.closest('.overflow-x-auto')
+  if (!(pane instanceof HTMLElement)) return
+
+  const paneRect = pane.getBoundingClientRect()
+  const elRect = el.getBoundingClientRect()
+  const delta =
+    elRect.left + elRect.width / 2 - (paneRect.left + pane.clientWidth / 2)
+
+  pane.scrollTo({
+    left: Math.max(0, pane.scrollLeft + delta),
+    behavior: 'smooth',
+  })
 }
 
 function resetOutputScroll() {

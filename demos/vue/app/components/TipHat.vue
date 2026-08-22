@@ -1,7 +1,7 @@
 <template>
   <canvas
     ref="emberCanvasRef"
-    class="pointer-events-none absolute inset-0 z-10 size-full"
+    class="pointer-events-none absolute inset-0 z-10 size-full max-h-none max-w-none contain-paint will-change-[contents]"
     aria-hidden="true"
   ></canvas>
   <button
@@ -10,8 +10,10 @@
     class="group relative z-20 inline-flex touch-manipulation appearance-none items-center justify-center border-0 bg-transparent p-4 select-none focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-sky-400/70"
     :style="wandCursorStyle"
     aria-label="Tip the hat"
-    @pointerenter="onHatPlay"
-    @click="onHatPlay"
+    @pointerenter="onHatEnter"
+    @pointerleave="onHatLeave"
+    @pointercancel="onHatLeave"
+    @click="onHatClick"
   >
     <span
       class="pointer-events-none absolute top-1/2 left-1/2 size-24 -translate-x-1/2 -translate-y-[42%] rounded-full opacity-70 blur-2xl transition duration-500 hat-aura"
@@ -39,16 +41,14 @@ const hatWrapRef = ref<HTMLElement | null>(null)
 const emberCanvasRef = ref<HTMLCanvasElement | null>(null)
 /** Canvas-baked 🪄 PNG cursor (SVG emoji cursors are unreliable). */
 const wandCursorStyle = ref<{ cursor: string }>({ cursor: 'pointer' })
-/** True only while the hat-tip animation is playing (0.7s). */
-const sprinkling = ref(false)
+/** Continuous brim sprinkle while the pointer is over the hat. */
+const hovering = ref(false)
 /** Drives `animate-hat-tip` from JS so each tap can restart it (iOS sticky :hover cannot). */
 const hatTipping = ref(false)
-let sprinkleTimer = 0
 let hatTipTimer = 0
-let lastHatPlay = 0
+let lastBurst = 0
 const HAT_TIP_MS = 700
-/** Collapse iOS first-tap pointerenter + click into one burst. */
-const HAT_PLAY_DEBOUNCE_MS = 80
+const HAT_CLICK_DEBOUNCE_MS = 80
 const WAND_CURSOR_SIZE = 64
 
 function bakeWandCursor() {
@@ -72,6 +72,8 @@ function bakeWandCursor() {
   }
 }
 
+type EmberKind = 'rise' | 'fall' | 'burst'
+
 interface Ember {
   x: number
   y: number
@@ -81,7 +83,16 @@ interface Ember {
   alpha: number
   decay: number
   color: string
-  fall: boolean
+  kind: EmberKind
+}
+
+const PALETTE = Array.from(
+  { length: 24 },
+  (_, i) => `hsl(${(i * 15) % 360} 95% ${64 + (i % 4) * 4}%)`,
+)
+
+function emberColor() {
+  return PALETTE[(Math.random() * PALETTE.length) | 0]!
 }
 
 function isCheapDevice(): boolean {
@@ -94,45 +105,57 @@ function isCheapDevice(): boolean {
 function useEmbers() {
   let raf = 0
   let embers: Ember[] = []
+  const pool: Ember[] = []
   let lastTs = 0
   let riseAcc = 0
   let fallAcc = 0
   let origin: { cx: number; brimY: number; spread: number } | null = null
   let cheap = false
-  let risePerSec = 48
-  let fallPerSec = 42
-  let maxEmbers = 80
+  let risePerSec = 20
+  let fallPerSec = 40
+  let maxEmbers = 360
+  let burstCount = 160
   let visible = true
   let ctx: CanvasRenderingContext2D | null = null
+  let cssW = 1
+  let cssH = 1
   let resizeObserver: ResizeObserver | null = null
   let intersectObserver: IntersectionObserver | null = null
 
   const GRAVITY = 120
-
-  function emberColor() {
-    return `hsl(${Math.random() * 360} 95% ${62 + Math.random() * 16}%)`
-  }
+  const BURST_GRAVITY = 90
+  const BURST_DRAG = 0.65
 
   function applyDeviceProfile() {
     cheap = isCheapDevice()
-    risePerSec = cheap ? 16 : 48
-    fallPerSec = cheap ? 14 : 42
-    maxEmbers = cheap ? 28 : 80
+    risePerSec = cheap ? 8 : 20
+    fallPerSec = cheap ? 18 : 40
+    maxEmbers = cheap ? 140 : 360
+    burstCount = cheap ? 56 : 160
+  }
+
+  function hostEl() {
+    return emberCanvasRef.value?.parentElement ?? null
   }
 
   function syncCanvasSize() {
     const canvas = emberCanvasRef.value
-    if (!canvas || !ctx) return
+    const host = hostEl()
+    if (!canvas || !ctx || !host) return
     const dpr = cheap ? 1 : Math.min(window.devicePixelRatio || 1, 2)
-    const cssW = Math.max(1, canvas.clientWidth)
-    const cssH = Math.max(1, canvas.clientHeight)
-    const bw = Math.round(cssW * dpr)
-    const bh = Math.round(cssH * dpr)
+    // Size from the header, never from canvas.clientWidth — the buffer attributes are
+    // intrinsic size and can fight Tailwind’s canvas { max-width:100%; height:auto }.
+    cssW = Math.max(1, host.clientWidth)
+    cssH = Math.max(1, host.clientHeight)
+    const bw = Math.min(4096, Math.round(cssW * dpr))
+    const bh = Math.min(4096, Math.round(cssH * dpr))
     if (canvas.width !== bw || canvas.height !== bh) {
       canvas.width = bw
       canvas.height = bh
     }
-    ctx.setTransform(dpr, 0, 0, dpr, 0, 0)
+    ctx.setTransform(bw / cssW, 0, 0, bh / cssH, 0, 0)
+    ctx.imageSmoothingEnabled = false
+    ctx.globalCompositeOperation = 'lighter'
   }
 
   function refreshOrigin() {
@@ -151,44 +174,97 @@ function useEmbers() {
     }
   }
 
-  function spawnRise() {
-    if (!origin || embers.length >= maxEmbers) return
-    embers.push({
-      x: origin.cx + (Math.random() - 0.5) * origin.spread * 2.2,
-      y: origin.brimY + (Math.random() - 0.5) * 6,
-      vx: (Math.random() - 0.5) * 42,
-      vy: -(24 + Math.random() * 54),
-      size: 1.4 + Math.random() * 1.8,
-      alpha: 0.5 + Math.random() * 0.35,
-      decay: 0.36 + Math.random() * 0.3,
-      color: emberColor(),
-      fall: false,
-    })
-  }
-
-  function spawnFall(force = false) {
-    if (!origin) return
-    if (embers.length >= maxEmbers) {
-      if (!force) return
-      embers.shift()
+  function pushEmber(
+    x: number,
+    y: number,
+    vx: number,
+    vy: number,
+    size: number,
+    alpha: number,
+    decay: number,
+    kind: EmberKind,
+  ) {
+    if (embers.length >= maxEmbers) return
+    const recycled = pool.pop()
+    if (recycled) {
+      recycled.x = x
+      recycled.y = y
+      recycled.vx = vx
+      recycled.vy = vy
+      recycled.size = size
+      recycled.alpha = alpha
+      recycled.decay = decay
+      recycled.color = emberColor()
+      recycled.kind = kind
+      embers.push(recycled)
+      return
     }
     embers.push({
-      x: origin.cx + (Math.random() - 0.5) * origin.spread * 2.4,
-      y: origin.brimY + (Math.random() - 0.5) * 6,
-      vx: (Math.random() - 0.5) * 84,
-      vy: 24 + Math.random() * 72,
-      size: 1.6 + Math.random() * 2.2,
-      alpha: 0.55 + Math.random() * 0.35,
-      decay: 0.15 + Math.random() * 0.15,
+      x,
+      y,
+      vx,
+      vy,
+      size,
+      alpha,
+      decay,
       color: emberColor(),
-      fall: true,
+      kind,
     })
   }
 
-  function burstFall(count = 14) {
+  function spawnRise() {
+    if (!origin) return
+    pushEmber(
+      origin.cx + (Math.random() - 0.5) * origin.spread * 2.2,
+      origin.brimY + (Math.random() - 0.5) * 6,
+      (Math.random() - 0.5) * 42,
+      -(24 + Math.random() * 54),
+      1.4 + Math.random() * 1.8,
+      0.5 + Math.random() * 0.35,
+      0.36 + Math.random() * 0.3,
+      'rise',
+    )
+  }
+
+  function spawnFall() {
+    if (!origin) return
+    pushEmber(
+      origin.cx + (Math.random() - 0.5) * origin.spread * 2.4,
+      origin.brimY + (Math.random() - 0.5) * 6,
+      (Math.random() - 0.5) * 140,
+      -40 + Math.random() * 130,
+      1.5 + Math.random() * 2.4,
+      0.6 + Math.random() * 0.35,
+      0.18 + Math.random() * 0.22,
+      'fall',
+    )
+  }
+
+  function seedSprinkle(count = 14) {
     refreshOrigin()
     const n = cheap ? Math.min(count, 8) : count
-    for (let i = 0; i < n; i++) spawnFall(true)
+    for (let i = 0; i < n; i++) spawnFall()
+  }
+
+  function burstRadial(count = burstCount) {
+    refreshOrigin()
+    if (!origin) return
+    const want = cheap ? Math.min(count, burstCount) : count
+    const n = Math.min(want, maxEmbers - embers.length)
+    for (let i = 0; i < n; i++) {
+      const angle = (Math.PI * 2 * i) / n + (Math.random() - 0.5) * 0.5
+      const speed = 220 + Math.random() * 620
+      pushEmber(
+        origin.cx + (Math.random() - 0.5) * 12,
+        origin.brimY + (Math.random() - 0.5) * 12,
+        Math.cos(angle) * speed,
+        Math.sin(angle) * speed,
+        2 + Math.random() * 4,
+        0.8 + Math.random() * 0.2,
+        0.35 + Math.random() * 0.45,
+        'burst',
+      )
+    }
   }
 
   function tick(ts: number) {
@@ -199,22 +275,21 @@ function useEmbers() {
     const dt = Math.min(rawDt, 0.05)
     lastTs = ts
 
-    const w = canvas.clientWidth
-    const h = canvas.clientHeight
-    ctx.clearRect(0, 0, w, h)
+    ctx.clearRect(0, 0, cssW, cssH)
 
-    if (!sprinkling.value) {
-      riseAcc += risePerSec * dt
-      while (riseAcc >= 1) {
-        spawnRise()
-        riseAcc -= 1
-      }
-    } else {
+    if (hovering.value) {
       riseAcc = 0
       fallAcc += fallPerSec * dt
       while (fallAcc >= 1) {
         spawnFall()
         fallAcc -= 1
+      }
+    } else {
+      fallAcc = 0
+      riseAcc += risePerSec * dt
+      while (riseAcc >= 1) {
+        spawnRise()
+        riseAcc -= 1
       }
     }
 
@@ -222,14 +297,21 @@ function useEmbers() {
       const e = embers[i]!
       e.x += e.vx * dt
       e.y += e.vy * dt
-      e.vx += (Math.random() - 0.5) * (e.fall ? 24 : 36) * dt
-      if (e.fall) e.vy += GRAVITY * dt
+      if (e.kind === 'burst') {
+        const drag = 1 - BURST_DRAG * dt
+        e.vx *= drag
+        e.vy = e.vy * drag + BURST_GRAVITY * dt
+      } else if (e.kind === 'fall') {
+        e.vy += GRAVITY * dt
+      }
       e.alpha -= e.decay * dt
 
-      const offscreen = e.y > h + 20 || e.y < -20 || e.x < -20 || e.x > w + 20
+      const offscreen = e.y > cssH + 20 || e.y < -20 || e.x < -20 || e.x > cssW + 20
       if (e.alpha <= 0 || offscreen) {
+        const dead = e
         embers[i] = embers[embers.length - 1]!
         embers.pop()
+        if (pool.length < maxEmbers) pool.push(dead)
         continue
       }
 
@@ -258,22 +340,26 @@ function useEmbers() {
     else loopIfNeeded()
   }
 
+  function onHostResize() {
+    syncCanvasSize()
+    refreshOrigin()
+  }
+
   function start() {
     const canvas = emberCanvasRef.value
-    if (!canvas) return
+    const host = hostEl()
+    if (!canvas || !host) return
     applyDeviceProfile()
     ctx = canvas.getContext('2d', { alpha: true, desynchronized: true })
     if (!ctx) return
+    ctx.imageSmoothingEnabled = false
+    ctx.globalCompositeOperation = 'lighter'
     syncCanvasSize()
     refreshOrigin()
 
-    resizeObserver = new ResizeObserver(() => {
-      syncCanvasSize()
-      refreshOrigin()
-    })
-    resizeObserver.observe(canvas)
+    resizeObserver = new ResizeObserver(onHostResize)
+    resizeObserver.observe(host)
 
-    // Canvas fills the positioned hero via absolute inset-0; observe it for offscreen pause.
     intersectObserver = new IntersectionObserver(
       ([entry]) => {
         visible = Boolean(entry?.isIntersecting)
@@ -282,7 +368,7 @@ function useEmbers() {
       },
       { threshold: 0.05 },
     )
-    intersectObserver.observe(canvas)
+    intersectObserver.observe(host)
 
     document.addEventListener('visibilitychange', onVisibility)
     visible = true
@@ -298,26 +384,42 @@ function useEmbers() {
     intersectObserver = null
     ctx = null
     embers = []
+    pool.length = 0
     lastTs = 0
     riseAcc = 0
     fallAcc = 0
   }
 
-  return { start, stop, burstFall }
+  return { start, stop, burstRadial, seedSprinkle }
 }
 
-const { start: startEmbers, stop: stopEmbers, burstFall } = useEmbers()
+const {
+  start: startEmbers,
+  stop: stopEmbers,
+  burstRadial,
+  seedSprinkle,
+} = useEmbers()
 
-function onHatPlay() {
+function onHatEnter() {
+  hovering.value = true
+  seedSprinkle(16)
+}
+
+function onHatLeave() {
+  hovering.value = false
+}
+
+function burstEmbers() {
   const now = performance.now()
-  if (now - lastHatPlay < HAT_PLAY_DEBOUNCE_MS) return
-  lastHatPlay = now
+  if (now - lastBurst < HAT_CLICK_DEBOUNCE_MS) return
+  lastBurst = now
+  burstRadial()
+}
 
-  window.clearTimeout(sprinkleTimer)
+function onHatClick() {
+  burstEmbers()
+
   window.clearTimeout(hatTipTimer)
-  sprinkling.value = true
-  burstFall(12)
-
   hatTipping.value = false
   void nextTick(() => {
     hatTipping.value = true
@@ -325,11 +427,9 @@ function onHatPlay() {
       hatTipping.value = false
     }, HAT_TIP_MS)
   })
-
-  sprinkleTimer = window.setTimeout(() => {
-    sprinkling.value = false
-  }, HAT_TIP_MS)
 }
+
+defineExpose({ burstEmbers })
 
 onMounted(() => {
   bakeWandCursor()
@@ -338,7 +438,6 @@ onMounted(() => {
   }
 })
 onUnmounted(() => {
-  window.clearTimeout(sprinkleTimer)
   window.clearTimeout(hatTipTimer)
   stopEmbers()
 })

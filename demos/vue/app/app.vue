@@ -7,13 +7,14 @@
         <header
           class="relative flex w-full flex-col items-center justify-center overflow-hidden px-6 py-8 text-center"
           class:sm="py-16"
+          class:md="py-20"
         >
-          <TipHat />
+          <TipHat ref="tipHatRef" />
 
           <h1
-            class="text-tight mt-4 w-full text-center font-display text-3xl font-semibold tracking-tight text-balance"
+            class="text-tight mt-4 w-full text-center font-display text-3xl font-bold tracking-[-0.03em] text-balance"
             class:sm="text-4xl"
-            class:md="text-6xl"
+            class:md="text-[60px]"
           >
             Readable Utility CSS.
             <span class="text-white/50">No horizontal scroll.</span>
@@ -26,9 +27,10 @@
           <div class="mt-8 flex flex-wrap items-center justify-center gap-4">
             <a
               href="#setup"
-              class="glass-cta relative inline-flex items-center rounded-full border border-white/20 bg-linear-to-b from-accent/45 to-accent/15 px-8 py-3 font-display text-lg font-semibold text-white shadow-[0_0_24px_rgb(40_83_255/0.35),inset_0_1px_0_0_rgb(255_255_255/0.45),inset_0_-1px_0_0_rgb(40_83_255/0.25),inset_0_0_24px_0_rgb(40_83_255/0.4)] backdrop-blur-xl backdrop-saturate-150 transition-[border-color,background-color] duration-200 ease-out"
+              class="glass-cta relative z-20 inline-flex items-center rounded-full border border-white/20 bg-linear-to-b from-accent/45 to-accent/15 px-8 py-3 font-display text-lg font-semibold text-white shadow-[0_0_24px_rgb(40_83_255/0.35),inset_0_1px_0_0_rgb(255_255_255/0.45),inset_0_-1px_0_0_rgb(40_83_255/0.25),inset_0_0_24px_0_rgb(40_83_255/0.4)] backdrop-blur-sm backdrop-saturate-150 transition-[border-color,background-color] duration-200 ease-out"
               class:hover="border-white/30 from-accent/55 to-accent/25"
               class:focus-visible="outline-2 outline-offset-2 outline-accent"
+              @pointerenter="tipHatRef?.burstEmbers()"
             >
               <span class="relative z-10">Get started</span>
             </a>
@@ -56,7 +58,7 @@
       <div class="mx-auto flex w-full max-w-4xl bg-neutral-950">
         <GutterRail />
 
-        <div class="min-w-0 flex-1 bg-white/1 px-6 py-8" class:sm="px-12 py-16">
+        <div class="min-w-0 flex-1 bg-white/1 px-6 py-10" class:sm="px-12 py-20">
           <div class="flex flex-col items-start gap-6">
             <div class="flex items-center gap-3" aria-hidden="true">
               <IconTailwind />
@@ -71,7 +73,7 @@
             </h2>
           </div>
 
-          <div class="mt-10 flex flex-wrap items-end gap-x-12 gap-y-6">
+          <div class="mt-12 flex flex-wrap items-end gap-x-12 gap-y-6" class:sm="mt-16">
             <div class="flex min-w-0 flex-col gap-2">
               <SegmentedControl
                 v-model="setupMode"
@@ -88,7 +90,7 @@
             </div>
           </div>
 
-          <div class="mt-10 min-w-0">
+          <div class="mt-12 min-w-0" class:sm="mt-16">
             <Step :number="1" title="Install">
               <CodeBlock
                 v-model="packageManager"
@@ -299,6 +301,8 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
 import type { DemoFormat } from './components/ClassExample.vue'
+
+const tipHatRef = ref<{ burstEmbers: () => void } | null>(null)
 
 const setupMode = ref<'quick' | 'manual'>('quick')
 const cssEngine = ref<'tailwind' | 'unocss'>('tailwind')
