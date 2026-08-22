@@ -75,13 +75,25 @@
       </div>
     </div>
     <div
-      class="scrollbar-faint max-w-full min-w-0 overflow-x-auto py-5 text-neutral-500"
-      :class="[
-        embedded ? 'px-6 sm:px-12' : 'px-6',
-        { 'whitespace-nowrap [&>code]:inline-block [&>code]:w-max': !wrap },
-      ]"
+      class="max-w-full min-w-0"
+      :class="{
+        'mask-fade-x': !wrap,
+        'sm:[--mask-fade:3rem]': !wrap && embedded,
+      }"
     >
-      <slot />
+      <div
+        class="scrollbar-faint overflow-x-auto py-5 text-neutral-500"
+        :class="{ 'whitespace-nowrap': !wrap }"
+      >
+        <div
+          :class="[
+            embedded ? 'px-6 sm:px-12' : 'px-6',
+            { 'w-max min-w-full [&>code]:inline-block [&>code]:w-max': !wrap },
+          ]"
+        >
+          <slot />
+        </div>
+      </div>
     </div>
   </div>
 </template>

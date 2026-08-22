@@ -159,6 +159,31 @@ code {
   );
 }
 
+/* Edge fade for one-line code panes. Put this on a non-scrolling wrapper
+   so the gradient stays on the viewport while content pans underneath.
+   Match --mask-fade to the inner horizontal padding. */
+@utility mask-fade-x {
+  --mask-fade: 1.5rem;
+  -webkit-mask-image: linear-gradient(
+    to right,
+    transparent,
+    #000 var(--mask-fade),
+    #000 calc(100% - var(--mask-fade)),
+    transparent
+  );
+  mask-image: linear-gradient(
+    to right,
+    transparent,
+    #000 var(--mask-fade),
+    #000 calc(100% - var(--mask-fade)),
+    transparent
+  );
+  -webkit-mask-repeat: no-repeat;
+  mask-repeat: no-repeat;
+  -webkit-mask-size: 100% 100%;
+  mask-size: 100% 100%;
+}
+
 /* Nearly invisible scrollbar; still scrollable via trackpad/wheel. */
 @utility scrollbar-faint {
   scrollbar-width: thin;

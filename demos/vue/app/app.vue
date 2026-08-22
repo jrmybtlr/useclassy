@@ -12,14 +12,16 @@
           <TipHat ref="tipHatRef" />
 
           <h1
-            class="text-tight mt-4 w-full text-center font-display text-3xl font-bold tracking-[-0.03em] text-balance"
+            class="text-tight mt-4 w-full text-center font-display text-3xl font-semibold tracking-[-0.03em] text-balance"
             class:sm="text-4xl"
             class:md="text-[60px]"
           >
             Readable Utility CSS.
             <span class="text-white/50">No horizontal scroll.</span>
           </h1>
-          <p class="mt-4 max-w-[42ch] text-center text-lg text-pretty text-neutral-400">
+          <p
+            class="mt-5 max-w-[42ch] text-center text-xl/relaxed tracking-tight text-pretty text-neutral-400"
+          >
             Write Tailwind and UnoCSS that's easier to read, review and debug. Made for agents and
             humans.
           </p>
@@ -73,7 +75,7 @@
             </h2>
           </div>
 
-          <div class="mt-12 flex flex-wrap items-end gap-x-12 gap-y-6" class:sm="mt-16">
+          <div class="mt-6 flex flex-wrap items-end gap-x-12 gap-y-6" class:sm="mt-12">
             <div class="flex min-w-0 flex-col gap-2">
               <SegmentedControl
                 v-model="setupMode"
