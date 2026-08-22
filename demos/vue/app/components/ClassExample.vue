@@ -25,6 +25,7 @@
       v-model:wrap="outputWrap"
       embedded
       wrap-toggle
+      fade-x
       filename="output"
       class="border-t border-neutral-900"
       :copy-text="combinedCopy"

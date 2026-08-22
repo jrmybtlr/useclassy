@@ -77,19 +77,22 @@
     <div
       class="max-w-full min-w-0"
       :class="{
-        'mask-fade-x': !wrap,
-        'sm:[--mask-fade:3rem]': !wrap && embedded,
+        'fade-x-edges': fadeX && !wrap,
+        'sm:[--mask-fade:3rem]': fadeX && !wrap && embedded,
       }"
     >
       <div
         class="scrollbar-faint overflow-x-auto py-5 text-neutral-500"
-        :class="{ 'whitespace-nowrap': !wrap }"
+        :class="[fadeX && !wrap ? 'relative z-0' : padClass, { 'whitespace-nowrap': !wrap }]"
       >
         <div
-          :class="[
-            embedded ? 'px-6 sm:px-12' : 'px-6',
-            { 'w-max min-w-full [&>code]:inline-block [&>code]:w-max': !wrap },
-          ]"
+          :class="
+            fadeX && !wrap
+              ? [padClass, 'w-max min-w-full [&>code]:inline-block [&>code]:w-max']
+              : !wrap
+                ? '[&>code]:inline-block [&>code]:w-max'
+                : undefined
+          "
         >
           <slot />
         </div>
@@ -99,7 +102,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue'
+import { computed, ref } from 'vue'
 
 const props = defineProps<{
   copyText: string
@@ -108,7 +111,11 @@ const props = defineProps<{
   ariaLabel?: string
   embedded?: boolean
   wrapToggle?: boolean
+  /** Viewport-fixed left/right fade for one-line overflow (output ticker). */
+  fadeX?: boolean
 }>()
+
+const padClass = computed(() => (props.embedded ? 'px-6 sm:px-12' : 'px-6'))
 
 const modelValue = defineModel<string>()
 const wrap = defineModel<boolean>('wrap', { default: false })
