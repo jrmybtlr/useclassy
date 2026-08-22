@@ -3,7 +3,9 @@
     <section class="mx-auto flex w-full max-w-4xl bg-neutral-950">
       <GutterRail />
 
-      <div class="flex min-w-0 flex-1 flex-col items-center bg-white/1">
+      <div
+        class="flex min-w-0 flex-1 flex-col items-center bg-[radial-gradient(ellipse_100%_80rem_at_50%_0%,rgb(255_255_255/0.03),transparent)]"
+      >
         <header
           class="relative flex w-full flex-col items-center justify-center overflow-hidden px-6 py-8 text-center"
           class:sm="py-16"

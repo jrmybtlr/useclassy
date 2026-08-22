@@ -19,7 +19,7 @@
             :key="tab.value"
             type="button"
             role="tab"
-            class="inline-flex shrink-0 items-center border-b-2 py-3 font-display text-sm"
+            class="inline-flex shrink-0 items-center border-b-2 py-3 font-display text-base"
             class:hover="text-neutral-200"
             class:focus-visible="outline-2 outline-offset-2 outline-accent"
             :class="
