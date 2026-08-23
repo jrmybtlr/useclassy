@@ -6,7 +6,7 @@
   src: url('/fonts/gilroy/Semibold/Gilroy-SemiBold.woff') format('woff');
   font-weight: 600;
   font-style: normal;
-  font-display: swap;
+  font-display: block;
 }
 
 @font-face {
@@ -14,13 +14,15 @@
   src: url('/fonts/gilroy/Bold/Gilroy-Bold.woff') format('woff');
   font-weight: 700;
   font-style: normal;
-  font-display: swap;
+  font-display: block;
 }
 
 @theme {
   --font-sans: 'Inter', ui-sans-serif, system-ui, sans-serif;
   --font-sans--font-feature-settings: 'cv02', 'cv03', 'cv04', 'cv11', 'ss01', 'ss03';
   --font-display: 'Gilroy', ui-sans-serif, system-ui, sans-serif;
+  --font-display--font-feature-settings: normal;
+  --font-display--font-variation-settings: normal;
   --font-mono: 'IBM Plex Mono', ui-monospace, monospace;
   --color-accent: #2853ff;
   --color-canvas: #080808;
@@ -113,6 +115,12 @@ body {
   @apply overscroll-none bg-canvas font-sans text-white;
 }
 
+/* Gilroy is static. Do not inherit Inter features/opsz or faux-bold. */
+.font-display {
+  font-optical-sizing: none;
+  font-synthesis: none;
+}
+
 /* Gutter wallpaper: 1px dots, solid column punch-through. */
 @utility bg-gutter-dots {
   background-color: var(--color-neutral-950);
@@ -134,6 +142,25 @@ body {
 
 code {
   @apply block font-mono text-sm/[1.9em];
+}
+
+.docs-shiki {
+  background: transparent !important;
+  line-height: 1.7;
+  white-space: normal;
+}
+
+.docs-shiki .line {
+  display: block;
+  white-space: pre-wrap;
+  min-height: 1.7em;
+}
+
+code.docs-inline-code {
+  @apply inline rounded-md bg-white/5 px-2 py-0.5 text-[0.9em] leading-none break-words text-white;
+  @apply p-1 pt-px pb-px;
+  box-decoration-break: clone;
+  -webkit-box-decoration-break: clone;
 }
 
 @utility text-glow {

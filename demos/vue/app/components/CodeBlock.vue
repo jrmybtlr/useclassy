@@ -33,8 +33,12 @@
             {{ tab.label }}
           </button>
         </div>
-        <div v-else-if="filename" class="truncate py-3 font-display text-sm text-neutral-400">
-          {{ filename }}
+        <div
+          v-else-if="filename"
+          class="font-base flex items-center gap-1.5 truncate py-3 font-display text-neutral-400"
+        >
+          <slot name="filename-prefix" />
+          <span class="font-base truncate text-base">{{ filename }}</span>
         </div>
       </div>
       <div class="flex shrink-0 items-center pr-1.5">

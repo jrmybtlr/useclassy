@@ -1,5 +1,5 @@
 <template>
-  <div ref="rootEl" class="min-w-0 max-w-full overflow-hidden">
+  <div ref="rootEl" class="max-w-full min-w-0 overflow-hidden">
     <CodeBlock
       v-model="format"
       embedded
@@ -30,6 +30,9 @@
       class="border-t border-neutral-900"
       :copy-text="combinedCopy"
     >
+      <template #filename-prefix>
+        <span class="text-base leading-none" aria-hidden="true">🎩</span>
+      </template>
       <code @pointerenter="pointerInside = true" @pointerleave="onPointerLeave">
         <span class="text-sky-300">{{ attrName }}="</span>
         <span class="text-neutral-300">
@@ -134,8 +137,7 @@ function scrollOutputSectionIntoView(key: string) {
 
   const paneRect = pane.getBoundingClientRect()
   const elRect = el.getBoundingClientRect()
-  const delta =
-    elRect.left + elRect.width / 2 - (paneRect.left + pane.clientWidth / 2)
+  const delta = elRect.left + elRect.width / 2 - (paneRect.left + pane.clientWidth / 2)
 
   pane.scrollTo({
     left: Math.max(0, pane.scrollLeft + delta),

@@ -1,5 +1,17 @@
 # Lessons
 
+## Shiki `.line` plus `whitespace-pre` double-spaces (2026-08-23)
+
+- Shiki emits `<span class="line">…</span>\n<span class="line">`.
+- `whitespace-pre-wrap` on the parent preserves those newlines, and `.line { display: block }` adds another break — every source line looks blank-separated.
+- Collapse inter-span newlines (`>\n<` → `><`), keep `white-space: normal` on the `<code>`, and put `white-space: pre-wrap` on `.line` so wrapping still works.
+
+## Nested async Vue setup hides children (2026-08-23)
+
+- `await useAsyncData(...)` in a child (`DocsCodeFence`) makes the component async. Without a parent `<Suspense>`, Vue can skip those nodes on the client after hydration.
+- Docs headings/paragraphs stay visible; every fenced `CodeBlock` disappears.
+- Keep setup sync: call `useAsyncData` without `await`, always render the chrome, and fall back to escaped code until highlight resolves.
+
 ## Horizontal scroller must not use scrollIntoView (2026-08-22)
 
 - `scrollIntoView({ inline: 'center', block: 'nearest' })` still scrolls the window vertically when the active token is off-screen or only partly visible.

@@ -1,451 +1,172 @@
 # 🎩 UseClassy
 
-UseClassy transforms variant attributes (`class:hover="..."`) into standard atomic classes (`hover:...`). This allows for cleaner component markup by separating base classes from stateful or responsive variants. Works with **Tailwind CSS** and **UnoCSS**.
+A Vite plugin that automatically rewrites conditional class attributes like `class:hover` or `class:focus` into standard utility classes usable by Tailwind CSS and UnoCSS. UseClassy lets you write cleaner, more maintainable variant styles in your HTML, Vue, React, Blade, and Svelte code, with no runtime overhead.
 
-## Features
-
-- Transforms attributes like `class:hover="text-blue-500"` to standard `class="hover:text-blue-500"`.
-- Supports chaining modifiers like `class:dark:hover="text-blue-500"` → `dark:hover:text-blue-500` (same composition as Tailwind / UnoCSS).
-- Supports React conditional variants: `className:hover={isActive ? 'bg-blue-500' : 'bg-gray-200'}`.
-- Works seamlessly with React (`className`), Vue/HTML (`class`), and Svelte (`class`).
-- Integrates with Vite's build process and dev server. No runtime overhead.
-- Smart Caching: Avoids reprocessing unchanged files during development.
-- Runs before Tailwind / UnoCSS with HMR and TailwindMerge support.
-
-## Installation
-
-```bash
-# npm
-npm install vite-plugin-useclassy --save-dev
-
-# yarn
-yarn add vite-plugin-useclassy -D
-
-# pnpm
-pnpm add vite-plugin-useclassy -D
+```html
+<button
+  class="rounded px-4 bg-blue-600 text-white"
+  class:hover="bg-blue-700"
+  class:focus="ring-2 ring-blue-300"
+></button>
 ```
 
-When using the React helpers or JSX attribute types (`vite-plugin-useclassy/react`), install **React 18 or 19** (`react` satisfies `^18.0.0 || ^19.0.0`). `react` is an **optional** peer dependency — the Vite plugin alone does not require React for Vue, Svelte, or Blade projects.
+becomes `class="rounded px-4 bg-blue-600 text-white hover:bg-blue-700 focus:ring-2 focus:ring-blue-300"`. There is no runtime. Put UseClassy before Tailwind or UnoCSS so those engines see the rewritten utilities.
 
-## Quick setup (recommended)
-
-After installing the package, run the init helper from your **app root** (where `package.json` and `vite.config.*` live). It patches Vite and Tailwind or UnoCSS. For Tailwind, it also merges VS Code IntelliSense settings when it can.
+## Install
 
 ```bash
+npm i -D vite-plugin-useclassy
 npx vite-plugin-useclassy init
 ```
 
-Options:
+`init` patches Vite and your CSS engine, plus VS Code IntelliSense for Tailwind. Run it from the app root (the folder with `package.json` and `vite.config.*`).
 
 ```bash
-# React: include className:* IntelliSense patterns
 npx vite-plugin-useclassy init --language react
-
-# Svelte
-npx vite-plugin-useclassy init --language svelte
-
-# UnoCSS instead of Tailwind
-npx vite-plugin-useclassy init --engine unocss --language react
-
-# Also install the AI agent skill (Cursor, Codex, Copilot + AGENTS.md)
-npx vite-plugin-useclassy init --with-skills
-
-# Claude Code users: also copy into .claude/skills
+npx vite-plugin-useclassy init --engine unocss --language svelte
+npx vite-plugin-useclassy init --with-skills          # agent skill + Cursor rules + AGENTS.md
 npx vite-plugin-useclassy init --with-skills --with-claude
+npx vite-plugin-useclassy init --dry-run              # print planned edits
 ```
 
-Add **`--dry-run`** to any init command to print the planned file changes without modifying your repo (for example `npx vite-plugin-useclassy init --language react --dry-run`). Use **`--force`** with `--with-skills` to overwrite skill/rule files that differ from the packaged templates.
+`--language` is `vue` (default), `react`, `blade`, or `svelte`. `--engine` is `tailwind` or `unocss` (auto-detected; Tailwind wins if both are installed). `--force` overwrites locally edited skill files.
 
-If detection fails or your config is non-standard, use the manual steps below.
+If detection fails, follow the [manual setup](#vite) below.
 
-## Vite Configuration
+## Usage
 
-Add `useClassy` to your Vite plugins. It's recommended that you place it before Tailwind, UnoCSS, or other CSS processing plugins.
-
-```ts
-// vite.config.ts
-import useClassy from "vite-plugin-useclassy";
-
-export default {
-  plugins: [
-    useClassy({
-      language: "react", // or 'vue', 'blade', or 'svelte'
-
-      // Optional: CSS engine that consumes the class manifest.
-      // Defaults to 'tailwind'. Use 'unocss' for UnoCSS projects.
-      // engine: "unocss",
-
-      // Optional: Customize the output directory. Defaults to '.classy'.
-      // outputDir: '.classy',
-
-      // Optional: Customize output file name. Defaults to 'output.classy.html'.
-      // outputFileName: 'generated-classes.html'
-
-      // Optional: Enable debugging. Defaults to false.
-      // debug: true,
-    }),
-    // ... other plugins
-  ],
-};
-```
-
-## React Usage (`className`)
-
-### Variant Attributes
-
-```tsx
-// Input (using class:variant attributes)
-<button
-  className="px-4 py-2 rounded bg-blue-600 text-white"
-  className:hover="bg-blue-700 scale-105"
-  className:focus="ring-2 ring-blue-300"
-  className:disabled="opacity-50 cursor-not-allowed"
-  className:dark="bg-sky-700"
-/>
-
-// Output (after transformation by the plugin)
-<button
-  className="px-4 py-2 rounded bg-blue-600 text-white hover:bg-blue-700 hover:scale-105 focus:ring-2 focus:ring-blue-300 disabled:opacity-50 disabled:cursor-not-allowed dark:bg-sky-700"
-/>
-```
-
-### Conditional / dynamic variants
-
-JSX expression values work too — string literals inside the expression are prefixed with the variant:
-
-```tsx
-// Input
-<button
-  className="px-4 py-2 rounded"
-  className:hover={isActive ? 'bg-blue-500 text-white' : 'bg-gray-200'}
-  className:disabled={isDisabled && 'opacity-50 cursor-not-allowed'}
-/>
-
-// Output
-<button
-  className={`px-4 py-2 rounded ${(isActive ? 'hover:bg-blue-500 hover:text-white' : 'hover:bg-gray-200') || ''} ${(isDisabled && 'disabled:opacity-50 disabled:cursor-not-allowed') || ''}`}
-/>
-```
-
-Expressions without string literals (e.g. `className:hover={hoverClasses}`) are left unchanged so runtime variables are not corrupted. Prefer string literals in the expression (as above), or store already-prefixed class names in the variable.
-
-### TypeScript / JSX attribute types
-
-Importing the React entry enables `class:` / `className:` attributes on intrinsic elements:
-
-```ts
-import 'vite-plugin-useclassy/react'
-// or: /// <reference types="vite-plugin-useclassy/react" />
-```
-
-You can also type component props with `ClassyProps`:
-
-```ts
-import type { ClassyProps } from 'vite-plugin-useclassy/react'
-
-type ButtonProps = ClassyProps<{ onClick?: () => void }>
-```
-
-## Vue / HTML Usage (`class`)
+**Vue / HTML.** Use `class` plus `class:modifier`:
 
 ```vue
-<template>
-  <button
-    class="px-4 py-2 rounded bg-blue-600 text-white"
-    class:hover="bg-blue-700 scale-105"
-    class:focus="ring-2 ring-blue-300"
-    class:disabled="opacity-50 cursor-not-allowed"
-    class:dark="bg-sky-700"
-  />
-
-  <!-- Output -->
-  <button
-    class="px-4 py-2 rounded bg-blue-600 text-white hover:bg-blue-700 hover:scale-105 focus:ring-2 focus:ring-blue-300 disabled:opacity-50 disabled:cursor-not-allowed dark:bg-sky-700"
-  />
-</template>
-```
-
-## Svelte Usage (`class`)
-
-Set `language: "svelte"` so the plugin uses Svelte-aware regexes. Place `useClassy` **before** `@sveltejs/vite-plugin-svelte` so UseClassy modifiers are rewritten before the Svelte compiler sees them.
-
-```ts
-useClassy({
-  language: "svelte",
-});
-```
-
-```svelte
 <button
   class="px-4 py-2 rounded bg-blue-600 text-white"
   class:hover="bg-blue-700 scale-105"
   class:focus="ring-2 ring-blue-300"
-  class:active={isActive}
->
-  Click
-</button>
+  class:disabled="opacity-50 cursor-not-allowed"
+  class:dark="bg-sky-700"
+/>
+```
 
-<!-- Output -->
+**React.** Use `className` and `className:hover`. JSX expressions work when the class tokens are string literals:
+
+```tsx
 <button
-  class="px-4 py-2 rounded bg-blue-600 text-white hover:bg-blue-700 hover:scale-105 focus:ring-2 focus:ring-blue-300"
-  class:active={isActive}
->
-  Click
-</button>
+  className="px-4 py-2 rounded"
+  className:hover={isActive ? 'bg-blue-500 text-white' : 'bg-gray-200'}
+/>
 ```
 
-Quoted UseClassy modifiers (`class:hover="..."`) are transformed. Native Svelte class directives (`class:active={isActive}` or shorthand `class:active`) are left unchanged.
+Expressions with no string literals (`className:hover={hoverClasses}`) are left alone. Import types with `import 'vite-plugin-useclassy/react'` (or `ClassyProps`). React 18/19 is an optional peer, only needed for those helpers.
 
-## Chained modifiers
+**Svelte.** Quoted modifiers transform; native directives do not. Put UseClassy before `@sveltejs/vite-plugin-svelte`.
 
-`class:sm:hover="underline"` is the same as putting `sm:hover:underline` on the class string: underline only when **sm and hover**.
-
-```html
-<!-- Input -->
-<p class:sm:hover="underline">
-
-<!-- Output -->
-<p class="sm:hover:underline">
+```svelte
+<button class="px-4 py-2 rounded" class:hover="bg-blue-700" class:active={isActive}>
 ```
 
-`class:dark="bg-sky-700"` only produces `dark:bg-sky-700`. It does **not** invent `dark:hover:…`.
+**Laravel Blade.** `composer require useclassy/laravel`, then `language: "blade"`. PHP ^8.2, Laravel ^11–13. Blade files sit outside Vite’s module graph, so keep the class manifest registered with Tailwind or UnoCSS (below).
 
-Modifier names may include letters, digits, `_`, `-`, `:`, `/` (named groups such as `group-hover/item`), and `@` (container queries such as `@md`). Arbitrary variants (`[&>*]`, `data-[state=open]`) cannot be attribute names — leave those tokens on the base class. In React JSX, `/` in an attribute name is invalid, so named groups must stay on `className` as well.
+### Chained modifiers
 
-## Laravel Blade Usage
+`class:sm:hover="underline"` emits `sm:hover:underline` only, the same composition as Tailwind / UnoCSS, not the individual `sm:` and `hover:` pieces.
 
-For Laravel applications, install the dedicated Composer package. The service provider will be automatically registered via Laravel's package auto-discovery.
+Modifier names may include letters, digits, `_`, `-`, `:`, `/` (`group-hover/item`), and `@` (`@md`). Arbitrary variants (`[&>*]`, `data-[state=open]`) cannot be attribute names, so leave those on the base class. In React JSX, `/` is invalid in an attribute name, so named groups stay on `className`.
 
-```bash
-composer require useclassy/laravel
-```
-
-### Add 'blade' to the language option in your Vite configuration
+## Vite
 
 ```ts
-useClassy({
-  language: "blade",
-  // engine: "unocss", // when using UnoCSS instead of Tailwind
-});
-```
+import useClassy from 'vite-plugin-useclassy'
 
-### Blade Template Usage
-
-```blade
-<h1 class="text-xl" class:lg="text-3xl" class:hover="text-blue-600">
-    Responsive heading that changes on large screens and hover
-</h1>
-```
-
-The package transforms these during Blade compilation:
-
-- `class:lg="text-3xl"` becomes `lg:text-3xl`
-- `class:hover="text-blue-600"` becomes `hover:text-blue-600`
-- `class:dark="bg-gray-800 text-white"` becomes `dark:bg-gray-800 dark:text-white`
-- `class:@md="p-6"` becomes `@md:p-6`
-
-These transformed classes are merged with any existing `class` attributes. Blade files sit outside Vite's module graph, so keep the plugin manifest registered with Tailwind (`@source` / `content`) or UnoCSS (`content.filesystem`).
-
-### Requirements
-
-- PHP ^8.2
-- Laravel ^11.0|^12.0|^13.0
-
-## How engines find the classes
-
-UseClassy is a Vite `enforce: 'pre'` rewrite. Put it **before** Tailwind or UnoCSS in `plugins` so `class:hover="bg-red"` becomes `class="hover:bg-red"` in the file the engine scans.
-
-It also writes variant tokens to **`.classy/output.classy.html`**.
-
-- **Tailwind** must be pointed at that file (`@source` on v4, `content` on v3). Tailwind scans the filesystem, not Vite’s transform pipeline, so the manifest is required.
-- **UnoCSS (Vite)** extracts from the pipeline by default, so the rewrite is usually enough. `content.filesystem` is a **backstop** for files Uno skips (plain `.ts` / `.js`, Blade, HTML that never enter Vite). Phase 1 is this shared transform + dump, not an Uno extractor or transformer.
-
-## Tailwind JIT Integration
-
-UseClassy writes discovered classes to **`.classy/output.classy.html`** by default (configurable via `outputDir` / `outputFileName`). Tailwind must scan that file so utilities like `hover:…` exist in CSS.
-
-### Why `@source` / `content` is required
-
-The plugin adds `.classy/` to **`.gitignore`**. **Tailwind CSS v4** does not scan gitignored paths during automatic detection, so it will miss the manifest unless you register it explicitly. Use `@source` in your CSS (v4) or add the file to `content` (v3). See Tailwind’s docs: [Detecting classes in source files](https://tailwindcss.com/docs/detecting-classes-in-source-files).
-
-### Tailwind v4
-
-`@source` paths are **relative to the stylesheet file**, not necessarily the project root. If your entry CSS lives in `src/`, the line may look like `../.classy/output.classy.html` instead of `./.classy/...`.
-
-```css
-/* Example when the stylesheet is next to package.json */
-@import "tailwindcss";
-@source "./.classy/output.classy.html";
-```
-
-### Tailwind v3
-
-Add the manifest to `content` in `tailwind.config.*`:
-
-```js
 export default {
-  content: [
-    // ...existing paths
-    "./.classy/output.classy.html",
+  plugins: [
+    useClassy({
+      language: 'vue', // 'react' | 'blade' | 'svelte'
+      // engine: "unocss",
+    }),
+    // Tailwind / UnoCSS after UseClassy
   ],
-};
-```
-
-### Path helpers (optional)
-
-The package exports stable defaults and helpers so docs, init, and your own scripts stay aligned:
-
-```ts
-import {
-  getUseClassyTailwindSourceDirective,
-  getUseClassyTailwindSourceLineForRootStylesheet,
-  getUseClassyTailwindV3ContentEntry,
-} from "vite-plugin-useclassy";
-// or: import { ... } from "vite-plugin-useclassy/tailwind";
-
-// v4: correct @source for a given CSS file path
-const line = getUseClassyTailwindSourceDirective(
-  "/path/to/project/src/app.css",
-  "/path/to/project",
-);
-// line → @source "../.classy/output.classy.html";
-
-// v4 shorthand when the CSS file sits beside package.json:
-getUseClassyTailwindSourceLineForRootStylesheet();
-// → @source "./.classy/output.classy.html";
-
-// v3 content array entry (default output paths):
-getUseClassyTailwindV3ContentEntry();
-// → "./.classy/output.classy.html"
-```
-
-If you customize `outputDir` or `outputFileName` in `useClassy({ ... })`, pass the same options into these helpers.
-
-## UnoCSS Integration
-
-This is **Phase 1** wiring: the same transform as Tailwind, not an Uno extractor or transformer.
-
-UseClassy’s variant-attribute syntax (`class:hover="…"`) is different from UnoCSS [Attributify](https://unocss.dev/presets/attributify) (`bg="hover:…"`). Prefer UseClassy when you want **variant-first** markup with normal utility tokens. Do not enable Attributify on the same attributes.
-
-Place UseClassy **before** `unocss/vite`. Both plugins use `enforce: 'pre'`, so order in the `plugins` array decides who sees the source first. After UseClassy rewrites `class:hover="bg-red"` to `class="hover:bg-red"`, Uno’s **pipeline** extract (the default for Vite) already sees normal utilities.
-
-`content.filesystem` is a **backstop** for files Uno does not extract from the pipeline (`.ts` / `.js` are excluded by default, plus Blade / HTML that never enter Vite). It is the same HTML manifest Tailwind scans — not the idiomatic Uno API for a Vite app.
-
-`presetUno()` in the examples is enough for the canary. This does not imply [presetWind3](https://unocss.dev/presets/wind3) / [presetWind4](https://unocss.dev/presets/wind4), shortcuts, or variant-group (`hover:(px-2 py-1)`) parity. Svelte’s native `class:` directives also collide with `@unocss/extractor-svelte` — quoted UseClassy modifiers only.
-
-### 1. Plugin
-
-```ts
-useClassy({
-  language: "react",
-  engine: "unocss", // skips Tailwind @source inject
-});
-```
-
-### 2. `uno.config.ts`
-
-```ts
-import { defineConfig, presetUno } from "unocss";
-import { getUseClassyUnoFilesystemEntry } from "vite-plugin-useclassy/unocss";
-
-export default defineConfig({
-  presets: [presetUno()],
-  content: {
-    filesystem: [
-      getUseClassyUnoFilesystemEntry(),
-      // → "./.classy/output.classy.html"
-    ],
-  },
-});
-```
-
-### 3. Init helper
-
-```bash
-npx vite-plugin-useclassy init --engine unocss --language react
-```
-
-When both Tailwind and UnoCSS are installed, init defaults to Tailwind unless you pass `--engine unocss`. Init does **not** write `tailwindCSS.classAttributes` for Uno projects — use the [UnoCSS VS Code extension](https://unocss.dev/integrations/vscode).
-
-See `demos/unocss-react` for a working canary. The marketing site (`demos/vue`) shows chained modifiers in the live example.
-
-## Tailwind IntelliSense
-
-Add the following to your editor settings to enable IntelliSense for UseClassy variant attributes.
-
-```json
-{
-  "tailwindCSS.classAttributes": [
-    "class",
-    "class:[\\w:/@-]*",
-    "className",
-    "className:[\\w:/@-]*"
-  ]
 }
 ```
 
-For Vue-only projects you can omit the `className` entries. Running `npx vite-plugin-useclassy init` merges these into `.vscode/settings.json` when possible.
+| Option                         | Default                          | Notes                                                            |
+| ------------------------------ | -------------------------------- | ---------------------------------------------------------------- |
+| `language`                     | `'vue'`                          | `'vue'` \| `'react'` \| `'blade'` \| `'svelte'`                  |
+| `engine`                       | `'tailwind'`                     | `'unocss'` skips Tailwind `@source` inject                       |
+| `outputDir` / `outputFileName` | `.classy` / `output.classy.html` | Class manifest Tailwind and Uno scan                             |
+| `manifestRoot`                 | Vite `root`                      | Set when Vite’s root is a subfolder (e.g. Nuxt `srcDir: "app/"`) |
+| `injectTailwindSource`         | `true`                           | Tailwind v4 only; ignored for UnoCSS                             |
+| `debug`                        | `false`                          | Log transform and manifest writes                                |
 
-## AI-assisted setup
+Processes `.vue`, `.svelte`, `.ts`, `.tsx`, `.js`, `.jsx`, `.html`, and `.blade.php`. Skips `node_modules`, gitignored paths, and virtual modules.
 
-### Agent skill (recommended)
+## Tailwind
 
-Install an [Agent Skill](https://agentskills.io) that teaches AI coding agents how to write and refactor UseClassy markup:
+UseClassy writes discovered utilities to `.classy/output.classy.html` (gitignored). Tailwind v4 does not scan gitignored files unless you `@source` them. The plugin injects that directive into stylesheets that `@import "tailwindcss"`. `init` also writes it into your CSS.
+
+```css
+@import 'tailwindcss';
+@source "./.classy/output.classy.html";
+```
+
+`@source` paths are relative to the CSS file. If the stylesheet lives in `src/`, use `../.classy/output.classy.html`.
+
+**Tailwind v3.** Add the manifest to `content`:
+
+```js
+content: ["./.classy/output.classy.html"],
+```
+
+Path helpers: `getUseClassyTailwindSourceDirective`, `getUseClassyTailwindV3ContentEntry` from `vite-plugin-useclassy` or `vite-plugin-useclassy/tailwind`. Pass the same `outputDir` / `outputFileName` you use in the plugin.
+
+## UnoCSS
+
+```ts
+useClassy({ language: 'react', engine: 'unocss' })
+```
+
+Place it before `unocss/vite`. After the rewrite, Uno’s Vite pipeline already sees `hover:` classes. Register the HTML manifest as a filesystem source for files Uno does not extract (plain `.ts` / `.js`, Blade, HTML that never enter Vite):
+
+```ts
+import { defineConfig, presetUno } from 'unocss'
+import { getUseClassyUnoFilesystemEntry } from 'vite-plugin-useclassy/unocss'
+
+export default defineConfig({
+  presets: [presetUno()],
+  content: { filesystem: [getUseClassyUnoFilesystemEntry()] },
+})
+```
+
+UseClassy is variant-first (`class:hover="bg-red"`), not [Attributify](https://unocss.dev/presets/attributify) (`bg="hover:..."`). Don’t enable both on the same attributes. See `demos/unocss-react`.
+
+## IntelliSense
+
+`init` merges this into `.vscode/settings.json` for Tailwind projects:
+
+```json
+{
+  "tailwindCSS.classAttributes": ["class", "class:[\\w:/@-]*", "className", "className:[\\w:/@-]*"]
+}
+```
+
+Vue-only projects can omit the `className` entries. UnoCSS projects should use the [UnoCSS VS Code extension](https://unocss.dev/integrations/vscode) instead.
+
+## Agent skill
 
 ```bash
 npx vite-plugin-useclassy init --with-skills
 ```
 
-That writes:
+| Path                            | Used by                            |
+| ------------------------------- | ---------------------------------- |
+| `.agents/skills/useclassy/`     | Cursor, Codex, Copilot             |
+| `.cursor/rules/useclassy-*.mdc` | Cursor                             |
+| `AGENTS.md` (fenced block)      | Windsurf, Aider, Cline, and others |
 
-| Destination | Read by |
-|-------------|---------|
-| `.agents/skills/useclassy/` | Cursor, Codex, GitHub Copilot |
-| `.cursor/rules/useclassy-*.mdc` | Cursor (glob-scoped setup and authoring rules) |
-| `AGENTS.md` (fenced section) | Windsurf, Aider, Cline, and other AGENTS.md readers |
-
-Claude Code does not read `.agents/skills`. If you use Claude Code, also pass **`--with-claude`** to copy the same skill into `.claude/skills/useclassy/`. That copy is opt-in because Cursor also discovers `.claude/skills` and would otherwise load the skill twice.
-
-The skill is a single portable `SKILL.md` using the standard `name` + `description` frontmatter. Re-running is idempotent: matching files are left alone, the fenced `AGENTS.md` block (`<!-- useclassy:start -->` … `<!-- useclassy:end -->`) is refreshed to the latest template text without touching content outside the markers, and skill/rule files with local edits are **skipped** unless you pass **`--force`**. `--with-cursor` is an alias for `--with-skills`.
-
-The **skill focuses on writing new UseClassy markup and safely refactoring existing Tailwind variant classes** across Vue, React, Svelte, Blade, and HTML. It teaches grouping by modifier, preserving dynamic classes, handling Svelte directives, and converting chained variants such as `sm:hover:underline` to `class:sm:hover="underline"`. Installation and Tailwind/Vite wiring stay in the separate setup rule.
-
-Source templates live in [`templates/`](templates/) if you prefer to copy them manually.
-
-### One-shot prompt
-
-Use this prompt in your editor agent when you want a one-shot manual setup (for example if `init` cannot patch your repo):
-
-**Prompt — “Set up UseClassy in this repo”**
-
-1. Install dev dependency: `vite-plugin-useclassy` (use the repo’s package manager: npm, pnpm, or yarn).
-2. Open `vite.config.*`. Add `import useClassy from 'vite-plugin-useclassy'`. In `plugins`, insert `useClassy({ language: '<vue|react|blade|svelte>' })` **before** `@tailwindcss/vite` or other CSS pipeline plugins so it runs early. For Svelte, also place it before `@sveltejs/vite-plugin-svelte`.
-3. **Tailwind v4** (project uses `@import "tailwindcss"` and typically `@tailwindcss/vite`): In the main CSS entry that imports Tailwind, add an `@source` line pointing at the generated manifest. Default manifest path is `.classy/output.classy.html` from the project root; the `@source` path must be **relative to that CSS file**. If `useClassy` uses custom `outputDir` / `outputFileName`, use those instead.
-4. **Tailwind v3** (`tailwind.config.*`): Add `".classy/output.classy.html"` (or `./.classy/output.classy.html` as appropriate) to the `content` array without removing existing entries.
-5. **VS Code** (Tailwind only): In `.vscode/settings.json` (merge, do not wipe), set or extend `tailwindCSS.classAttributes` to include `"class:[\\w:/@-]*"`. For React, also add `"className:[\\w:/@-]*"`. Skip this on UnoCSS projects — use the UnoCSS extension instead.
-6. Run `dev` once so `.classy/output.classy.html` is generated; confirm Tailwind includes a class that only appears on a `class:hover` or `className:hover` attribute.
-7. Optionally run `npx vite-plugin-useclassy init --with-skills` (or copy the templates above) so agents keep using UseClassy modifier attributes when editing UI.
-
-## Debugging
-
-Enable debugging by setting `debug: true` in the plugin options. This will log detailed information about the plugin's operation to the console.
-
-```ts
-useClassy({
-  debug: true,
-});
-```
-
-## Processing Rules
-
-- Only processes files with `.vue`, `.svelte`, `.ts`, `.tsx`, `.js`, `.jsx`, `.html`, and `.blade.php` extensions.
-- Does not process files in the `node_modules` directory.
-- Does not process files in `.gitignore` directories.
-- Does not process virtual modules.
+Add `--with-claude` to also copy into `.claude/skills/` (opt-in so Cursor doesn’t load the skill twice). Running it again is safe; `--force` overwrites local edits. Templates live in [`templates/`](templates/).
 
 ## Contributing
 
-Contributions are welcome! Please open an issue or submit a pull request.
+Issues and PRs welcome.
 
 ## License
 
