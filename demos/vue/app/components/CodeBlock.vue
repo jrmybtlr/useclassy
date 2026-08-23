@@ -4,7 +4,7 @@
     :class="{ 'rounded-lg border border-neutral-900': !embedded }"
   >
     <div
-      class="flex items-center border-b border-neutral-900"
+      class="flex items-center border-b border-neutral-900 pr-1"
       :class="embedded ? 'pl-6 sm:pl-12' : 'pl-6'"
     >
       <div class="min-w-0 flex-1 overflow-x-auto">

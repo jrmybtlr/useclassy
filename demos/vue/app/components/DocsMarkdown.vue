@@ -110,7 +110,7 @@ function headingClass(depth: number, index: number): string {
 
 function paragraphClass(index: number): string {
   if (props.nested) return 'text-base leading-relaxed'
-  if (index === 1) return 'mt-4 text-xl/normal tracking-tight'
+  if (index === 0) return 'text-xl/normal tracking-tight'
   return 'mt-4 text-base leading-relaxed'
 }
 </script>

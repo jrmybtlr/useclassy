@@ -27,7 +27,7 @@
           humans.
         </p>
 
-        <div class="mt-8 flex flex-wrap items-center justify-center gap-4">
+        <div class="mt-8 flex flex-wrap items-center justify-center gap-2.5">
           <a
             href="#setup"
             class="glass-cta relative z-20 inline-flex items-center rounded-full border border-white/20 bg-linear-to-b from-accent/45 to-accent/15 px-8 py-3 font-display text-lg font-semibold text-white shadow-[0_0_24px_rgb(40_83_255/0.35),inset_0_1px_0_0_rgb(255_255_255/0.45),inset_0_-1px_0_0_rgb(40_83_255/0.25),inset_0_0_24px_0_rgb(40_83_255/0.4)] backdrop-blur-sm backdrop-saturate-150 transition-[border-color,background-color] duration-200 ease-out"
@@ -39,22 +39,22 @@
           </a>
           <NuxtLink
             to="/docs"
-            class="inline-flex items-center font-display text-lg text-neutral-400"
-            class:hover="text-white"
+            class="inline-flex items-center rounded-full border border-white/10 bg-white/1 px-8 py-3 font-display text-lg font-semibold text-neutral-200 transition-[border-color,background-color,color] duration-200 ease-out"
+            class:hover="border-white/25 bg-white/10 text-white"
             class:focus-visible="outline-2 outline-offset-2 outline-accent"
           >
             Docs
           </NuxtLink>
-          <a
-            href="https://github.com/jrmybtlr/useclassy"
-            class="inline-flex items-center gap-2 font-display text-lg text-neutral-400"
-            class:hover="text-white"
-            class:focus-visible="outline-2 outline-offset-2 outline-accent"
-          >
-            <IconGithub />
-            GitHub
-          </a>
         </div>
+        <a
+          href="https://github.com/jrmybtlr/useclassy"
+          class="mt-8 inline-flex items-center gap-2 px-2 font-display text-lg text-neutral-500 transition-colors duration-200 ease-out"
+          class:hover="text-white"
+          class:focus-visible="outline-2 outline-offset-2 outline-accent"
+        >
+          <IconGithub />
+          GitHub
+        </a>
       </header>
 
       <div class="w-full min-w-0 overflow-hidden border-t border-neutral-900">

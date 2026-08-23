@@ -1,4 +1,16 @@
+import type { H3Event } from 'h3'
+import docsMarkdown from 'virtual:site-readme'
+
 const SITE = 'https://useclassy.com'
+
+export { docsMarkdown }
+
+export function sendMarkdown(event: H3Event, body: string) {
+  setHeader(event, 'content-type', 'text/markdown; charset=utf-8')
+  setHeader(event, 'cache-control', 'public, max-age=300')
+  appendResponseHeader(event, 'link', '</llms.txt>; rel="describedby"')
+  return body
+}
 
 export const indexMarkdown = `# UseClassy
 
@@ -20,8 +32,6 @@ npx vite-plugin-useclassy init
 \`init\` patches Vite and your CSS engine. See the [docs](${SITE}/docs.md) for Usage, Vite, Tailwind, UnoCSS, IntelliSense, and the agent skill.
 `
 
-export { default as docsMarkdown } from '../../../../README.md?raw'
-
 export const llmsTxt = `# UseClassy
 
 > A Vite plugin that turns \`class:hover\` / \`className:focus\` attributes into normal Tailwind CSS and UnoCSS classes. No runtime.
@@ -34,6 +44,7 @@ export const llmsTxt = `# UseClassy
 ## Optional
 
 - [Website](${SITE}/): Marketing site
+- [Full documentation](${SITE}/llms-full.txt): Home plus the complete README in one file
 - [GitHub](https://github.com/jrmybtlr/useclassy): Source code
 `
 

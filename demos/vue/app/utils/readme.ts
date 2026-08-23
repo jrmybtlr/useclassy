@@ -12,7 +12,16 @@ export function slugify(text: string): string {
     .replace(/\s+/g, '-')
 }
 
-export const readmeTokens: Token[] = lexer(src)
+function skipLeadingH1(tokens: Token[]): Token[] {
+  const start = tokens.findIndex((token) => token.type !== 'space')
+  const first = start === -1 ? undefined : tokens[start]
+  if (first?.type === 'heading' && first.depth === 1) {
+    return tokens.slice(start + 1)
+  }
+  return tokens
+}
+
+export const readmeTokens: Token[] = skipLeadingH1(lexer(src))
 
 export type ReadmeHeading = {
   id: string

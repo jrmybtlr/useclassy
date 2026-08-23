@@ -1,9 +1,11 @@
 import path from 'node:path'
+import { readFileSync } from 'node:fs'
 import { fileURLToPath } from 'node:url'
 import useClassy from '../../src/index.ts'
 import tailwindcss from '@tailwindcss/vite'
 
 const rootDir = path.dirname(fileURLToPath(import.meta.url))
+const readme = readFileSync(path.resolve(rootDir, '../../README.md'), 'utf8')
 
 export default defineNuxtConfig({
   modules: ['@nuxt/fonts', '@nuxthub/core', '@nuxt/icon'],
@@ -30,6 +32,9 @@ export default defineNuxtConfig({
   nitro: {
     prerender: {
       routes: ['/llms.txt', '/llms-full.txt', '/llm.txt', '/index.md', '/docs.md'],
+    },
+    virtual: {
+      'virtual:site-readme': () => `export default ${JSON.stringify(readme)}`,
     },
   },
 

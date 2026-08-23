@@ -188,8 +188,42 @@ code.docs-inline-code {
   );
 }
 
-/* Viewport-fixed edge fade. Mask-image on overflow-x panes sizes to
-   scrollWidth, so overlays stay on the visible edges instead. */
+/* Start or end fade for overflow-x panes. Overlays stay on the
+   visible edges — mask-image would size to scrollWidth. */
+@utility fade-x-start {
+  position: relative;
+  --mask-fade: 1.5rem;
+  --fade-from: color-mix(in srgb, white 1%, var(--color-neutral-950));
+
+  &::before {
+    content: '';
+    position: absolute;
+    inset-block: 0;
+    left: 0;
+    z-index: 10;
+    width: var(--mask-fade);
+    pointer-events: none;
+    background: linear-gradient(to right, var(--fade-from), transparent);
+  }
+}
+
+@utility fade-x-end {
+  position: relative;
+  --mask-fade: 1.5rem;
+  --fade-from: color-mix(in srgb, white 1%, var(--color-neutral-950));
+
+  &::after {
+    content: '';
+    position: absolute;
+    inset-block: 0;
+    right: 0;
+    z-index: 10;
+    width: var(--mask-fade);
+    pointer-events: none;
+    background: linear-gradient(to left, var(--fade-from), transparent);
+  }
+}
+
 @utility fade-x-edges {
   position: relative;
   --mask-fade: 1.5rem;

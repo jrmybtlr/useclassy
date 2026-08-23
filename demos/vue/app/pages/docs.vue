@@ -10,7 +10,7 @@
   <section>
     <div class="mx-auto flex w-full max-w-4xl bg-neutral-950">
       <GutterRail />
-      <article class="min-w-0 flex-1 bg-white/1 px-6 py-10" class:sm="px-12 py-20">
+      <article class="min-w-0 flex-1 bg-white/1 px-6 py-10" class:sm="px-12 py-12">
         <DocsMarkdown :tokens="readmeTokens" />
       </article>
       <GutterRail />

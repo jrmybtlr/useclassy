@@ -4,13 +4,14 @@ A Vite plugin that automatically rewrites conditional class attributes like `cla
 
 ```html
 <button
-  class="rounded px-4 bg-blue-600 text-white"
+  class="@container rounded px-4 bg-blue-600 text-white"
   class:hover="bg-blue-700"
   class:focus="ring-2 ring-blue-300"
+  class:@md="px-6"
 ></button>
 ```
 
-becomes `class="rounded px-4 bg-blue-600 text-white hover:bg-blue-700 focus:ring-2 focus:ring-blue-300"`. There is no runtime. Put UseClassy before Tailwind or UnoCSS so those engines see the rewritten utilities.
+becomes `class="@container rounded px-4 bg-blue-600 text-white hover:bg-blue-700 focus:ring-2 focus:ring-blue-300 @md:px-6"`. There is no runtime. Put UseClassy before Tailwind or UnoCSS so those engines see the rewritten utilities.
 
 ## Install
 
@@ -21,15 +22,14 @@ npx vite-plugin-useclassy init
 
 `init` patches Vite and your CSS engine, plus VS Code IntelliSense for Tailwind. Run it from the app root (the folder with `package.json` and `vite.config.*`).
 
-```bash
-npx vite-plugin-useclassy init --language react
-npx vite-plugin-useclassy init --engine unocss --language svelte
-npx vite-plugin-useclassy init --with-skills          # agent skill + Cursor rules + AGENTS.md
-npx vite-plugin-useclassy init --with-skills --with-claude
-npx vite-plugin-useclassy init --dry-run              # print planned edits
-```
-
-`--language` is `vue` (default), `react`, `blade`, or `svelte`. `--engine` is `tailwind` or `unocss` (auto-detected; Tailwind wins if both are installed). `--force` overwrites locally edited skill files.
+| Option           | Default      | Notes                                                                              |
+| ---------------- | ------------ | ---------------------------------------------------------------------------------- |
+| `--language`     | `'vue'`      | `'vue'` \| `'react'` \| `'blade'` \| `'svelte'`                                    |
+| `--engine`       | auto-detect  | `'tailwind'` \| `'unocss'`; Tailwind wins if both are installed                    |
+| `--with-skills`  | `false`      | Agent skill, Cursor rules, and `AGENTS.md`                                         |
+| `--with-claude`  | `false`      | Also copy to `.claude/skills/` (requires `--with-skills`)                          |
+| `--force`        | `false`      | Overwrite locally edited skill files                                               |
+| `--dry-run`      | `false`      | Print planned edits                                                                |
 
 If detection fails, follow the [manual setup](#vite) below.
 

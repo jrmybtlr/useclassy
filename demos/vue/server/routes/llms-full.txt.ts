@@ -1,7 +1,3 @@
-import { docsMarkdown, llmsFullTxt } from '../utils/site-markdown'
+import { docsMarkdown, llmsFullTxt, sendMarkdown } from '../utils/site-markdown'
 
-export default defineEventHandler((event) => {
-  setHeader(event, 'content-type', 'text/markdown; charset=utf-8')
-  setHeader(event, 'cache-control', 'public, max-age=300')
-  return llmsFullTxt(docsMarkdown)
-})
+export default defineEventHandler((event) => sendMarkdown(event, llmsFullTxt(docsMarkdown)))

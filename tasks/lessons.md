@@ -1,5 +1,11 @@
 # Lessons
 
+## Nitro cannot load Vite `?raw` (2026-08-23)
+
+- `import x from 'file.md?raw'` works in Vite (app code) and fails in Nitro (`ENOENT …/README.md?raw`).
+- Do not `readFileSync` that path at Worker runtime either. Inline the file at config time via `nitro.virtual`.
+- Do not name the virtual module `#something`. Node treats `#` as `package.json` `imports`, so an unresolved specifier crashes every request with `Package import specifier "#…" is not defined`. Use `virtual:…`.
+
 ## Shiki `.line` plus `whitespace-pre` double-spaces (2026-08-23)
 
 - Shiki emits `<span class="line">…</span>\n<span class="line">`.
