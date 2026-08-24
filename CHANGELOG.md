@@ -1,3 +1,19 @@
+## v4.0.0
+
+[compare changes](https://github.com/jrmybtlr/useclassy/compare/v3.2.0...v4.0.0)
+
+### 🚀 Enhancements
+
+- Support conditional JSX expressions on className variants ([#44](https://github.com/jrmybtlr/useclassy/pull/44))
+
+### 🏡 Chore
+
+- Sync 3.3.0 polish for feature-complete gaps ([#48](https://github.com/jrmybtlr/useclassy/pull/48))
+
+### ❤️ Contributors
+
+- Jeremy Butler <jeremy.butler@laravel.com>
+
 ## v3.3.0
 
 [compare changes](https://github.com/jrmybtlr/useclassy/compare/v3.2.0...v3.3.0)
