@@ -1,6 +1,6 @@
 <template>
   <div
-    class="relative block w-full overflow-x-auto rounded-none border border-white/10 bg-zinc-900/30 text-sm"
+    class="relative w-full overflow-hidden overflow-x-auto rounded-lg border border-white/10 bg-neutral-950 text-sm"
   >
     <slot />
   </div>

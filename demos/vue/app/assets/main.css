@@ -1,46 +1,275 @@
-@import "tailwindcss";
+@import 'tailwindcss';
 @plugin "tailwindcss-motion";
 
-body {
-  @apply bg-zinc-950 text-white;
+@font-face {
+  font-family: 'Gilroy';
+  src: url('/fonts/gilroy/Semibold/Gilroy-SemiBold.woff') format('woff');
+  font-weight: 600;
+  font-style: normal;
+  font-display: block;
 }
 
-.font-serif {
-  font-family: "Playfair Display", serif;
+@font-face {
+  font-family: 'Gilroy';
+  src: url('/fonts/gilroy/Bold/Gilroy-Bold.woff') format('woff');
+  font-weight: 700;
+  font-style: normal;
+  font-display: block;
 }
 
-.font-sans {
-  font-family: "Inter", sans-serif;
+@theme {
+  --font-sans: 'Inter', ui-sans-serif, system-ui, sans-serif;
+  --font-sans--font-feature-settings: 'cv02', 'cv03', 'cv04', 'cv11', 'ss01', 'ss03';
+  --font-display: 'Gilroy', ui-sans-serif, system-ui, sans-serif;
+  --font-display--font-feature-settings: normal;
+  --font-display--font-variation-settings: normal;
+  --font-mono: 'IBM Plex Mono', ui-monospace, monospace;
+  --color-accent: #2853ff;
+  --color-canvas: #080808;
+  --color-neutral-950: rgb(20, 20, 20);
+  --color-neutral-900: rgb(39, 39, 39);
+  --animate-hat-tip: hat-tip 0.7s cubic-bezier(0.34, 1.35, 0.64, 1);
+  --animate-hat-float: hat-float 3s ease-in-out infinite;
 }
 
-.font-mono {
-  font-family: "Fira Code", monospace;
-}
-
-code {
-  @apply block text-sm/[1.9em] font-mono px-5 py-4;
-}
-
-/* A better container */
-.container {
-  width: 100%;
-  max-width: 720px;
-  margin-left: auto;
-  margin-right: auto;
-  padding-left: calc(env(safe-area-inset-left, 0rem) + 1.1rem);
-  padding-right: calc(env(safe-area-inset-right, 0rem) + 1.1rem);
-}
-
-@media screen and (min-width: 768px) {
-  .container {
-    padding-left: calc(env(safe-area-inset-left, 0rem) + 2rem);
-    padding-right: calc(env(safe-area-inset-right, 0rem) + 2rem);
+@keyframes hat-tip {
+  0%,
+  100% {
+    transform: rotate(0deg);
+  }
+  35% {
+    transform: rotate(24deg);
+  }
+  55% {
+    transform: rotate(10deg);
+  }
+  72% {
+    transform: rotate(16deg);
   }
 }
 
-@media screen and (min-width: 1280px) {
-  .container {
-    padding-left: calc(env(safe-area-inset-left, 0rem) + 3rem);
-    padding-right: calc(env(safe-area-inset-right, 0rem) + 3rem);
+@keyframes hat-float {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-6px);
+  }
+}
+
+@keyframes glass-pulse {
+  0%,
+  100% {
+    box-shadow:
+      0 0 28px rgb(40 83 255 / 0.45),
+      inset 0 1px 0 0 rgb(255 255 255 / 0.5),
+      inset 0 -1px 0 0 rgb(40 83 255 / 0.3),
+      inset 0 0 28px 0 rgb(40 83 255 / 0.45);
+  }
+  50% {
+    box-shadow:
+      0 0 44px rgb(40 83 255 / 0.75),
+      inset 0 1px 0 0 rgb(255 255 255 / 0.7),
+      inset 0 -1px 0 0 rgb(40 83 255 / 0.45),
+      inset 0 0 44px 0 rgb(40 83 255 / 0.7);
+  }
+}
+
+@utility glass-cta {
+  isolation: isolate;
+
+  &::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    z-index: 0;
+    border-radius: inherit;
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.35s ease;
+    box-shadow:
+      0 0 28px rgb(40 83 255 / 0.45),
+      inset 0 1px 0 0 rgb(255 255 255 / 0.5),
+      inset 0 -1px 0 0 rgb(40 83 255 / 0.3),
+      inset 0 0 28px 0 rgb(40 83 255 / 0.45);
+  }
+
+  &:hover::after,
+  &:focus-visible::after {
+    opacity: 1;
+  }
+
+  @media (prefers-reduced-motion: no-preference) {
+    &::after {
+      animation: glass-pulse 1.8s ease-in-out infinite;
+    }
+  }
+}
+
+html {
+  @apply overscroll-none scroll-smooth antialiased scheme-only-dark;
+}
+
+body {
+  @apply overscroll-none bg-canvas font-sans text-white;
+}
+
+/* Gilroy is static. Do not inherit Inter features/opsz or faux-bold. */
+.font-display {
+  font-optical-sizing: none;
+  font-synthesis: none;
+}
+
+/* Gutter wallpaper: 1px dots, solid column punch-through. */
+@utility bg-gutter-dots {
+  background-color: var(--color-neutral-950);
+  background-image: radial-gradient(circle, rgb(255 255 255 / 0.05) 0.5px, transparent 1px);
+  background-size: 8px 8px;
+}
+
+/* Spacer hatch: 1px diagonals on the canvas. */
+@utility bg-diagonal-lines {
+  background-color: var(--color-neutral-950);
+  background-image: repeating-linear-gradient(
+    -45deg,
+    transparent,
+    transparent 7px,
+    rgb(255 255 255 / 0.06) 7px,
+    rgb(255 255 255 / 0.06) 8px
+  );
+}
+
+code {
+  @apply block font-mono text-sm/[1.9em];
+}
+
+.docs-shiki {
+  background: transparent !important;
+  line-height: 1.7;
+  white-space: normal;
+}
+
+.docs-shiki .line {
+  display: block;
+  white-space: pre-wrap;
+  min-height: 1.7em;
+}
+
+code.docs-inline-code {
+  @apply inline rounded-md bg-white/5 px-2 py-0.5 text-[0.9em] leading-none break-words text-white;
+  @apply p-1 pt-px pb-px;
+  box-decoration-break: clone;
+  -webkit-box-decoration-break: clone;
+}
+
+@utility text-glow {
+  text-shadow:
+    0 0 2px rgb(255 255 255 / 0.9),
+    0 0 8px rgb(125 211 252 / 0.95),
+    0 0 18px rgb(56 189 248 / 0.65),
+    0 0 32px rgb(40 83 255 / 0.45);
+}
+
+@utility hat-glow {
+  filter: drop-shadow(0 0 4px rgb(125 211 252 / 0.3)) drop-shadow(0 0 14px rgb(40 83 255 / 0.2));
+}
+
+@utility hat-glow-hot {
+  filter: drop-shadow(0 0 6px rgb(186 230 253 / 0.55)) drop-shadow(0 0 22px rgb(40 83 255 / 0.45));
+}
+
+@utility hat-aura {
+  background: radial-gradient(
+    circle,
+    rgb(186 230 253 / 0.18) 0%,
+    rgb(56 189 248 / 0.12) 45%,
+    transparent 70%
+  );
+}
+
+/* Start or end fade for overflow-x panes. Overlays stay on the
+   visible edges — mask-image would size to scrollWidth. */
+@utility fade-x-start {
+  position: relative;
+  --mask-fade: 1.5rem;
+  --fade-from: color-mix(in srgb, white 1%, var(--color-neutral-950));
+
+  &::before {
+    content: '';
+    position: absolute;
+    inset-block: 0;
+    left: 0;
+    z-index: 10;
+    width: var(--mask-fade);
+    pointer-events: none;
+    background: linear-gradient(to right, var(--fade-from), transparent);
+  }
+}
+
+@utility fade-x-end {
+  position: relative;
+  --mask-fade: 1.5rem;
+  --fade-from: color-mix(in srgb, white 1%, var(--color-neutral-950));
+
+  &::after {
+    content: '';
+    position: absolute;
+    inset-block: 0;
+    right: 0;
+    z-index: 10;
+    width: var(--mask-fade);
+    pointer-events: none;
+    background: linear-gradient(to left, var(--fade-from), transparent);
+  }
+}
+
+@utility fade-x-edges {
+  position: relative;
+  --mask-fade: 1.5rem;
+  --fade-from: color-mix(in srgb, white 1%, var(--color-neutral-950));
+
+  &::before,
+  &::after {
+    content: '';
+    position: absolute;
+    inset-block: 0;
+    z-index: 10;
+    width: var(--mask-fade);
+    pointer-events: none;
+  }
+
+  &::before {
+    left: 0;
+    background: linear-gradient(to right, var(--fade-from), transparent);
+  }
+
+  &::after {
+    right: 0;
+    background: linear-gradient(to left, var(--fade-from), transparent);
+  }
+}
+
+/* Nearly invisible scrollbar; still scrollable via trackpad/wheel. */
+@utility scrollbar-faint {
+  scrollbar-width: thin;
+  scrollbar-color: rgb(255 255 255 / 0.12) transparent;
+
+  &::-webkit-scrollbar {
+    height: 4px;
+    width: 4px;
+  }
+
+  &::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  &::-webkit-scrollbar-thumb {
+    background-color: rgb(255 255 255 / 0.12);
+    border-radius: 9999px;
+  }
+
+  &::-webkit-scrollbar-thumb:hover {
+    background-color: rgb(255 255 255 / 0.22);
   }
 }

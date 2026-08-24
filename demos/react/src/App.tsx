@@ -32,7 +32,8 @@ function App() {
         </h1>
         <p className="max-w-xl text-sm text-zinc-400">
           Smoke coverage for quoted modifiers, conditionals, comparison
-          operands, nested braces, and multi-modifier merges.
+          operands, nested braces, and chained modifiers. Chained attributes
+          match Tailwind variant composition (`sm:hover:underline` only).
         </p>
       </header>
 
@@ -171,10 +172,22 @@ function App() {
           </div>
         </Case>
 
+        <Case
+          title="Chained modifier"
+          detail='className:sm:hover="underline" emits sm:hover:underline — underline only when sm AND hover.'
+        >
+          <p
+            className="rounded-lg border border-zinc-700 bg-zinc-900 px-5 py-3 text-zinc-100"
+            className:sm:hover="underline"
+          >
+            Resize below/above sm, then hover.
+          </p>
+        </Case>
+
         {/* Nested modifiers */}
         <Case
           title="Nested modifiers"
-          detail="className:sm:hover expands full chain + partials for Tailwind"
+          detail="className:sm:hover and className:lg:focus-within each prefix the full chain."
         >
           <div
             className="px-5 py-3 rounded-lg bg-zinc-900"

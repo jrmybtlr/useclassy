@@ -1,5 +1,8 @@
 import type { ViteDevServer } from 'vite'
 
+/** CSS engine UseClassy wires the class manifest into. */
+export type ClassyEngine = 'tailwind' | 'unocss'
+
 // Plugin-specific types
 export interface ClassyOptions {
   /**
@@ -7,6 +10,17 @@ export interface ClassyOptions {
    * @default "vue"
    */
   language?: 'vue' | 'react' | 'blade' | 'svelte'
+
+  /**
+   * CSS engine that consumes the generated class manifest.
+   * - `tailwind` (default): may inject `@source` into Tailwind CSS
+   * - `unocss`: skips Tailwind inject. Place UseClassy before `unocss/vite`
+   *   so the pipeline sees rewritten `hover:…` classes. Also register the
+   *   manifest via `content.filesystem` (see `vite-plugin-useclassy/unocss`)
+   *   as a backstop for files Uno does not extract from the pipeline.
+   * @default "tailwind"
+   */
+  engine?: ClassyEngine
 
   /**
    * Directory to output the generated class file
@@ -23,6 +37,7 @@ export interface ClassyOptions {
 
   /**
    * Inject a Tailwind v4 `@source` directive into stylesheets that import Tailwind.
+   * Ignored when `engine` is `"unocss"`.
    * @default true
    */
   injectTailwindSource?: boolean

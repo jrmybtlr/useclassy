@@ -29,11 +29,11 @@ When this project uses `vite-plugin-useclassy`, write new static Tailwind varian
 ## Rules
 
 - Base utilities on `class` / `className`; variants on `class:mod="…"` / `className:mod="…"`.
-- Group static utilities by identical single modifier and remove the prefix from each modifier value.
+- Group static utilities by identical modifier prefix (including chains such as `sm:hover`) and remove that prefix from each modifier value.
 - Vue / Blade / Svelte / HTML: values must be double-quoted static strings.
 - React: prefer double-quoted static strings; `className:mod={cond ? 'a' : 'b'}` is also valid when literals should be prefixed.
 - Leave Vue `:class`, Svelte native `class:name={cond}`, and unrelated dynamic base expressions unchanged.
 - **Svelte**: only transform quoted UseClassy modifiers (`class:hover="…"`). Do not rewrite native `class:name={cond}` or `class:name`.
-- Keep arbitrary variants such as `[&>*]:mt-2` and `data-[state=open]:block` in the base string.
-- Chained attributes are additive: `class:sm:hover="underline"` generates `sm:hover:underline`, `sm:underline`, and `hover:underline`. Keep an existing exact chained token in the base string unless all combinations are intended.
+- Keep arbitrary variants such as `[&>*]:mt-2` and `data-[state=open]:block` in the base string. Named groups (`group-hover/item`) and `@md` container queries work as Vue/HTML modifier names; in React JSX, keep named groups on `className` because `/` is not a valid attribute-name character.
+- Chained attributes match Tailwind/Uno composition: `class:sm:hover="underline"` generates `sm:hover:underline` only. Converting `sm:hover:underline` to `class:sm:hover="underline"` is behavior-preserving.
 - After refactoring, run formatting and relevant tests/build; verify dynamic classes and rendered states are unchanged.

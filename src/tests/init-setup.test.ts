@@ -4,13 +4,16 @@ import path from 'path'
 import { afterEach, describe, expect, it } from 'vitest'
 
 import {
+  detectCssEngine,
   detectTailwindFlavor,
   installAgentResources,
   mergeTailwindClassAttributes,
   patchAgentsMdContent,
   patchTailwindV3ConfigContent,
   patchTailwindV4Stylesheet,
+  patchUnoConfigContent,
   patchViteConfigContent,
+  resolveInitEngine,
   resolveTemplatesRoot,
   runInitSetup,
 } from '../init-setup'
@@ -38,6 +41,18 @@ export default defineConfig({
     expect(out).toContain('import useClassy from \'vite-plugin-useclassy\'')
     expect(out).toContain('language: \'vue\'')
     expect(out).toMatch(/plugins:\s*\[\s*\n\s*useClassy/)
+    expect(out).not.toContain('engine:')
+  })
+
+  it('includes engine: unocss when requested', () => {
+    const src = `import { defineConfig } from 'vite'
+export default defineConfig({
+  plugins: [],
+})
+`
+    const out = patchViteConfigContent(src, 'react', 'unocss')
+    expect(out).toContain('language: \'react\'')
+    expect(out).toContain('engine: \'unocss\'')
   })
 
   it('does not duplicate useClassy', () => {
@@ -45,6 +60,135 @@ export default defineConfig({
 export default { plugins: [useClassy({ language: 'vue' })] }
 `
     expect(patchViteConfigContent(src, 'vue')).toBe(src)
+  })
+})
+
+describe('patchUnoConfigContent', () => {
+  it('inserts content.filesystem into defineConfig', () => {
+    const src = `import { defineConfig, presetUno } from 'unocss'
+
+export default defineConfig({
+  presets: [presetUno()],
+})
+`
+    const out = patchUnoConfigContent(src)
+    expect(out).toContain('filesystem: [\'./.classy/output.classy.html\']')
+    expect(out).toContain('presets: [presetUno()]')
+  })
+
+  it('appends to an existing filesystem array', () => {
+    const src = `export default defineConfig({
+  content: {
+    filesystem: ['./src/**/*.php'],
+  },
+})
+`
+    const out = patchUnoConfigContent(src)
+    expect(out).toContain('\'./.classy/output.classy.html\'')
+    expect(out).toContain('./src/**/*.php')
+  })
+
+  it('is a no-op when manifest already referenced', () => {
+    const src = `export default {
+  content: { filesystem: ['./.classy/output.classy.html'] },
+}
+`
+    expect(patchUnoConfigContent(src)).toBe(src)
+  })
+
+  it('is a no-op when helper already referenced', () => {
+    const src = `import { getUseClassyUnoFilesystemEntry } from 'vite-plugin-useclassy/unocss'
+export default defineConfig({
+  content: { filesystem: [getUseClassyUnoFilesystemEntry()] },
+})
+`
+    expect(patchUnoConfigContent(src)).toBe(src)
+  })
+
+  it('still patches when filename only appears in a comment', () => {
+    const src = `export default defineConfig({
+  // scans output.classy.html after transform
+  presets: [],
+})
+`
+    const out = patchUnoConfigContent(src)
+    expect(out).toContain('\'./.classy/output.classy.html\'')
+    expect(out).toContain('scans output.classy.html')
+  })
+})
+
+describe('detectCssEngine / resolveInitEngine', () => {
+  it('detects unocss from dependency', () => {
+    const dir = tempDir()
+    fs.writeFileSync(
+      path.join(dir, 'package.json'),
+      JSON.stringify({ devDependencies: { unocss: '^66.0.0' } }),
+      'utf-8',
+    )
+    expect(detectCssEngine(dir)).toBe('unocss')
+    expect(resolveInitEngine(dir)).toBe('unocss')
+  })
+
+  it('prefers tailwind when both are present unless explicit', () => {
+    const dir = tempDir()
+    fs.writeFileSync(
+      path.join(dir, 'package.json'),
+      JSON.stringify({
+        devDependencies: {
+          '@tailwindcss/vite': '^4.0.0',
+          unocss: '^66.0.0',
+        },
+      }),
+      'utf-8',
+    )
+    expect(detectCssEngine(dir)).toBe('both')
+    expect(resolveInitEngine(dir)).toBe('tailwind')
+    expect(resolveInitEngine(dir, 'unocss')).toBe('unocss')
+  })
+
+  it('runInitSetup patches uno.config for engine unocss', () => {
+    const dir = tempDir()
+    fs.writeFileSync(
+      path.join(dir, 'package.json'),
+      JSON.stringify({
+        name: 'app',
+        devDependencies: { unocss: '^66.0.0' },
+      }),
+      'utf-8',
+    )
+    fs.writeFileSync(
+      path.join(dir, 'vite.config.ts'),
+      `import { defineConfig } from 'vite'\nexport default defineConfig({ plugins: [] })\n`,
+      'utf-8',
+    )
+    fs.writeFileSync(
+      path.join(dir, 'uno.config.ts'),
+      `import { defineConfig, presetUno } from 'unocss'\nexport default defineConfig({\n  presets: [presetUno()],\n})\n`,
+      'utf-8',
+    )
+
+    const result = runInitSetup({
+      cwd: dir,
+      language: 'react',
+      engine: 'unocss',
+      dryRun: false,
+    })
+
+    expect(result.messages.some(m => m.includes('Using engine: unocss'))).toBe(
+      true,
+    )
+    expect(result.unocss).toBe(path.join(dir, 'uno.config.ts'))
+    const uno = fs.readFileSync(path.join(dir, 'uno.config.ts'), 'utf-8')
+    expect(uno).toContain('./.classy/output.classy.html')
+    const vite = fs.readFileSync(path.join(dir, 'vite.config.ts'), 'utf-8')
+    expect(vite).toContain('engine: \'unocss\'')
+    expect(result.vscodeSettings).toBeUndefined()
+    expect(
+      result.messages.some(m => m.includes('skipped Tailwind CSS IntelliSense')),
+    ).toBe(true)
+    expect(
+      fs.existsSync(path.join(dir, '.vscode', 'settings.json')),
+    ).toBe(false)
   })
 })
 
@@ -60,6 +204,24 @@ describe('patchTailwindV3ConfigContent', () => {
     const src = `export default { content: ["./.classy/output.classy.html"] }
 `
     expect(patchTailwindV3ConfigContent(src)).toBe(src)
+  })
+
+  it('is a no-op when helper already referenced', () => {
+    const src = `import { getUseClassyTailwindV3ContentEntry } from 'vite-plugin-useclassy/tailwind'
+export default { content: [getUseClassyTailwindV3ContentEntry()] }
+`
+    expect(patchTailwindV3ConfigContent(src)).toBe(src)
+  })
+
+  it('still patches when filename only appears in a comment', () => {
+    const src = `export default {
+  // later: output.classy.html
+  content: ['./src/**/*.html'],
+}
+`
+    const out = patchTailwindV3ConfigContent(src)
+    expect(out).toContain('./.classy/output.classy.html')
+    expect(out).toContain('./src/**/*.html')
   })
 })
 
@@ -78,6 +240,33 @@ describe('patchTailwindV4Stylesheet', () => {
     const text = fs.readFileSync(cssPath, 'utf-8')
     expect(text).toContain('@source "')
     expect(text).toContain('.classy/output.classy.html')
+  })
+
+  it('is a no-op when @source already points at the manifest', () => {
+    const dir = tempDir()
+    const cssPath = path.join(dir, 'src', 'main.css')
+    fs.mkdirSync(path.dirname(cssPath), { recursive: true })
+    const src = '@import "tailwindcss";\n@source "./.classy/output.classy.html";\n'
+    fs.writeFileSync(cssPath, src, 'utf-8')
+    const r = patchTailwindV4Stylesheet(cssPath, dir, false)
+    expect(r.changed).toBe(false)
+    expect(fs.readFileSync(cssPath, 'utf-8')).toBe(src)
+  })
+
+  it('still patches when filename only appears in a comment', () => {
+    const dir = tempDir()
+    const cssPath = path.join(dir, 'src', 'main.css')
+    fs.mkdirSync(path.dirname(cssPath), { recursive: true })
+    fs.writeFileSync(
+      cssPath,
+      '/* output.classy.html */\n@import "tailwindcss";\n',
+      'utf-8',
+    )
+    const r = patchTailwindV4Stylesheet(cssPath, dir, false)
+    expect(r.changed).toBe(true)
+    const text = fs.readFileSync(cssPath, 'utf-8')
+    expect(text).toContain('@source "')
+    expect(text).toContain('/* output.classy.html */')
   })
 })
 
@@ -110,19 +299,19 @@ describe('mergeTailwindClassAttributes', () => {
   it('merges vue patterns', () => {
     const out = mergeTailwindClassAttributes(['class'], 'vue')
     expect(out).toContain('class')
-    expect(out).toContain('class:[\\w:-]*')
+    expect(out).toContain('class:[\\w:/@-]*')
   })
 
   it('adds className for react', () => {
     const out = mergeTailwindClassAttributes([], 'react')
     expect(out).toContain('className')
-    expect(out).toContain('className:[\\w:-]*')
+    expect(out).toContain('className:[\\w:/@-]*')
   })
 
   it('uses vue-style patterns for svelte', () => {
     const out = mergeTailwindClassAttributes(['class'], 'svelte')
     expect(out).toContain('class')
-    expect(out).toContain('class:[\\w:-]*')
+    expect(out).toContain('class:[\\w:/@-]*')
     expect(out).not.toContain('className')
   })
 })

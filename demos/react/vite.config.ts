@@ -6,8 +6,9 @@ import path from "path";
 
 export default defineConfig({
   plugins: [
-    react(),
+    // Before React and Tailwind so className:hover rewrites ahead of JSX / CSS scan.
     useClassy({ language: "react", debug: true }),
+    react(),
     tailwindcss(),
   ],
   server: {

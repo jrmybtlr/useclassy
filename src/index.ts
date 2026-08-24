@@ -30,15 +30,17 @@ import {
 
 import type { ClassyOptions, ProcessCodeResult, ViteServer } from './types'
 import {
-  getUseClassyManifestPath,
-  getUseClassyTailwindSourceDirective,
-} from './tailwind'
+  invalidateCssEngineModules,
+  invalidateCssEngineModulesForHotUpdate,
+} from './hmr'
+import { injectTailwindSourceIfNeeded } from './tailwind'
 
 /**
  * UseClassy Vite plugin
- * Transforms class:modifier attributes into Tailwind JIT-compatible class names.
+ * Transforms class:modifier attributes into atomic CSS utilities (`hover:…`).
  * @param options - Configuration options for the plugin
  * @param options.language - The framework language to use (e.g., "vue", "react", "blade", or "svelte")
+ * @param options.engine - CSS engine for the class manifest (`tailwind` or `unocss`)
  * @param options.outputDir - The directory to output the generated class file
  * @param options.outputFileName - The filename for the generated class file
  * @param options.debug - Enable debug logging
@@ -50,6 +52,7 @@ import {
  *   plugins: [
  *     useClassy({
  *       language: 'svelte',
+ *       engine: 'unocss',
  *       outputDir: '.classy',
  *       outputFileName: 'output.classy.html',
  *       debug: true
@@ -85,51 +88,23 @@ export default function useClassy(options: ClassyOptions = {}): PluginOption {
   const isBlade = options.language === 'blade'
   const isSvelte = options.language === 'svelte'
   const debug = options.debug || false
-  const injectTailwindSource = options.injectTailwindSource !== false
+  const engine = options.engine ?? 'tailwind'
+  const injectTailwindSource
+    = engine === 'tailwind' && options.injectTailwindSource !== false
 
-  /**
-   * After the class manifest changes on disk, force Tailwind CSS modules to
-   * recompile so `@source` picks up newly discovered variants during HMR.
-   * Avoid emitting a FS `change` for the `.html` manifest — Vite treats that as
-   * a full page reload. Invalidating CSS modules is enough: on regenerate,
-   * `@tailwindcss/vite` sees the newer mtime via `requiresBuild()`.
-   */
-  function invalidateTailwindCssModules(): void {
-    if (!viteServer?.moduleGraph || isBuild)
+  function onManifestWrote(): void {
+    if (!viteServer)
       return
-
-    const updates: Array<{
-      type: 'css-update'
-      path: string
-      acceptedPath: string
-      timestamp: number
-    }> = []
-    const timestamp = Date.now()
-
-    for (const [id, mod] of viteServer.moduleGraph.idToModuleMap) {
-      if (!id || !id.includes('.css'))
-        continue
-
-      viteServer.moduleGraph.invalidateModule(mod)
-      const url = mod.url || id
-      updates.push({
-        type: 'css-update',
-        path: url,
-        acceptedPath: url,
-        timestamp,
-      })
-    }
-
-    if (updates.length > 0) {
-      viteServer.ws.send({ type: 'update', updates })
-      if (debug)
-        console.log(`🎩 Invalidated ${updates.length} CSS module(s) after manifest write.`)
-    }
+    invalidateCssEngineModules({
+      server: viteServer,
+      isBuild,
+      debug,
+    })
   }
 
   // Per-instance write state — avoids shared module-level cache collisions.
   const { writeDirect, writeDebounced, resetCache } = createOutputFileWriter({
-    onWrote: invalidateTailwindCssModules,
+    onWrote: onManifestWrote,
   })
 
   type EnvironmentLike = {
@@ -325,9 +300,50 @@ export default function useClassy(options: ClassyOptions = {}): PluginOption {
     )
   }
 
+  /**
+   * Vite 8's Rolldown dep scanner parses `.tsx` / `.jsx` without running
+   * Vite `transform` hooks. Namespaced JSX allows one colon (`className:hover`),
+   * so chained modifiers (`className:sm:hover`) fail at parse time.
+   * Inject a Rolldown plugin that rewrites source first.
+   */
+  function rewriteJsxForDepScan(code: string): string | null {
+    if (!code.includes('className:') && !code.includes('class:'))
+      return null
+
+    try {
+      const { transformedCode } = processCode(code)
+      return transformedCode === code ? null : transformedCode
+    }
+    catch {
+      return null
+    }
+  }
+
+  const jsxDepScanPlugin = {
+    name: 'useClassy:dep-scan',
+    transform: {
+      filter: { id: /\.[cm]?[jt]sx$/ },
+      handler(code: string) {
+        return rewriteJsxForDepScan(code)
+      },
+    },
+  }
+
   return {
     name: 'useClassy',
     enforce: 'pre',
+
+    config() {
+      const optimizeDeps = {
+        rolldownOptions: {
+          plugins: [jsxDepScanPlugin],
+        },
+      }
+      return {
+        optimizeDeps,
+        ssr: { optimizeDeps },
+      }
+    },
 
     configResolved(config) {
       isBuild = config.command === 'build'
@@ -394,13 +410,7 @@ export default function useClassy(options: ClassyOptions = {}): PluginOption {
       if (!isManifestFile(file))
         return
 
-      const cssModules: import('vite').ModuleNode[] = []
-      for (const [id, mod] of server.moduleGraph.idToModuleMap) {
-        if (!id || !id.includes('.css'))
-          continue
-        server.moduleGraph.invalidateModule(mod, undefined, timestamp, true)
-        cssModules.push(mod)
-      }
+      const cssModules = invalidateCssEngineModulesForHotUpdate(server, timestamp)
 
       if (debug)
         console.log(`🎩 Manifest changed — updating ${cssModules.length} CSS module(s).`)
@@ -410,7 +420,13 @@ export default function useClassy(options: ClassyOptions = {}): PluginOption {
     },
 
     transform(code: string, id: string) {
-      const tailwindSource = injectTailwindSourceIfNeeded(code, id)
+      const tailwindSource = injectTailwindSourceIfNeeded(code, id, {
+        enabled: injectTailwindSource,
+        manifestRoot,
+        outputDir,
+        outputFileName,
+        debug,
+      })
       if (tailwindSource !== null) {
         return { code: tailwindSource, map: null }
       }
@@ -527,35 +543,6 @@ export default function useClassy(options: ClassyOptions = {}): PluginOption {
     },
   }
 
-  function injectTailwindSourceIfNeeded(code: string, id: string): string | null {
-    const cssPath = id.split('?', 1)[0]?.split('#', 1)[0] ?? id
-    if (!injectTailwindSource || !cssPath.endsWith('.css'))
-      return null
-    if (!/@import\s+["']tailwindcss["']/.test(code))
-      return null
-
-    const manifestPath = getUseClassyManifestPath({
-      outputDir,
-      outputFileName,
-    })
-    if (code.includes(manifestPath) || code.includes(outputFileName))
-      return null
-
-    const directive = getUseClassyTailwindSourceDirective(
-      id,
-      manifestRoot,
-      { outputDir, outputFileName },
-    )
-
-    if (debug)
-      console.log('🎩 Injecting Tailwind @source into:', id)
-
-    return code.replace(
-      /@import\s+["']tailwindcss["'];?\s*\n/,
-      match => `${match}${directive}\n`,
-    )
-  }
-
   function setupOutputEndpoint(server: ViteServer) {
     server.middlewares.use(
       '/__useClassy__/generate-output',
@@ -602,19 +589,26 @@ export default function useClassy(options: ClassyOptions = {}): PluginOption {
   }
 }
 
-// Tailwind integration helpers (paths match plugin defaults unless overridden)
+// Manifest + Tailwind / UnoCSS integration helpers
 export {
   USECLASSY_DEFAULT_OUTPUT_DIR,
   USECLASSY_DEFAULT_OUTPUT_FILE,
   getUseClassyManifestPath,
+} from './manifest'
+export type {
+  UseClassyManifestPathsOptions,
+  UseClassyTailwindPathsOptions,
+} from './manifest'
+export {
   getUseClassyTailwindSourceDirective,
   getUseClassyTailwindSourceLineForRootStylesheet,
   getUseClassyTailwindV3ContentEntry,
 } from './tailwind'
-export type { UseClassyTailwindPathsOptions } from './tailwind'
+export { getUseClassyUnoFilesystemEntry } from './unocss'
+export type { UseClassyUnoPathsOptions } from './unocss'
 
 // Runtime helpers re-exported for backward compatibility. Prefer
 // `vite-plugin-useclassy/react` for new code (and for ClassyProps / JSX types).
 export { classy, useClassy as useClassyHook } from './react'
 export { writeGitignore } from './utils'
-export type { ClassyOptions } from './types.d.ts'
+export type { ClassyOptions, ClassyEngine } from './types.d.ts'

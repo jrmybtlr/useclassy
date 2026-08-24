@@ -12,19 +12,34 @@ export const SUPPORTED_FILES = [
   '.blade.php',
 ]
 
-const MAX_MODIFIER_DEPTH = 4
+/**
+ * Variant names in `class:…` / `className:…`.
+ * Includes `/` (named groups like `group-hover/item`) and `@` (container
+ * queries like `@md`). Arbitrary variants (`[&>*]`, `data-[open]`) still cannot
+ * be attribute names — `[` / `]` / `&` are not allowed, and JSX cannot parse
+ * `/` in `className:group-hover/item` (keep those tokens on the base class).
+ */
+export const CLASS_MODIFIER_NAME_PATTERN = String.raw`[\w/:@-]+`
 
 /** Base (Vue) class attribute regexes */
 export const CLASS_REGEX = /(?<![:\w])class="([^"]*)"(?![^>]*:class)/g
-export const CLASS_MODIFIER_REGEX = /(?<![:\w])class:([\w-:]+)="([^"]*)"/g
+export const CLASS_MODIFIER_REGEX = new RegExp(
+  String.raw`(?<![:\w])class:(${CLASS_MODIFIER_NAME_PATTERN})="([^"]*)"`,
+  'g',
+)
 
 /** React `className` / `class` regexes */
 export const REACT_CLASS_REGEX = /(?<![:\w])className=(?:"([^"]*)"|{([^}]*)})(?![^>]*:)/g
-export const REACT_CLASS_MODIFIER_REGEX
-  = /(?<![:\w])(?:className|class):([\w-:]+)="([^"]*)"/g
+export const REACT_CLASS_MODIFIER_REGEX = new RegExp(
+  String.raw`(?<![:\w])(?:className|class):(${CLASS_MODIFIER_NAME_PATTERN})="([^"]*)"`,
+  'g',
+)
 
 /** Start of a JSX expression modifier: `className:hover={` or `class:sm:hover = {` */
-const JSX_MODIFIER_START_REGEX = /(?<![:\w])(?:className|class):([\w-:]+)\s*=\s*\{/g
+const JSX_MODIFIER_START_REGEX = new RegExp(
+  String.raw`(?<![:\w])(?:className|class):(${CLASS_MODIFIER_NAME_PATTERN})\s*=\s*\{`,
+  'g',
+)
 
 /**
  * Svelte `class` regexes.
@@ -34,8 +49,10 @@ const JSX_MODIFIER_START_REGEX = /(?<![:\w])(?:className|class):([\w-:]+)\s*=\s*
  * Unlike Vue, there is no `:class` binding lookahead.
  */
 export const SVELTE_CLASS_REGEX = /(?<![:\w])class=(?:"([^"]*)"|{([^}]*)})/g
-export const SVELTE_CLASS_MODIFIER_REGEX
-  = /(?<![:\w])class:([\w-:]+)="([^"]*)"/g
+export const SVELTE_CLASS_MODIFIER_REGEX = new RegExp(
+  String.raw`(?<![:\w])class:(${CLASS_MODIFIER_NAME_PATTERN})="([^"]*)"`,
+  'g',
+)
 
 /**
  * Generates a hash string from the input string
@@ -180,9 +197,10 @@ export function readBalancedJsxExpression(
 }
 
 /**
- * Builds the prefixed class list for a modifier (full chain + partials).
- * Partials are capped by `MAX_MODIFIER_DEPTH` so long chains stay bounded,
- * matching the historical `extractClasses` behavior.
+ * Prefixes each class token with the full modifier chain.
+ * `class:sm:hover="underline"` emits `sm:hover:underline` only — the same
+ * composition Tailwind and UnoCSS use — not the individual `sm:` / `hover:`
+ * pieces.
  */
 function buildModifiedClasses(
   classes: string,
@@ -191,19 +209,10 @@ function buildModifiedClasses(
   if (!modifiers.trim())
     return []
 
-  const modifierParts = modifiers.split(':')
   const modifiedClassesArr: string[] = []
-  const maxDepth = Math.min(modifierParts.length, MAX_MODIFIER_DEPTH)
 
   tokenize(classes, (value) => {
     modifiedClassesArr.push(`${modifiers}:${value}`)
-    if (modifierParts.length > 1) {
-      for (let j = 0; j < maxDepth; j++) {
-        const part = modifierParts[j]
-        if (part)
-          modifiedClassesArr.push(`${part}:${value}`)
-      }
-    }
   })
 
   return modifiedClassesArr

@@ -41,3 +41,7 @@ jobs:
 
       - name: Run tests
         run: pnpm test
+
+      - name: Build UnoCSS canary demo
+        if: matrix.os == 'ubuntu-latest' && matrix.node-version == '22.x'
+        run: pnpm --filter unocss-react-demo build

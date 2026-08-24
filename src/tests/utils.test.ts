@@ -321,6 +321,14 @@ describe('utils module', () => {
         '/mock/cwd/.classy/.output.html.tmp',
         '/mock/cwd/.classy/output.html',
       )
+
+      const tmpWrite = (fs.writeFileSync as Mock).mock.calls.find(
+        ([filePath]) => String(filePath).includes('.output.html.tmp'),
+      )
+      expect(tmpWrite?.[1]).toContain('<div class="focus:outline-none"></div>')
+      expect(tmpWrite?.[1]).toContain('<div class="hover:bg-blue-500"></div>')
+      expect(tmpWrite?.[1]).not.toContain('style=')
+      expect(tmpWrite?.[1]).not.toContain('display')
     })
 
     it('should invoke onWrote after a successful write', () => {

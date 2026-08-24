@@ -1,0 +1,7 @@
+{
+  "vitest.vitestPackagePath": "${workspaceFolder}/node_modules/vitest/package.json",
+  "tailwindCSS.classAttributes": [
+    "class",
+    "class:[\\w:-]*"
+  ]
+}

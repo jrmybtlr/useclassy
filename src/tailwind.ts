@@ -1,44 +1,26 @@
 import path from 'path'
 
-/** Default `outputDir` for UseClassy (matches plugin defaults). */
-export const USECLASSY_DEFAULT_OUTPUT_DIR = '.classy'
+import {
+  getUseClassyManifestPath,
+  referencesUseClassyManifest,
+  resolvedOutputDir,
+  resolvedOutputFile,
+  type UseClassyManifestPathsOptions,
+} from './manifest'
 
-/** Default `outputFileName` for UseClassy (matches plugin defaults). */
-export const USECLASSY_DEFAULT_OUTPUT_FILE = 'output.classy.html'
-
-export interface UseClassyTailwindPathsOptions {
-  outputDir?: string
-  outputFileName?: string
-}
-
-function resolvedOutputDir(options?: UseClassyTailwindPathsOptions): string {
-  return options?.outputDir ?? USECLASSY_DEFAULT_OUTPUT_DIR
-}
-
-function resolvedOutputFile(options?: UseClassyTailwindPathsOptions): string {
-  return options?.outputFileName ?? USECLASSY_DEFAULT_OUTPUT_FILE
-}
-
-function toPosixPath(segment: string): string {
-  return segment.replace(/\\/g, '/')
-}
-
-/**
- * POSIX-style path from project root to the generated class manifest, e.g. `.classy/output.classy.html`.
- */
-export function getUseClassyManifestPath(
-  options?: UseClassyTailwindPathsOptions,
-): string {
-  const dir = toPosixPath(resolvedOutputDir(options))
-  const file = toPosixPath(resolvedOutputFile(options))
-  return `${dir}/${file}`
-}
+export {
+  USECLASSY_DEFAULT_OUTPUT_DIR,
+  USECLASSY_DEFAULT_OUTPUT_FILE,
+  getUseClassyManifestPath,
+  type UseClassyManifestPathsOptions,
+  type UseClassyTailwindPathsOptions,
+} from './manifest'
 
 /**
  * Tailwind v3 `content` entry (relative to typical config-at-root layouts).
  */
 export function getUseClassyTailwindV3ContentEntry(
-  options?: UseClassyTailwindPathsOptions,
+  options?: UseClassyManifestPathsOptions,
 ): string {
   return `./${getUseClassyManifestPath(options)}`
 }
@@ -48,7 +30,7 @@ export function getUseClassyTailwindV3ContentEntry(
  * Prefer {@link getUseClassyTailwindSourceDirective} when the CSS file is under `src/` etc.
  */
 export function getUseClassyTailwindSourceLineForRootStylesheet(
-  options?: UseClassyTailwindPathsOptions,
+  options?: UseClassyManifestPathsOptions,
 ): string {
   return `@source "./${getUseClassyManifestPath(options)}";`
 }
@@ -59,7 +41,7 @@ export function getUseClassyTailwindSourceLineForRootStylesheet(
 export function getUseClassyTailwindSourceDirective(
   stylesheetAbsolutePath: string,
   projectRoot: string,
-  options?: UseClassyTailwindPathsOptions,
+  options?: UseClassyManifestPathsOptions,
 ): string {
   const manifestAbs = path.join(
     projectRoot,
@@ -73,4 +55,49 @@ export function getUseClassyTailwindSourceDirective(
   const posix = rel.split(path.sep).join('/')
   const normalized = posix.startsWith('.') ? posix : `./${posix}`
   return `@source "${normalized}";`
+}
+
+export type InjectTailwindSourceOptions = {
+  enabled: boolean
+  manifestRoot: string
+  outputDir: string
+  outputFileName: string
+  debug?: boolean
+}
+
+/**
+ * When enabled, insert a Tailwind v4 `@source` directive after `@import "tailwindcss"`.
+ * Returns the rewritten CSS, or `null` when no change is needed.
+ */
+export function injectTailwindSourceIfNeeded(
+  code: string,
+  id: string,
+  options: InjectTailwindSourceOptions,
+): string | null {
+  const cssPath = id.split('?', 1)[0]?.split('#', 1)[0] ?? id
+  if (!options.enabled || !cssPath.endsWith('.css'))
+    return null
+  if (!/@import\s+["']tailwindcss["']/.test(code))
+    return null
+
+  const pathOpts = {
+    outputDir: options.outputDir,
+    outputFileName: options.outputFileName,
+  }
+  if (referencesUseClassyManifest(code, options.outputFileName))
+    return null
+
+  const directive = getUseClassyTailwindSourceDirective(
+    cssPath,
+    options.manifestRoot,
+    pathOpts,
+  )
+
+  if (options.debug)
+    console.log('🎩 Injecting Tailwind @source into:', id)
+
+  return code.replace(
+    /@import\s+["']tailwindcss["'];?\s*\n/,
+    match => `${match}${directive}\n`,
+  )
 }

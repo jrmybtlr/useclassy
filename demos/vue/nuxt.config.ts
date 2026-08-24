@@ -1,13 +1,21 @@
 import path from 'node:path'
+import { readFileSync } from 'node:fs'
 import { fileURLToPath } from 'node:url'
 import useClassy from '../../src/index.ts'
 import tailwindcss from '@tailwindcss/vite'
 
 const rootDir = path.dirname(fileURLToPath(import.meta.url))
+const readme = readFileSync(path.resolve(rootDir, '../../README.md'), 'utf8')
 
 export default defineNuxtConfig({
-
   modules: ['@nuxt/fonts', '@nuxthub/core', '@nuxt/icon'],
+
+  fonts: {
+    families: [
+      // Local @font-face in main.css — skip metric fallbacks and a second face.
+      { name: 'Gilroy', provider: 'none' },
+    ],
+  },
 
   icon: {
     serverBundle: {
@@ -21,11 +29,17 @@ export default defineNuxtConfig({
 
   css: ['~/assets/main.css'],
 
+  nitro: {
+    prerender: {
+      routes: ['/llms.txt', '/llms-full.txt', '/llm.txt', '/index.md', '/docs.md'],
+    },
+    virtual: {
+      'virtual:site-readme': () => `export default ${JSON.stringify(readme)}`,
+    },
+  },
+
   vite: {
-    plugins: [
-      useClassy({ debug: true, manifestRoot: rootDir }),
-      tailwindcss(),
-    ],
+    plugins: [useClassy({ manifestRoot: rootDir }), tailwindcss()],
     resolve: {
       alias: {
         'vite-plugin-useclassy': path.resolve(rootDir, '../../src/index.ts'),
@@ -35,6 +49,9 @@ export default defineNuxtConfig({
       fs: {
         allow: [path.resolve(rootDir, '../..')],
       },
+    },
+    optimizeDeps: {
+      include: ['marked', 'shiki'],
     },
   },
 })
