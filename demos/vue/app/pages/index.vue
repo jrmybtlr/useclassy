@@ -27,7 +27,7 @@
           humans.
         </p>
 
-        <div class="mt-8 flex flex-wrap items-center justify-center gap-3">
+        <div class="mt-8 flex flex-wrap items-center justify-center gap-1">
           <a
             href="#setup"
             class="glass-cta relative z-20 inline-flex items-center rounded-full border border-white/20 bg-linear-to-b from-accent/45 to-accent/15 px-8 py-3 font-display text-lg font-semibold text-white shadow-[0_0_24px_rgb(40_83_255/0.35),inset_0_1px_0_0_rgb(255_255_255/0.45),inset_0_-1px_0_0_rgb(40_83_255/0.25),inset_0_0_24px_0_rgb(40_83_255/0.4)] backdrop-blur-sm backdrop-saturate-150 transition-[border-color,background-color] duration-200 ease-out"
@@ -39,7 +39,7 @@
           </a>
           <NuxtLink
             to="/docs"
-            class="relative inline-flex items-center rounded-full border border-transparent bg-transparent px-8 py-3 font-display text-lg font-semibold text-white/80 backdrop-blur-sm backdrop-saturate-150 transition-[background-color,color,box-shadow] duration-200 ease-out"
+            class="relative z-20 inline-flex items-center rounded-full border border-transparent bg-transparent px-8 py-3 font-display text-lg font-semibold text-white/80 backdrop-blur-md backdrop-saturate-150 transition-[background-color,color,box-shadow] duration-200 ease-out"
             class:hover="bg-white/15 text-white shadow-[inset_0_1px_0_0_rgb(255_255_255/0.55),inset_0_-1px_0_0_rgb(255_255_255/0.1),inset_0_0_24px_0_rgb(255_255_255/0.14),0_0_28px_rgb(255_255_255/0.12)]"
             class:focus-visible="outline-2 outline-offset-2 outline-accent"
           >
