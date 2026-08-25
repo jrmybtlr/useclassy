@@ -150,7 +150,7 @@ UseClassy is variant-first (`class:hover="bg-red"`), not [Attributify](https://u
 
 ```json
 {
-  "tailwindCSS.classAttributes": ["class", "class:[\\w:/@-]*", "className", "className:[\\w:/@-]*"]
+  "tailwindCSS.classAttributes": ["class", "class:[\\w:/@\\[\\]\\-=&*>.]*", "className", "className:[\\w:/@\\[\\]\\-=&*>.]*"]
 }
 ```
 
