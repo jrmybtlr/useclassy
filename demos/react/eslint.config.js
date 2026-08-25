@@ -5,7 +5,11 @@ import reactRefresh from 'eslint-plugin-react-refresh'
 import tseslint from 'typescript-eslint'
 
 export default tseslint.config(
-  { ignores: ['dist'] },
+  {
+    // App.tsx keeps chained UseClassy attrs (`className:sm:hover`) that are
+    // not valid TSX. ESLint parses source before the Vite plugin rewrites them.
+    ignores: ['dist', 'src/App.tsx'],
+  },
   {
     extends: [js.configs.recommended, ...tseslint.configs.recommended],
     files: ['**/*.{ts,tsx}'],

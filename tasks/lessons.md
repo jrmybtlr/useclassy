@@ -1,5 +1,16 @@
 # Lessons
 
+## brace-expansion override must stay per-major (2026-08-24)
+
+- A global `"brace-expansion": ">=5.0.6"` remaps minimatch 3 (ESLint) onto v5, which dropped the CJS `expand` export → `expand is not a function`.
+- Pin patched versions per major (`1.1.18`, `2.1.4`, `3.0.6`, `5.0.9`) instead of collapsing every consumer onto v5.
+
+## pnpm `-r` default concurrency starves later demos (2026-08-24)
+
+- `pnpm -r` (without `--parallel`) caps workspace concurrency at 4.
+- Five long-running demo `dev` servers means Vue (last in the list) never starts, so nothing listens on 3000.
+- Root `dev` must be `pnpm -r --parallel --filter './demos/**' dev`. Pin Nuxt `devServer.port` to 3000.
+
 ## Nitro cannot load Vite `?raw` (2026-08-23)
 
 - `import x from 'file.md?raw'` works in Vite (app code) and fails in Nitro (`ENOENT …/README.md?raw`).

@@ -29,6 +29,10 @@ export default defineNuxtConfig({
 
   css: ['~/assets/main.css'],
 
+  devServer: {
+    port: 3000,
+  },
+
   nitro: {
     prerender: {
       routes: ['/llms.txt', '/llms-full.txt', '/llm.txt', '/index.md', '/docs.md'],
