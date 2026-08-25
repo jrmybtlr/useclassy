@@ -106,7 +106,8 @@ function modifierPrefixesForRegex(classModifierRegex: RegExp): ClassModifierPref
 }
 
 /**
- * Finds `class:mod="…"` / `className:mod="…"` with bracket-aware modifier names.
+ * Finds `class:mod="…"` / `class:mod='…'` / `className:mod="…"` with
+ * bracket-aware modifier names. Value quotes may be `"` or `'`.
  */
 export function forEachQuotedClassModifier(
   code: string,
@@ -155,19 +156,28 @@ export function forEachQuotedClassModifier(
     while (i < code.length && /\s/.test(code[i]!))
       i++
 
-    if (code[i] !== '=' || code[i + 1] !== '"') {
+    if (code[i] !== '=') {
+      searchFrom = name.endIndex
+      continue
+    }
+    i++
+    while (i < code.length && /\s/.test(code[i]!))
+      i++
+
+    const quote = code[i]
+    if (quote !== '"' && quote !== '\'') {
       searchFrom = name.endIndex
       continue
     }
 
-    const valueStart = i + 2
+    const valueStart = i + 1
     let j = valueStart
     while (j < code.length) {
       if (code[j] === '\\' && j + 1 < code.length) {
         j += 2
         continue
       }
-      if (code[j] === '"')
+      if (code[j] === quote)
         break
       j++
     }
@@ -204,7 +214,7 @@ export const REACT_CLASS_MODIFIER_REGEX = new RegExp(
 
 /**
  * Svelte `class` regexes.
- * UseClassy modifiers use quoted values (`class:hover="..."`).
+ * UseClassy modifiers use quoted values (`class:hover="..."` or `class:hover='...'`).
  * Native Svelte class directives (`class:active={cond}`, shorthand `class:active`)
  * are left alone because they do not use a quoted string value.
  * Unlike Vue, there is no `:class` binding lookahead.

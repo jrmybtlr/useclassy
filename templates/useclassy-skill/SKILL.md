@@ -33,8 +33,8 @@ Use UseClassy to separate Tailwind variants from base utilities:
 
 Modifier names may contain letters, numbers, `_`, `-`, `:`, `/` (named groups such as `group-hover/item`), `@` (container queries such as `@md`), and arbitrary variants with `[…]` (`[&>*]`, `data-[state=open]`). UseClassy parses modifier names with bracket depth so `=` inside `[…]` is not the attribute separator. React uses the same modifier attributes as Vue; UseClassy rewrites them before JSX/HTML parse.
 
-- **Vue / Blade / Svelte / HTML:** modifier values must be double-quoted static class strings.
-- **React:** prefer double-quoted static strings. JSX expressions are also supported when string literals inside the expression should receive the variant prefix, e.g. `className:hover={on ? 'bg-blue-500' : 'bg-gray-200'}`.
+- **Vue / Blade / Svelte / HTML:** modifier values must be quoted static class strings (`"` or `'`).
+- **React:** prefer quoted static strings (`"` or `'`). JSX expressions are also supported when string literals inside the expression should receive the variant prefix, e.g. `className:hover={on ? 'bg-blue-500' : 'bg-gray-200'}`.
 
 ## Refactor existing code
 

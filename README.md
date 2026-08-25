@@ -62,6 +62,8 @@ If detection fails, follow the [manual setup](#vite) below.
 
 Expressions with no string literals (`className:hover={hoverClasses}`) are left alone. Import types with `import 'vite-plugin-useclassy/react'` (or `ClassyProps`). React 18/19 is an optional peer, only needed for those helpers.
 
+Quoted modifier values may use `"` or `'`. Prefer `"` in docs and new code.
+
 `className:@md`, `className:group-hover/item`, and arbitrary variants like `className:[&>*]` / `className:data-[state=open]` use the same attribute spelling as Vue. UseClassy rewrites them before the JSX/HTML parser runs (bracket-aware so `=` inside `[…]` stays part of the name). Put UseClassy before `@vitejs/plugin-react`. TypeScript and some linters may still flag the source the same way they already flag chained modifiers.
 
 **Svelte.** Quoted modifiers transform; native directives do not. Put UseClassy before `@sveltejs/vite-plugin-svelte`.

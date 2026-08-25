@@ -437,6 +437,33 @@ describe('core module', () => {
       expect(reactClasses.has('data-[state=open]:block')).toBeTruthy()
     })
 
+    it('transforms single-quoted modifier values', () => {
+      const vueClasses = new Set<string>()
+      const vueResult = transformClassModifiers(
+        `<div class:hover='bg-red-500' class:data-[state=open]='block'>X</div>`,
+        vueClasses,
+        CLASS_MODIFIER_REGEX,
+        'class',
+      )
+      expect(vueResult).toContain('hover:bg-red-500')
+      expect(vueResult).toContain('data-[state=open]:block')
+      expect(vueResult).not.toContain(`class:hover='`)
+      expect(vueClasses.has('hover:bg-red-500')).toBeTruthy()
+      expect(vueClasses.has('data-[state=open]:block')).toBeTruthy()
+
+      const reactClasses = new Set<string>()
+      const reactResult = transformClassModifiers(
+        `<div className:hover = 'text-lg' className:@md='p-4'>X</div>`,
+        reactClasses,
+        REACT_CLASS_MODIFIER_REGEX,
+        'className',
+      )
+      expect(reactResult).toContain('hover:text-lg')
+      expect(reactResult).toContain('@md:p-4')
+      expect(reactResult).not.toContain(`className:hover`)
+      expect(reactClasses.has('@md:p-4')).toBeTruthy()
+    })
+
     it('transforms JSX expression arbitrary modifiers', () => {
       const code
         = `<div className:data-[state=open]={on ? 'block' : 'hidden'}>X</div>`
