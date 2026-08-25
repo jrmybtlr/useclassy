@@ -17,6 +17,7 @@ export default defineConfig({
   resolve: {
     alias: {
       "@": path.resolve(__dirname, "./src"),
+      "vite-plugin-useclassy/react": path.resolve(__dirname, "../../src/react.ts"),
     },
   },
 });

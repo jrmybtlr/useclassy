@@ -75,7 +75,11 @@
 - Do not rewrite UseClassy smoke demos into a polished fictional product UI (Harbor-style inbox, design-system cards, etc.) unless the user has approved a mock after seeing it.
 - Coverage pages can stay labeled and a bit clinical; that is easier to scan than a realistic layout that hides the cases. Prefer smaller visual cleanup (copy, titles, spacing) over a full scene rewrite.
 
-## JSX conditional class rewrites (2026-07-21)
+## React `@` / `/` modifiers (2026-08-25)
+
+- JSX attribute names cannot contain `@` or `/`, so `className:@md` and `className:group-hover/item` will never parse.
+- Do not invent substitute characters (`$md`, `at-md`, `group-hover__item`). That fights Tailwind muscle memory.
+- Use `mods({ '@md': '…', 'group-hover/item': '…' })` (also `classy.mods` / `useMods`) so keys keep the real variant names. Scan those maps into the class manifest.
 
 - When rewriting string literals inside `className:modifier={…}`, never blindly prefix every quoted string.
 - Comparison operands (`===` / `!==` / `==` / `!=`) and string method receivers (`'x'.includes`) must stay untouched.

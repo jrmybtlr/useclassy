@@ -332,6 +332,42 @@ describe('core module', () => {
       expect(modifierClasses.has('dark:bg-gray-800')).toBeTruthy()
       expect(modifierClasses.has('dark:text-gray-500')).toBeFalsy()
     })
+
+    it('extracts React mods() maps with @ and / modifier names', () => {
+      const code = `
+        import { classy, mods } from 'vite-plugin-useclassy/react'
+        const cn = classy(
+          'rounded',
+          mods({
+            '@md': 'p-4 text-base',
+            'group-hover/item': 'bg-red-500',
+            hover: isOn && 'underline',
+          }),
+        )
+        const again = classy.mods({ '@lg': 'gap-8' })
+        const memo = useMods({ 'sm:hover': on ? 'scale-105' : 'scale-100' })
+      `
+      const allClasses = new Set<string>()
+      const modifierClasses = new Set<string>()
+
+      extractClasses(
+        code,
+        allClasses,
+        modifierClasses,
+        REACT_CLASS_REGEX,
+        REACT_CLASS_MODIFIER_REGEX,
+      )
+
+      expect(allClasses.has('@md:p-4')).toBeTruthy()
+      expect(allClasses.has('@md:text-base')).toBeTruthy()
+      expect(allClasses.has('group-hover/item:bg-red-500')).toBeTruthy()
+      expect(allClasses.has('hover:underline')).toBeTruthy()
+      expect(allClasses.has('@lg:gap-8')).toBeTruthy()
+      expect(allClasses.has('sm:hover:scale-105')).toBeTruthy()
+      expect(allClasses.has('sm:hover:scale-100')).toBeTruthy()
+      expect(modifierClasses.has('@md:p-4')).toBeTruthy()
+      expect(modifierClasses.has('group-hover/item:bg-red-500')).toBeTruthy()
+    })
   })
 
   describe('transformClassModifiers', () => {

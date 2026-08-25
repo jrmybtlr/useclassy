@@ -22,14 +22,14 @@ npx vite-plugin-useclassy init
 
 `init` patches Vite and your CSS engine, plus VS Code IntelliSense for Tailwind. Run it from the app root (the folder with `package.json` and `vite.config.*`).
 
-| Option           | Default      | Notes                                                                              |
-| ---------------- | ------------ | ---------------------------------------------------------------------------------- |
-| `--language`     | `'vue'`      | `'vue'` \| `'react'` \| `'blade'` \| `'svelte'`                                    |
-| `--engine`       | auto-detect  | `'tailwind'` \| `'unocss'`; Tailwind wins if both are installed                    |
-| `--with-skills`  | `false`      | Agent skill, Cursor rules, and `AGENTS.md`                                         |
-| `--with-claude`  | `false`      | Also copy to `.claude/skills/` (requires `--with-skills`)                          |
-| `--force`        | `false`      | Overwrite locally edited skill files                                               |
-| `--dry-run`      | `false`      | Print planned edits                                                                |
+| Option          | Default     | Notes                                                           |
+| --------------- | ----------- | --------------------------------------------------------------- |
+| `--language`    | `'vue'`     | `'vue'` \| `'react'` \| `'blade'` \| `'svelte'`                 |
+| `--engine`      | auto-detect | `'tailwind'` \| `'unocss'`; Tailwind wins if both are installed |
+| `--with-skills` | `false`     | Agent skill, Cursor rules, and `AGENTS.md`                      |
+| `--with-claude` | `false`     | Also copy to `.claude/skills/` (requires `--with-skills`)       |
+| `--force`       | `false`     | Overwrite locally edited skill files                            |
+| `--dry-run`     | `false`     | Print planned edits                                             |
 
 If detection fails, follow the [manual setup](#vite) below.
 
@@ -58,6 +58,24 @@ If detection fails, follow the [manual setup](#vite) below.
 
 Expressions with no string literals (`className:hover={hoverClasses}`) are left alone. Import types with `import 'vite-plugin-useclassy/react'` (or `ClassyProps`). React 18/19 is an optional peer, only needed for those helpers.
 
+JSX cannot parse `@` or `/` in attribute names, so container queries and named groups use `mods()` with the **same** Tailwind names:
+
+```tsx
+import { classy, mods } from 'vite-plugin-useclassy/react'
+
+;<div
+  className={classy(
+    'rounded px-4',
+    mods({
+      '@md': 'p-6',
+      'group-hover/item': 'bg-red-500',
+    }),
+  )}
+  className:hover="underline"
+/>
+```
+
+`mods` is also available as `classy.mods`. The plugin scans these maps into the class manifest so Tailwind/UnoCSS still see `@md:p-6` and `group-hover/item:bg-red-500`.
 **Svelte.** Quoted modifiers transform; native directives do not. Put UseClassy before `@sveltejs/vite-plugin-svelte`.
 
 ```svelte
@@ -70,7 +88,7 @@ Expressions with no string literals (`className:hover={hoverClasses}`) are left 
 
 `class:sm:hover="underline"` emits `sm:hover:underline` only, the same composition as Tailwind / UnoCSS, not the individual `sm:` and `hover:` pieces.
 
-Modifier names may include letters, digits, `_`, `-`, `:`, `/` (`group-hover/item`), and `@` (`@md`). Arbitrary variants (`[&>*]`, `data-[state=open]`) cannot be attribute names, so leave those on the base class. In React JSX, `/` is invalid in an attribute name, so named groups stay on `className`.
+Modifier names may include letters, digits, `_`, `-`, `:`, `/` (`group-hover/item`), and `@` (`@md`). Arbitrary variants (`[&>*]`, `data-[state=open]`) cannot be attribute names, so leave those on the base class (Vue/HTML/Svelte) or pass them through React `mods({ '[&>*]': 'mt-2' })`. In React JSX, `/` and `@` are invalid in attribute names — use `mods({ '@md': '…', 'group-hover/item': '…' })` instead of inventing substitute characters.
 
 ## Vite
 
