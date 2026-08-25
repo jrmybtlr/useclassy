@@ -75,10 +75,10 @@
 - Do not rewrite UseClassy smoke demos into a polished fictional product UI (Harbor-style inbox, design-system cards, etc.) unless the user has approved a mock after seeing it.
 - Coverage pages can stay labeled and a bit clinical; that is easier to scan than a realistic layout that hides the cases. Prefer smaller visual cleanup (copy, titles, spacing) over a full scene rewrite.
 
-## React `@` / `/` modifiers (2026-08-25)
+## React `@` / `/` / arbitrary modifiers (2026-08-25)
 
-- JSX cannot parse `@` or `/` in attribute names on its own, but UseClassy rewrites `className:@md` / `className:group-hover/item` before JSX parse — same pipeline as `className:sm:hover`.
-- Do not invent substitute characters (`$md`, `at-md`) and do not add a separate `mods()` API for this; keep the same attribute spelling as Vue.
+- UseClassy rewrites `className:@md`, `className:group-hover/item`, `className:[&>*]`, and `className:data-[state=open]` before JSX/HTML parse — same pipeline as `className:sm:hover`.
+- Parse modifier names with bracket depth so `=` inside `[…]` is not treated as the attribute separator. Do not invent substitute characters or a separate `mods()` helper.
 - TypeScript / some linters may still flag the source the same way they already flag chained modifiers.
 
 - When rewriting string literals inside `className:modifier={…}`, never blindly prefix every quoted string.

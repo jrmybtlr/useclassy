@@ -185,16 +185,19 @@ function App() {
         </Case>
 
         <Case
-          title="@md and named groups"
-          detail='Same spelling as Vue: className:@md and className:group-hover/item — UseClassy rewrites before JSX parse.'
+          title="@md, named groups, arbitrary variants"
+          detail="className:@md, className:group-hover/item, className:[&>*], className:data-[state=open] — bracket-aware rewrite before JSX parse."
         >
-          <div className="group/item rounded-lg border border-zinc-700 bg-zinc-900 p-4 @container">
+          <div className="group/item @container rounded-lg border border-zinc-700 bg-zinc-900 p-4">
             <div
               className="rounded px-4 py-3 text-zinc-100 transition"
+              data-state={isActive ? "open" : "closed"}
               className:@md="p-6 text-base"
               className:group-hover/item="bg-red-500 text-white"
+              className:[&>*]="mt-2"
+              className:data-[state=open]="ring-2 ring-emerald-400"
             >
-              Hover the card · resize the container for @md
+              <span>Hover · @md · toggle isActive for data-state</span>
             </div>
           </div>
         </Case>

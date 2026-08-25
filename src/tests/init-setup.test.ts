@@ -299,19 +299,19 @@ describe('mergeTailwindClassAttributes', () => {
   it('merges vue patterns', () => {
     const out = mergeTailwindClassAttributes(['class'], 'vue')
     expect(out).toContain('class')
-    expect(out).toContain('class:[\\w:/@-]*')
+    expect(out).toContain('class:[\\w:/@\\[\\]\\-=&*>.]*')
   })
 
   it('adds className for react', () => {
     const out = mergeTailwindClassAttributes([], 'react')
     expect(out).toContain('className')
-    expect(out).toContain('className:[\\w:/@-]*')
+    expect(out).toContain('className:[\\w:/@\\[\\]\\-=&*>.]*')
   })
 
   it('uses vue-style patterns for svelte', () => {
     const out = mergeTailwindClassAttributes(['class'], 'svelte')
     expect(out).toContain('class')
-    expect(out).toContain('class:[\\w:/@-]*')
+    expect(out).toContain('class:[\\w:/@\\[\\]\\-=&*>.]*')
     expect(out).not.toContain('className')
   })
 })

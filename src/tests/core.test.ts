@@ -407,6 +407,51 @@ describe('core module', () => {
       expect(classes.has('@md:p-4')).toBeTruthy()
     })
 
+    it('transforms arbitrary variants with brackets and inner =', () => {
+      const code
+        = '<div class:[&>*]="mt-2" class:data-[state=open]="block" className:[&_p]:hover="underline">X</div>'
+      const vueClasses = new Set<string>()
+      const vueResult = transformClassModifiers(
+        code,
+        vueClasses,
+        CLASS_MODIFIER_REGEX,
+        'class',
+      )
+      expect(vueResult).toContain('[&>*]:mt-2')
+      expect(vueResult).toContain('data-[state=open]:block')
+      expect(vueResult).not.toContain('class:[&>*]')
+      expect(vueResult).not.toContain('class:data-[state=open]')
+      expect(vueClasses.has('[&>*]:mt-2')).toBeTruthy()
+      expect(vueClasses.has('data-[state=open]:block')).toBeTruthy()
+
+      const reactClasses = new Set<string>()
+      const reactResult = transformClassModifiers(
+        '<div className:[&>*]="mt-2" className:data-[state=open]="block">X</div>',
+        reactClasses,
+        REACT_CLASS_MODIFIER_REGEX,
+        'className',
+      )
+      expect(reactResult).toContain('[&>*]:mt-2')
+      expect(reactResult).toContain('data-[state=open]:block')
+      expect(reactResult).not.toContain('className:[&>*]')
+      expect(reactClasses.has('data-[state=open]:block')).toBeTruthy()
+    })
+
+    it('transforms JSX expression arbitrary modifiers', () => {
+      const code
+        = `<div className:data-[state=open]={on ? 'block' : 'hidden'}>X</div>`
+      const classes = new Set<string>()
+      const result = transformClassModifiers(
+        code,
+        classes,
+        REACT_CLASS_MODIFIER_REGEX,
+        'className',
+      )
+      expect(result).toContain('data-[state=open]:block')
+      expect(result).toContain('data-[state=open]:hidden')
+      expect(result).not.toContain('className:data-[state=open]')
+    })
+
     it('extracts React className:@md and named-group modifiers', () => {
       const code
         = '<div className:group-hover/item="bg-red-500" className:@md="p-4 text-base">X</div>'

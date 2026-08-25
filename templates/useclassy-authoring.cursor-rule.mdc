@@ -34,6 +34,6 @@ When this project uses `vite-plugin-useclassy`, write new static Tailwind varian
 - React: prefer double-quoted static strings; `className:mod={cond ? 'a' : 'b'}` is also valid when literals should be prefixed.
 - Leave Vue `:class`, Svelte native `class:name={cond}`, and unrelated dynamic base expressions unchanged.
 - **Svelte**: only transform quoted UseClassy modifiers (`class:hover="…"`). Do not rewrite native `class:name={cond}` or `class:name`.
-- Keep arbitrary variants such as `[&>*]:mt-2` and `data-[state=open]:block` in the base string. Named groups (`group-hover/item`) and `@md` container queries work as modifier attributes in Vue/HTML and React (`className:group-hover/item`, `className:@md`). UseClassy rewrites React attributes before JSX parse (same as `className:sm:hover`).
+- Keep named groups (`group-hover/item`), `@md` container queries, and arbitrary variants (`[&>*]`, `data-[state=open]`) as modifier attributes in Vue/HTML and React. UseClassy rewrites them before parse (bracket-aware so `=` inside `[…]` is fine).
 - Chained attributes match Tailwind/Uno composition: `class:sm:hover="underline"` generates `sm:hover:underline` only. Converting `sm:hover:underline` to `class:sm:hover="underline"` is behavior-preserving.
 - After refactoring, run formatting and relevant tests/build; verify dynamic classes and rendered states are unchanged.

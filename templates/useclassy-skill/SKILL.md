@@ -28,10 +28,10 @@ Use UseClassy to separate Tailwind variants from base utilities:
 | Language    | Base            | Modifiers                                                               |
 | ----------- | --------------- | ----------------------------------------------------------------------- |
 | Vue / Blade | `class="…"`     | `class:hover="…"`, `class:sm:hover="…"`                                 |
-| React       | `className="…"` | `className:hover="…"`, `className:@md="…"`, `className:group-hover/item="…"`; JSX expressions allowed |
+| React       | `className="…"` | `className:hover="…"`, `className:@md="…"`, `className:group-hover/item="…"`, `className:[&>*]="…"`, `className:data-[state=open]="…"`; JSX expressions allowed |
 | Svelte      | `class="…"`     | Quoted only: `class:hover="…"`                                          |
 
-Modifier names may contain letters, numbers, `_`, `-`, `:`, `/` (named groups such as `group-hover/item`), and `@` (container queries such as `@md`). Arbitrary variants (`[&>*]`, `data-[state=open]`) cannot be attribute names — leave those tokens on the base class. React uses the same modifier attributes as Vue (`className:@md`, `className:group-hover/item`); UseClassy rewrites them before JSX parse (same as `className:sm:hover`).
+Modifier names may contain letters, numbers, `_`, `-`, `:`, `/` (named groups such as `group-hover/item`), `@` (container queries such as `@md`), and arbitrary variants with `[…]` (`[&>*]`, `data-[state=open]`). UseClassy parses modifier names with bracket depth so `=` inside `[…]` is not the attribute separator. React uses the same modifier attributes as Vue; UseClassy rewrites them before JSX/HTML parse.
 
 - **Vue / Blade / Svelte / HTML:** modifier values must be double-quoted static class strings.
 - **React:** prefer double-quoted static strings. JSX expressions are also supported when string literals inside the expression should receive the variant prefix, e.g. `className:hover={on ? 'bg-blue-500' : 'bg-gray-200'}`.
@@ -53,7 +53,6 @@ When asked to convert markup to UseClassy:
 Convert only static tokens that can be represented safely. Do not rewrite:
 
 - Dynamic expressions, template interpolations, conditional class helpers, Vue `:class`, or Svelte directives — unless you are intentionally using React's `className:mod={…}` expression form with string literals.
-- Arbitrary variant prefixes such as `[&>*]:mt-2` or `data-[state=open]:block`; their characters are not valid in a UseClassy modifier attribute name — leave those on the base class.
 - Variant tokens embedded in variables or function calls (leave those variables unchanged, or store already-prefixed class names).
 
 ## Chained modifiers
@@ -69,7 +68,7 @@ class:sm:hover="underline"
 
 - Put base utilities on `class` / `className`.
 - Vue / Blade / HTML: use `class:modifier="…"`.
-- React: prefer `className:modifier="…"` for static variants, including `className:@md` and `className:group-hover/item` (UseClassy rewrites before JSX parse). For runtime conditions that still use string literals, `className:modifier={cond ? 'a' : 'b'}` is valid and will prefix those literals. Leave `className={…}` base expressions unchanged when they are unrelated.
+- React: prefer `className:modifier="…"` for static variants, including `className:@md`, `className:group-hover/item`, `className:[&>*]`, and `className:data-[state=open]` (UseClassy rewrites before JSX parse). For runtime conditions that still use string literals, `className:modifier={cond ? 'a' : 'b'}` is valid and will prefix those literals. Leave `className={…}` base expressions unchanged when they are unrelated.
 - Vue: leave `:class` and other dynamic bindings unchanged.
 - **Svelte**: only transform quoted UseClassy modifiers. Native `class:active={cond}` and `class:active` stay untouched — do not rewrite those.
 - Do not move conditional base utilities into modifier attributes on Vue/Svelte/Blade; UseClassy modifiers represent Tailwind variants. React is the exception for `className:mod={…}` expression values.

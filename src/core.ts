@@ -14,31 +14,191 @@ export const SUPPORTED_FILES = [
 
 /**
  * Variant names in `class:…` / `className:…`.
- * Includes `/` (named groups like `group-hover/item`) and `@` (container
- * queries like `@md`). Arbitrary variants (`[&>*]`, `data-[open]`) still cannot
- * be attribute names — `[` / `]` / `&` are not allowed. React authors still write
- * `className:@md` / `className:group-hover/item`; UseClassy rewrites them before
- * JSX parse (same pipeline as `className:sm:hover`).
+ * Simple names: letters, digits, `_`, `-`, `:`, `/`, `@`.
+ * Arbitrary variants (`[&>*]`, `data-[state=open]`) are matched with
+ * bracket-aware scanning (not this character class alone) so `=` inside
+ * `[…]` is not treated as the attribute separator.
  */
 export const CLASS_MODIFIER_NAME_PATTERN = String.raw`[\w/:@-]+`
 
-/** Base (Vue) class attribute regexes */
+/** Prefixes that introduce a UseClassy modifier attribute. */
+export type ClassModifierPrefix = 'class:' | 'className:'
+
+/**
+ * Reads a modifier name starting at `start` (first character of the name).
+ * Bracket depth keeps `=` inside `[…]` as part of the name
+ * (`data-[state=open]`), stopping only at depth 0 before `=` / whitespace / EOS.
+ */
+export function readModifierName(
+  code: string,
+  start: number,
+): { modifiers: string, endIndex: number } | null {
+  if (start >= code.length)
+    return null
+
+  let i = start
+  let depth = 0
+
+  while (i < code.length) {
+    const ch = code[i]!
+
+    if (ch === '[') {
+      depth++
+      i++
+      continue
+    }
+
+    if (ch === ']') {
+      if (depth === 0)
+        return null
+      depth--
+      i++
+      continue
+    }
+
+    if (depth > 0) {
+      // Inside […] allow anything (including `=`, quotes, `&`, `*`, `>`).
+      i++
+      continue
+    }
+
+    // Depth 0: classic variant characters, or `[` handled above.
+    if (
+      (ch >= 'a' && ch <= 'z')
+      || (ch >= 'A' && ch <= 'Z')
+      || (ch >= '0' && ch <= '9')
+      || ch === '_'
+      || ch === '-'
+      || ch === ':'
+      || ch === '/'
+      || ch === '@'
+    ) {
+      i++
+      continue
+    }
+
+    break
+  }
+
+  if (i === start || depth !== 0)
+    return null
+
+  return {
+    modifiers: code.slice(start, i),
+    endIndex: i,
+  }
+}
+
+function modifierPrefixesForAttr(classAttrName: string): ClassModifierPrefix[] {
+  return classAttrName === 'className'
+    ? ['className:', 'class:']
+    : ['class:']
+}
+
+function modifierPrefixesForRegex(classModifierRegex: RegExp): ClassModifierPrefix[] {
+  if (
+    classModifierRegex === REACT_CLASS_MODIFIER_REGEX
+    || classModifierRegex.source.includes('className')
+  ) {
+    return ['className:', 'class:']
+  }
+  return ['class:']
+}
+
+/**
+ * Finds `class:mod="…"` / `className:mod="…"` with bracket-aware modifier names.
+ */
+export function forEachQuotedClassModifier(
+  code: string,
+  prefixes: readonly ClassModifierPrefix[],
+  callback: (match: {
+    fullStart: number
+    fullEnd: number
+    modifiers: string
+    classes: string
+  }) => void,
+): void {
+  let searchFrom = 0
+
+  while (searchFrom < code.length) {
+    let foundAt = -1
+    let foundPrefix: ClassModifierPrefix | null = null
+
+    for (const prefix of prefixes) {
+      let from = searchFrom
+      while (from < code.length) {
+        const idx = code.indexOf(prefix, from)
+        if (idx === -1)
+          break
+        if (isClassAttrNameBoundary(code, idx)) {
+          if (foundAt === -1 || idx < foundAt) {
+            foundAt = idx
+            foundPrefix = prefix
+          }
+          break
+        }
+        from = idx + 1
+      }
+    }
+
+    if (foundAt === -1 || !foundPrefix)
+      break
+
+    const nameStart = foundAt + foundPrefix.length
+    const name = readModifierName(code, nameStart)
+    if (!name) {
+      searchFrom = nameStart
+      continue
+    }
+
+    let i = name.endIndex
+    while (i < code.length && /\s/.test(code[i]!))
+      i++
+
+    if (code[i] !== '=' || code[i + 1] !== '"') {
+      searchFrom = name.endIndex
+      continue
+    }
+
+    const valueStart = i + 2
+    let j = valueStart
+    while (j < code.length) {
+      if (code[j] === '\\' && j + 1 < code.length) {
+        j += 2
+        continue
+      }
+      if (code[j] === '"')
+        break
+      j++
+    }
+
+    if (j >= code.length) {
+      searchFrom = name.endIndex
+      continue
+    }
+
+    callback({
+      fullStart: foundAt,
+      fullEnd: j + 1,
+      modifiers: name.modifiers,
+      classes: code.slice(valueStart, j),
+    })
+
+    searchFrom = j + 1
+  }
+}
+
+/** Base (Vue) class attribute regexes — simple names only; prefer scanners for full support. */
 export const CLASS_REGEX = /(?<![:\w])class="([^"]*)"(?![^>]*:class)/g
 export const CLASS_MODIFIER_REGEX = new RegExp(
   String.raw`(?<![:\w])class:(${CLASS_MODIFIER_NAME_PATTERN})="([^"]*)"`,
   'g',
 )
 
-/** React `className` / `class` regexes */
+/** React `className` / `class` regexes — simple names only; prefer scanners for full support. */
 export const REACT_CLASS_REGEX = /(?<![:\w])className=(?:"([^"]*)"|{([^}]*)})(?![^>]*:)/g
 export const REACT_CLASS_MODIFIER_REGEX = new RegExp(
   String.raw`(?<![:\w])(?:className|class):(${CLASS_MODIFIER_NAME_PATTERN})="([^"]*)"`,
-  'g',
-)
-
-/** Start of a JSX expression modifier: `className:hover={` or `class:sm:hover = {` */
-const JSX_MODIFIER_START_REGEX = new RegExp(
-  String.raw`(?<![:\w])(?:className|class):(${CLASS_MODIFIER_NAME_PATTERN})\s*=\s*\{`,
   'g',
 )
 
@@ -442,26 +602,73 @@ function forEachJsxModifier(
     expression: string
   }) => void,
 ): void {
-  JSX_MODIFIER_START_REGEX.lastIndex = 0
-  let startMatch: RegExpExecArray | null
-  while ((startMatch = JSX_MODIFIER_START_REGEX.exec(code)) !== null) {
-    const modifiers = startMatch[1]
-    const openBraceIndex = startMatch.index + startMatch[0].length - 1
-    const balanced = readBalancedJsxExpression(code, openBraceIndex)
-    if (!balanced || !modifiers) {
-      // Avoid tight loops on malformed `{` without a closing brace.
-      JSX_MODIFIER_START_REGEX.lastIndex = openBraceIndex + 1
+  // Prefer longer prefix first so `className:` wins over `class:`.
+  const prefixes: ClassModifierPrefix[] = ['className:', 'class:']
+  let searchFrom = 0
+
+  while (searchFrom < code.length) {
+    let foundAt = -1
+    let foundPrefix: ClassModifierPrefix | null = null
+
+    for (const prefix of prefixes) {
+      let from = searchFrom
+      while (from < code.length) {
+        const idx = code.indexOf(prefix, from)
+        if (idx === -1)
+          break
+        if (isClassAttrNameBoundary(code, idx)) {
+          if (foundAt === -1 || idx < foundAt) {
+            foundAt = idx
+            foundPrefix = prefix
+          }
+          break
+        }
+        from = idx + 1
+      }
+    }
+
+    if (foundAt === -1 || !foundPrefix)
+      break
+
+    const nameStart = foundAt + foundPrefix.length
+    const name = readModifierName(code, nameStart)
+    if (!name) {
+      searchFrom = nameStart
+      continue
+    }
+
+    let i = name.endIndex
+    while (i < code.length && /\s/.test(code[i]!))
+      i++
+
+    if (code[i] !== '=') {
+      searchFrom = name.endIndex
+      continue
+    }
+    i++
+    while (i < code.length && /\s/.test(code[i]!))
+      i++
+
+    if (code[i] !== '{') {
+      // Quoted modifiers are handled separately; skip `="…"`.
+      searchFrom = name.endIndex
+      continue
+    }
+
+    const balanced = readBalancedJsxExpression(code, i)
+    if (!balanced) {
+      searchFrom = i + 1
       continue
     }
 
     callback({
-      fullStart: startMatch.index,
+      fullStart: foundAt,
       fullEnd: balanced.endIndex + 1,
-      modifiers,
+      modifiers: name.modifiers,
       expression: balanced.content,
     })
 
-    JSX_MODIFIER_START_REGEX.lastIndex = balanced.endIndex + 1
+    searchFrom = balanced.endIndex + 1
   }
 }
 
@@ -506,18 +713,19 @@ export function extractClasses(
     }
   }
 
-  let modifierMatch
-  while ((modifierMatch = classModifierRegex.exec(code)) !== null) {
-    const modifiers = modifierMatch[1]
-    const classes = modifierMatch[2]
-
-    if (modifiers && classes) {
+  // Quoted modifiers — bracket-aware so `data-[state=open]` keeps its inner `=`.
+  forEachQuotedClassModifier(
+    code,
+    modifierPrefixesForRegex(classModifierRegex),
+    ({ modifiers, classes }) => {
+      if (!modifiers.trim() || !classes)
+        return
       for (const modifiedClass of buildModifiedClasses(classes, modifiers)) {
         allFileClasses.add(modifiedClass)
         modifierDerivedClasses.add(modifiedClass)
       }
-    }
-  }
+    },
+  )
 
   // Conditional / JSX expression modifiers: className:hover={cond ? 'a' : 'b'}
   forEachJsxModifier(code, ({ modifiers, expression }) => {
@@ -546,8 +754,12 @@ export function transformClassModifiers(
   classModifierRegex: RegExp,
   classAttrName: string,
 ): string {
-  const withStaticModifiers = code.replace(classModifierRegex, (match, modifiers, classes) => {
-    if (!modifiers?.trim()) return match
+  const prefixes = modifierPrefixesForAttr(classAttrName)
+  const replacements: Array<{ start: number, end: number, text: string }> = []
+
+  forEachQuotedClassModifier(code, prefixes, ({ fullStart, fullEnd, modifiers, classes }) => {
+    if (!modifiers?.trim())
+      return
 
     const modifiedClassesArr = buildModifiedClasses(classes, modifiers)
 
@@ -556,8 +768,25 @@ export function transformClassModifiers(
         generatedClassesSet.add(cls)
     }
 
-    return `${classAttrName}="${modifiedClassesArr.join(' ')}"`
+    replacements.push({
+      start: fullStart,
+      end: fullEnd,
+      text: `${classAttrName}="${modifiedClassesArr.join(' ')}"`,
+    })
   })
+
+  let withStaticModifiers = code
+  for (let i = replacements.length - 1; i >= 0; i--) {
+    const replacement = replacements[i]
+    if (!replacement)
+      continue
+    withStaticModifiers = withStaticModifiers.slice(0, replacement.start)
+      + replacement.text
+      + withStaticModifiers.slice(replacement.end)
+  }
+
+  // classModifierRegex retained for API compatibility (language detection in callers).
+  void classModifierRegex
 
   return transformJsxExpressionModifiers(
     withStaticModifiers,

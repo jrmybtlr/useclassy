@@ -242,6 +242,35 @@ describe('useClassy plugin', () => {
       expect(rewritten).not.toContain('className:@md')
       expect(rewritten).not.toContain('className:group-hover/item')
     })
+
+    it('rewrites arbitrary variant modifiers during Vite 8 dep scan', () => {
+      const plugin = useClassy({ language: 'react' }) as Plugin
+      const config = (
+        plugin.config as (config: object, env: object) => {
+          optimizeDeps: {
+            rolldownOptions: {
+              plugins: Array<{
+                name: string
+                transform: { handler: (code: string) => string | null }
+              }>
+            }
+          }
+        }
+      )({}, { command: 'serve', mode: 'development' })
+
+      const scanPlugin = config.optimizeDeps.rolldownOptions.plugins.find(
+        candidate => candidate.name === 'useClassy:dep-scan',
+      )
+      expect(scanPlugin).toBeDefined()
+
+      const rewritten = scanPlugin!.transform.handler(
+        '<div className:[&>*]="mt-2" className:data-[state=open]="block">X</div>',
+      )
+      expect(rewritten).toContain('[&>*]:mt-2')
+      expect(rewritten).toContain('data-[state=open]:block')
+      expect(rewritten).not.toContain('className:[&>*]')
+      expect(rewritten).not.toContain('className:data-[state=open]')
+    })
   })
 
   describe('Basic transformations', () => {
