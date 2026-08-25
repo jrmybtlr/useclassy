@@ -332,42 +332,6 @@ describe('core module', () => {
       expect(modifierClasses.has('dark:bg-gray-800')).toBeTruthy()
       expect(modifierClasses.has('dark:text-gray-500')).toBeFalsy()
     })
-
-    it('extracts React mods() maps with @ and / modifier names', () => {
-      const code = `
-        import { classy, mods } from 'vite-plugin-useclassy/react'
-        const cn = classy(
-          'rounded',
-          mods({
-            '@md': 'p-4 text-base',
-            'group-hover/item': 'bg-red-500',
-            hover: isOn && 'underline',
-          }),
-        )
-        const again = classy.mods({ '@lg': 'gap-8' })
-        const memo = useMods({ 'sm:hover': on ? 'scale-105' : 'scale-100' })
-      `
-      const allClasses = new Set<string>()
-      const modifierClasses = new Set<string>()
-
-      extractClasses(
-        code,
-        allClasses,
-        modifierClasses,
-        REACT_CLASS_REGEX,
-        REACT_CLASS_MODIFIER_REGEX,
-      )
-
-      expect(allClasses.has('@md:p-4')).toBeTruthy()
-      expect(allClasses.has('@md:text-base')).toBeTruthy()
-      expect(allClasses.has('group-hover/item:bg-red-500')).toBeTruthy()
-      expect(allClasses.has('hover:underline')).toBeTruthy()
-      expect(allClasses.has('@lg:gap-8')).toBeTruthy()
-      expect(allClasses.has('sm:hover:scale-105')).toBeTruthy()
-      expect(allClasses.has('sm:hover:scale-100')).toBeTruthy()
-      expect(modifierClasses.has('@md:p-4')).toBeTruthy()
-      expect(modifierClasses.has('group-hover/item:bg-red-500')).toBeTruthy()
-    })
   })
 
   describe('transformClassModifiers', () => {
@@ -421,6 +385,47 @@ describe('core module', () => {
       expect(result).toContain('class="@md:p-4"')
       expect(classes.has('group-hover/item:bg-red-500')).toBeTruthy()
       expect(classes.has('@md:p-4')).toBeTruthy()
+    })
+
+    it('transforms React className:@md and className:group-hover/item', () => {
+      const code
+        = '<div className="@container" className:group-hover/item="bg-red-500" className:@md="p-4">X</div>'
+      const classes = new Set<string>()
+
+      const result = transformClassModifiers(
+        code,
+        classes,
+        REACT_CLASS_MODIFIER_REGEX,
+        'className',
+      )
+
+      expect(result).toContain('group-hover/item:bg-red-500')
+      expect(result).toContain('@md:p-4')
+      expect(result).not.toContain('className:@md')
+      expect(result).not.toContain('className:group-hover/item')
+      expect(classes.has('group-hover/item:bg-red-500')).toBeTruthy()
+      expect(classes.has('@md:p-4')).toBeTruthy()
+    })
+
+    it('extracts React className:@md and named-group modifiers', () => {
+      const code
+        = '<div className:group-hover/item="bg-red-500" className:@md="p-4 text-base">X</div>'
+      const allClasses = new Set<string>()
+      const modifierClasses = new Set<string>()
+
+      extractClasses(
+        code,
+        allClasses,
+        modifierClasses,
+        REACT_CLASS_REGEX,
+        REACT_CLASS_MODIFIER_REGEX,
+      )
+
+      expect(allClasses.has('@md:p-4')).toBeTruthy()
+      expect(allClasses.has('@md:text-base')).toBeTruthy()
+      expect(allClasses.has('group-hover/item:bg-red-500')).toBeTruthy()
+      expect(modifierClasses.has('@md:p-4')).toBeTruthy()
+      expect(modifierClasses.has('group-hover/item:bg-red-500')).toBeTruthy()
     })
 
     it('leaves arbitrary variant prefixes in the base class string', () => {

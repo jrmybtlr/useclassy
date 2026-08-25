@@ -77,9 +77,9 @@
 
 ## React `@` / `/` modifiers (2026-08-25)
 
-- JSX attribute names cannot contain `@` or `/`, so `className:@md` and `className:group-hover/item` will never parse.
-- Do not invent substitute characters (`$md`, `at-md`, `group-hover__item`). That fights Tailwind muscle memory.
-- Use `mods({ '@md': '…', 'group-hover/item': '…' })` (also `classy.mods` / `useMods`) so keys keep the real variant names. Scan those maps into the class manifest.
+- JSX cannot parse `@` or `/` in attribute names on its own, but UseClassy rewrites `className:@md` / `className:group-hover/item` before JSX parse — same pipeline as `className:sm:hover`.
+- Do not invent substitute characters (`$md`, `at-md`) and do not add a separate `mods()` API for this; keep the same attribute spelling as Vue.
+- TypeScript / some linters may still flag the source the same way they already flag chained modifiers.
 
 - When rewriting string literals inside `className:modifier={…}`, never blindly prefix every quoted string.
 - Comparison operands (`===` / `!==` / `==` / `!=`) and string method receivers (`'x'.includes`) must stay untouched.

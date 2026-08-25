@@ -211,6 +211,37 @@ describe('useClassy plugin', () => {
       expect(rewritten).toContain('sm:hover:underline')
       expect(rewritten).not.toContain('className:sm:hover')
     })
+
+    it('rewrites className:@md and named-group modifiers during Vite 8 dep scan', () => {
+      const plugin = useClassy({ language: 'react' }) as Plugin
+      expect(typeof plugin.config).toBe('function')
+
+      const config = (
+        plugin.config as (config: object, env: object) => {
+          optimizeDeps: {
+            rolldownOptions: {
+              plugins: Array<{
+                name: string
+                transform: { handler: (code: string) => string | null }
+              }>
+            }
+          }
+        }
+      )({}, { command: 'serve', mode: 'development' })
+
+      const scanPlugin = config.optimizeDeps.rolldownOptions.plugins.find(
+        candidate => candidate.name === 'useClassy:dep-scan',
+      )
+      expect(scanPlugin).toBeDefined()
+
+      const rewritten = scanPlugin!.transform.handler(
+        '<div className:@md="p-4" className:group-hover/item="bg-red-500">X</div>',
+      )
+      expect(rewritten).toContain('@md:p-4')
+      expect(rewritten).toContain('group-hover/item:bg-red-500')
+      expect(rewritten).not.toContain('className:@md')
+      expect(rewritten).not.toContain('className:group-hover/item')
+    })
   })
 
   describe('Basic transformations', () => {

@@ -1,6 +1,5 @@
 import { useState, type ReactNode } from "react";
 import { twMerge } from "tailwind-merge";
-import { classy, mods } from "vite-plugin-useclassy/react";
 
 /** Tiny class-map helper to exercise nested-brace rewrites (`cn({ '…': cond })`). */
 function cn(map: Record<string, boolean | undefined>): string {
@@ -33,9 +32,8 @@ function App() {
         </h1>
         <p className="max-w-xl text-sm text-zinc-400">
           Smoke coverage for quoted modifiers, conditionals, comparison
-          operands, nested braces, chained modifiers, and{" "}
-          <code className="text-zinc-200">mods()</code> for{" "}
-          <code className="text-zinc-200">@md</code> / named groups.
+          operands, nested braces, chained modifiers,{" "}
+          <code className="text-zinc-200">@md</code>, and named groups.
         </p>
       </header>
 
@@ -187,18 +185,14 @@ function App() {
         </Case>
 
         <Case
-          title="mods() for @ and named groups"
-          detail="JSX cannot parse className:@md or className:group-hover/item — keep real names via mods()."
+          title="@md and named groups"
+          detail='Same spelling as Vue: className:@md and className:group-hover/item — UseClassy rewrites before JSX parse.'
         >
           <div className="group/item rounded-lg border border-zinc-700 bg-zinc-900 p-4 @container">
             <div
-              className={classy(
-                "rounded px-4 py-3 text-zinc-100 transition",
-                mods({
-                  "@md": "p-6 text-base",
-                  "group-hover/item": "bg-red-500 text-white",
-                }),
-              )}
+              className="rounded px-4 py-3 text-zinc-100 transition"
+              className:@md="p-6 text-base"
+              className:group-hover/item="bg-red-500 text-white"
             >
               Hover the card · resize the container for @md
             </div>
