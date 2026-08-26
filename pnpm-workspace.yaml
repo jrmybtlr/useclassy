@@ -1,3 +1,4 @@
 packages:
   - '.'
   - 'demos/*'
+  - 'useclassy-typescript-plugin'

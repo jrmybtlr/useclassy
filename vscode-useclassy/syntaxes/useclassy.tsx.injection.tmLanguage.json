@@ -1,0 +1,10 @@
+{
+  "scopeName": "useclassy.injection.tsx",
+  "injectionSelector": "L:meta.tag.attributes.tsx, L:meta.tag.attributes.jsx",
+  "patterns": [
+    {
+      "name": "entity.other.attribute-name.tsx",
+      "match": "\\b(?:className|class):(?:[^\\s=\\[]|\\[[^\\]]*\\])+"
+    }
+  ]
+}

@@ -7,15 +7,19 @@ import {
   detectCssEngine,
   detectTailwindFlavor,
   installAgentResources,
+  mergeExtensionRecommendations,
   mergeTailwindClassAttributes,
   patchAgentsMdContent,
   patchTailwindV3ConfigContent,
   patchTailwindV4Stylesheet,
   patchUnoConfigContent,
   patchViteConfigContent,
+  patchTsConfigContent,
   resolveInitEngine,
   resolveTemplatesRoot,
   runInitSetup,
+  USECLASSY_TS_PLUGIN_NAME,
+  USECLASSY_VSCODE_EXTENSION_ID,
 } from '../init-setup'
 
 function tempDir(): string {
@@ -38,8 +42,8 @@ export default defineConfig({
 })
 `
     const out = patchViteConfigContent(src, 'vue')
-    expect(out).toContain('import useClassy from \'vite-plugin-useclassy\'')
-    expect(out).toContain('language: \'vue\'')
+    expect(out).toContain("import useClassy from 'vite-plugin-useclassy'")
+    expect(out).toContain("language: 'vue'")
     expect(out).toMatch(/plugins:\s*\[\s*\n\s*useClassy/)
     expect(out).not.toContain('engine:')
   })
@@ -51,8 +55,8 @@ export default defineConfig({
 })
 `
     const out = patchViteConfigContent(src, 'react', 'unocss')
-    expect(out).toContain('language: \'react\'')
-    expect(out).toContain('engine: \'unocss\'')
+    expect(out).toContain("language: 'react'")
+    expect(out).toContain("engine: 'unocss'")
   })
 
   it('does not duplicate useClassy', () => {
@@ -72,7 +76,7 @@ export default defineConfig({
 })
 `
     const out = patchUnoConfigContent(src)
-    expect(out).toContain('filesystem: [\'./.classy/output.classy.html\']')
+    expect(out).toContain("filesystem: ['./.classy/output.classy.html']")
     expect(out).toContain('presets: [presetUno()]')
   })
 
@@ -84,7 +88,7 @@ export default defineConfig({
 })
 `
     const out = patchUnoConfigContent(src)
-    expect(out).toContain('\'./.classy/output.classy.html\'')
+    expect(out).toContain("'./.classy/output.classy.html'")
     expect(out).toContain('./src/**/*.php')
   })
 
@@ -112,8 +116,32 @@ export default defineConfig({
 })
 `
     const out = patchUnoConfigContent(src)
-    expect(out).toContain('\'./.classy/output.classy.html\'')
+    expect(out).toContain("'./.classy/output.classy.html'")
     expect(out).toContain('scans output.classy.html')
+  })
+})
+
+describe('patchTsConfigContent', () => {
+  it('adds the UseClassy TypeScript plugin for React', () => {
+    const src = `{
+  "compilerOptions": {
+    "jsx": "react-jsx"
+  }
+}
+`
+    const out = patchTsConfigContent(src)
+    expect(out).toContain(USECLASSY_TS_PLUGIN_NAME)
+    expect(JSON.parse(out).compilerOptions.plugins).toEqual([{ name: USECLASSY_TS_PLUGIN_NAME }])
+  })
+
+  it('does not duplicate the plugin entry', () => {
+    const src = `{
+  "compilerOptions": {
+    "plugins": [{ "name": "${USECLASSY_TS_PLUGIN_NAME}" }]
+  }
+}
+`
+    expect(patchTsConfigContent(src)).toBe(src)
   })
 })
 
@@ -174,21 +202,15 @@ describe('detectCssEngine / resolveInitEngine', () => {
       dryRun: false,
     })
 
-    expect(result.messages.some(m => m.includes('Using engine: unocss'))).toBe(
-      true,
-    )
+    expect(result.messages.some((m) => m.includes('Using engine: unocss'))).toBe(true)
     expect(result.unocss).toBe(path.join(dir, 'uno.config.ts'))
     const uno = fs.readFileSync(path.join(dir, 'uno.config.ts'), 'utf-8')
     expect(uno).toContain('./.classy/output.classy.html')
     const vite = fs.readFileSync(path.join(dir, 'vite.config.ts'), 'utf-8')
-    expect(vite).toContain('engine: \'unocss\'')
+    expect(vite).toContain("engine: 'unocss'")
     expect(result.vscodeSettings).toBeUndefined()
-    expect(
-      result.messages.some(m => m.includes('skipped Tailwind CSS IntelliSense')),
-    ).toBe(true)
-    expect(
-      fs.existsSync(path.join(dir, '.vscode', 'settings.json')),
-    ).toBe(false)
+    expect(result.messages.some((m) => m.includes('skipped Tailwind CSS IntelliSense'))).toBe(true)
+    expect(fs.existsSync(path.join(dir, '.vscode', 'settings.json'))).toBe(false)
   })
 })
 
@@ -230,11 +252,7 @@ describe('patchTailwindV4Stylesheet', () => {
     const dir = tempDir()
     const cssPath = path.join(dir, 'src', 'main.css')
     fs.mkdirSync(path.dirname(cssPath), { recursive: true })
-    fs.writeFileSync(
-      cssPath,
-      '@import "tailwindcss";\n',
-      'utf-8',
-    )
+    fs.writeFileSync(cssPath, '@import "tailwindcss";\n', 'utf-8')
     const r = patchTailwindV4Stylesheet(cssPath, dir, false)
     expect(r.changed).toBe(true)
     const text = fs.readFileSync(cssPath, 'utf-8')
@@ -257,11 +275,7 @@ describe('patchTailwindV4Stylesheet', () => {
     const dir = tempDir()
     const cssPath = path.join(dir, 'src', 'main.css')
     fs.mkdirSync(path.dirname(cssPath), { recursive: true })
-    fs.writeFileSync(
-      cssPath,
-      '/* output.classy.html */\n@import "tailwindcss";\n',
-      'utf-8',
-    )
+    fs.writeFileSync(cssPath, '/* output.classy.html */\n@import "tailwindcss";\n', 'utf-8')
     const r = patchTailwindV4Stylesheet(cssPath, dir, false)
     expect(r.changed).toBe(true)
     const text = fs.readFileSync(cssPath, 'utf-8')
@@ -313,6 +327,21 @@ describe('mergeTailwindClassAttributes', () => {
     expect(out).toContain('class')
     expect(out).toContain('class:[\\w:/@\\[\\]\\-=&*>.]*')
     expect(out).not.toContain('className')
+  })
+})
+
+describe('mergeExtensionRecommendations', () => {
+  it('adds UseClassy and preserves existing ids', () => {
+    const out = mergeExtensionRecommendations(['oxc.oxc-vscode'], [USECLASSY_VSCODE_EXTENSION_ID])
+    expect(out).toEqual(['oxc.oxc-vscode', USECLASSY_VSCODE_EXTENSION_ID])
+  })
+
+  it('does not duplicate', () => {
+    const out = mergeExtensionRecommendations(
+      [USECLASSY_VSCODE_EXTENSION_ID],
+      [USECLASSY_VSCODE_EXTENSION_ID],
+    )
+    expect(out).toEqual([USECLASSY_VSCODE_EXTENSION_ID])
   })
 })
 
@@ -368,29 +397,21 @@ describe('installAgentResources', () => {
   it('resolves packaged templates from source layout', () => {
     const root = resolveTemplatesRoot()
     expect(root).not.toBeNull()
-    expect(fs.existsSync(path.join(root!, 'useclassy-skill', 'SKILL.md'))).toBe(
-      true,
-    )
+    expect(fs.existsSync(path.join(root!, 'useclassy-skill', 'SKILL.md'))).toBe(true)
   })
 
   it('installs the skill into .agents/skills (dry-run writes nothing)', () => {
     const dir = tempDir()
-    fs.writeFileSync(
-      path.join(dir, 'package.json'),
-      JSON.stringify({ name: 'app' }),
-      'utf-8',
-    )
+    fs.writeFileSync(path.join(dir, 'package.json'), JSON.stringify({ name: 'app' }), 'utf-8')
 
     // 1 skill dir x 2 files + 2 cursor rules + AGENTS.md
     const dry = installAgentResources(dir, true)
-    expect(dry.every(r => !r.error)).toBe(true)
-    expect(dry.filter(r => r.changed)).toHaveLength(5)
-    expect(
-      fs.existsSync(path.join(dir, '.agents', 'skills', 'useclassy', 'SKILL.md')),
-    ).toBe(false)
+    expect(dry.every((r) => !r.error)).toBe(true)
+    expect(dry.filter((r) => r.changed)).toHaveLength(5)
+    expect(fs.existsSync(path.join(dir, '.agents', 'skills', 'useclassy', 'SKILL.md'))).toBe(false)
 
     const written = installAgentResources(dir, false)
-    expect(written.filter(r => r.changed)).toHaveLength(5)
+    expect(written.filter((r) => r.changed)).toHaveLength(5)
 
     const agentsSkill = path.join(dir, '.agents', 'skills', 'useclassy', 'SKILL.md')
     const skill = fs.readFileSync(agentsSkill, 'utf-8')
@@ -400,31 +421,23 @@ describe('installAgentResources', () => {
 
     // Default install avoids .claude so Cursor does not load a duplicate skill.
     expect(fs.existsSync(path.join(dir, '.claude'))).toBe(false)
-    expect(
-      fs.existsSync(path.join(dir, '.agents', 'skills', 'useclassy', 'examples.md')),
-    ).toBe(true)
-
-    expect(
-      fs.existsSync(path.join(dir, '.cursor', 'rules', 'useclassy-setup.mdc')),
-    ).toBe(true)
-    expect(
-      fs.existsSync(
-        path.join(dir, '.cursor', 'rules', 'useclassy-authoring.mdc'),
-      ),
-    ).toBe(true)
-
-    expect(fs.readFileSync(path.join(dir, 'AGENTS.md'), 'utf-8')).toContain(
-      '## UseClassy',
+    expect(fs.existsSync(path.join(dir, '.agents', 'skills', 'useclassy', 'examples.md'))).toBe(
+      true,
     )
 
+    expect(fs.existsSync(path.join(dir, '.cursor', 'rules', 'useclassy-setup.mdc'))).toBe(true)
+    expect(fs.existsSync(path.join(dir, '.cursor', 'rules', 'useclassy-authoring.mdc'))).toBe(true)
+
+    expect(fs.readFileSync(path.join(dir, 'AGENTS.md'), 'utf-8')).toContain('## UseClassy')
+
     const again = installAgentResources(dir, false)
-    expect(again.every(r => !r.changed && !r.error && !r.skipped)).toBe(true)
+    expect(again.every((r) => !r.changed && !r.error && !r.skipped)).toBe(true)
   })
 
   it('copies into .claude/skills only when withClaude is set', () => {
     const dir = tempDir()
     const written = installAgentResources(dir, false, { withClaude: true })
-    expect(written.filter(r => r.changed)).toHaveLength(7)
+    expect(written.filter((r) => r.changed)).toHaveLength(7)
 
     const agentsSkill = fs.readFileSync(
       path.join(dir, '.agents', 'skills', 'useclassy', 'SKILL.md'),
@@ -445,13 +458,13 @@ describe('installAgentResources', () => {
     fs.writeFileSync(skillPath, '# customized locally\n', 'utf-8')
 
     const skipped = installAgentResources(dir, false)
-    const skillResult = skipped.find(r => r.path === skillPath)
+    const skillResult = skipped.find((r) => r.path === skillPath)
     expect(skillResult?.skipped).toBe(true)
     expect(skillResult?.changed).toBe(false)
     expect(fs.readFileSync(skillPath, 'utf-8')).toBe('# customized locally\n')
 
     const forced = installAgentResources(dir, false, { force: true })
-    expect(forced.find(r => r.path === skillPath)?.changed).toBe(true)
+    expect(forced.find((r) => r.path === skillPath)?.changed).toBe(true)
     expect(fs.readFileSync(skillPath, 'utf-8')).toContain('name: useclassy')
   })
 
@@ -461,12 +474,8 @@ describe('installAgentResources', () => {
       templatesRoot: path.join(dir, 'missing-templates'),
     })
 
-    expect(results.some(r => r.error?.includes('Could not find package templates'))).toBe(
-      true,
-    )
-    expect(fs.readFileSync(path.join(dir, 'AGENTS.md'), 'utf-8')).toContain(
-      '## UseClassy',
-    )
+    expect(results.some((r) => r.error?.includes('Could not find package templates'))).toBe(true)
+    expect(fs.readFileSync(path.join(dir, 'AGENTS.md'), 'utf-8')).toContain('## UseClassy')
   })
 
   it('runInitSetup --with-skills installs agent files', () => {
@@ -485,11 +494,7 @@ describe('installAgentResources', () => {
       'utf-8',
     )
     fs.mkdirSync(path.join(dir, 'src'), { recursive: true })
-    fs.writeFileSync(
-      path.join(dir, 'src', 'main.css'),
-      '@import "tailwindcss";\n',
-      'utf-8',
-    )
+    fs.writeFileSync(path.join(dir, 'src', 'main.css'), '@import "tailwindcss";\n', 'utf-8')
 
     const result = runInitSetup({
       cwd: dir,
@@ -498,26 +503,93 @@ describe('installAgentResources', () => {
       withSkills: true,
     })
 
-    expect(result.messages.some(m => m.includes('[dry-run] Would write')
-      && m.includes(path.join('.agents', 'skills')))).toBe(true)
-    expect(result.messages.some(m => m.includes(path.join('.claude', 'skills')))).toBe(
-      false,
-    )
-    expect(result.messages.some(m => m.includes('AGENTS.md'))).toBe(true)
+    expect(
+      result.messages.some(
+        (m) => m.includes('[dry-run] Would write') && m.includes(path.join('.agents', 'skills')),
+      ),
+    ).toBe(true)
+    expect(result.messages.some((m) => m.includes(path.join('.claude', 'skills')))).toBe(false)
+    expect(result.messages.some((m) => m.includes('AGENTS.md'))).toBe(true)
   })
 
   it('leaves agent files alone without the flag', () => {
     const dir = tempDir()
-    fs.writeFileSync(
-      path.join(dir, 'package.json'),
-      JSON.stringify({ name: 'app' }),
-      'utf-8',
-    )
+    fs.writeFileSync(path.join(dir, 'package.json'), JSON.stringify({ name: 'app' }), 'utf-8')
 
     const result = runInitSetup({ cwd: dir, language: 'vue', dryRun: false })
 
     expect(result.agentFiles).toBeUndefined()
     expect(fs.existsSync(path.join(dir, '.agents'))).toBe(false)
     expect(fs.existsSync(path.join(dir, 'AGENTS.md'))).toBe(false)
+  })
+})
+
+describe('runInitSetup react TypeScript plugin', () => {
+  it('patches tsconfig.app.json when language is react', () => {
+    const dir = tempDir()
+    fs.writeFileSync(path.join(dir, 'package.json'), JSON.stringify({ name: 'app' }), 'utf-8')
+    fs.writeFileSync(
+      path.join(dir, 'tsconfig.app.json'),
+      JSON.stringify({ compilerOptions: { jsx: 'react-jsx' } }, null, 2),
+      'utf-8',
+    )
+
+    const result = runInitSetup({ cwd: dir, language: 'react', dryRun: false })
+
+    expect(result.tsConfig).toContain('tsconfig.app.json')
+    const parsed = JSON.parse(fs.readFileSync(path.join(dir, 'tsconfig.app.json'), 'utf-8')) as {
+      compilerOptions: { plugins: Array<{ name: string }> }
+    }
+    expect(parsed.compilerOptions.plugins).toEqual([{ name: USECLASSY_TS_PLUGIN_NAME }])
+    expect(result.messages.some((m) => m.includes('UseClassy TS plugin'))).toBe(true)
+  })
+
+  it('recommends useclassy.useclassy in .vscode/extensions.json', () => {
+    const dir = tempDir()
+    fs.writeFileSync(path.join(dir, 'package.json'), JSON.stringify({ name: 'app' }), 'utf-8')
+    fs.writeFileSync(
+      path.join(dir, 'tsconfig.json'),
+      JSON.stringify({ compilerOptions: { jsx: 'react-jsx' } }, null, 2),
+      'utf-8',
+    )
+
+    const result = runInitSetup({ cwd: dir, language: 'react', dryRun: false })
+
+    expect(result.vscodeExtensions).toContain('extensions.json')
+    const parsed = JSON.parse(
+      fs.readFileSync(path.join(dir, '.vscode', 'extensions.json'), 'utf-8'),
+    ) as { recommendations: string[] }
+    expect(parsed.recommendations).toContain(USECLASSY_VSCODE_EXTENSION_ID)
+  })
+
+  it('extends tsconfig.app.json from empty solution tsconfig when language is react', () => {
+    const dir = tempDir()
+    fs.writeFileSync(path.join(dir, 'package.json'), JSON.stringify({ name: 'app' }), 'utf-8')
+    fs.writeFileSync(
+      path.join(dir, 'tsconfig.app.json'),
+      JSON.stringify({ compilerOptions: { jsx: 'react-jsx' }, include: ['src'] }, null, 2),
+      'utf-8',
+    )
+    fs.writeFileSync(
+      path.join(dir, 'tsconfig.json'),
+      JSON.stringify(
+        {
+          files: [],
+          references: [{ path: './tsconfig.app.json' }, { path: './tsconfig.node.json' }],
+        },
+        null,
+        2,
+      ),
+      'utf-8',
+    )
+
+    runInitSetup({ cwd: dir, language: 'react', dryRun: false })
+
+    const solution = JSON.parse(fs.readFileSync(path.join(dir, 'tsconfig.json'), 'utf-8')) as {
+      extends?: string
+      references?: Array<{ path: string }>
+    }
+    expect(solution.extends).toBe('./tsconfig.app.json')
+    expect(solution.references).toEqual([{ path: './tsconfig.node.json' }])
   })
 })

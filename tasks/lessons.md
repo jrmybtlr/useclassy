@@ -1,5 +1,10 @@
 # Lessons
 
+## ClassExample highlight keeps class values white (2026-08-26)
+
+- Highlighted lines use `text-glow` plus a stronger attr-name blue (`text-sky-400`).
+- Do not paint the whole line with `[&_span]:text-sky-*`. Quoted class values and the output tokens stay `text-white` when highlighted.
+
 ## brace-expansion override must stay per-major (2026-08-24)
 
 - A global `"brace-expansion": ">=5.0.6"` remaps minimatch 3 (ESLint) onto v5, which dropped the CJS `expand` export → `expand is not a function`.
@@ -90,7 +95,10 @@
 
 - UseClassy rewrites `className:@md`, `className:group-hover/item`, `className:[&>*]`, and `className:data-[state=open]` before JSX/HTML parse — same pipeline as `className:sm:hover`.
 - Parse modifier names with bracket depth so `=` inside `[…]` is not treated as the attribute separator. Do not invent substitute characters or a separate `mods()` helper.
-- TypeScript / some linters may still flag the source the same way they already flag chained modifiers.
+- TypeScript / some linters may still flag the source the same way they already flag chained modifiers. Ignore `demos/*/src/App.tsx` in oxlint/oxfmt/ESLint; they parse source before the Vite plugin rewrites. For tsserver, add `useclassy-typescript-plugin` (or `vite-plugin-useclassy/typescript-plugin`) via `compilerOptions.plugins`, extend `tsconfig.app.json` from `tsconfig.json` (not `"files": []` only), put `src/tsconfig.json` extending the app config, and use the workspace TypeScript version.
+- VS Code/Cursor’s syntax-only tsserver does not load language-service plugins. Set `js/ts.tsserver.useSyntaxServer` to `never` and add `js/ts.tsserver.pluginPaths` (React `init` does this) so modifier rewrites run before TSX parse diagnostics.
+- Vite’s default React `tsconfig.json` uses `"files": []` plus a reference to `tsconfig.app.json`. `tsserver` stops at the empty root config, so the UseClassy plugin in `tsconfig.app.json` never loads. React `init` rewrites the solution config to `"extends": "./tsconfig.app.json"`; keep `build` on `tsc -p tsconfig.node.json` so CLI `tsc` does not parse modifier attrs without the plugin.
+- Do not put `className:mod='value'` (or `class:mod="value"`) inside another double-quoted JSX attribute. The scanner treats `"` as a name boundary and rewrites the substring, which breaks the outer quotes. Describe the syntax in prose instead.
 
 - When rewriting string literals inside `className:modifier={…}`, never blindly prefix every quoted string.
 - Comparison operands (`===` / `!==` / `==` / `!=`) and string method receivers (`'x'.includes`) must stay untouched.

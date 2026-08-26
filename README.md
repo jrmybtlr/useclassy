@@ -64,7 +64,32 @@ Expressions with no string literals (`className:hover={hoverClasses}`) are left 
 
 Quoted modifier values may use `"` or `'`. Prefer `"` in docs and new code.
 
-`className:@md`, `className:group-hover/item`, and arbitrary variants like `className:[&>*]` / `className:data-[state=open]` use the same attribute spelling as Vue. UseClassy rewrites them before the JSX/HTML parser runs (bracket-aware so `=` inside `[…]` stays part of the name). Put UseClassy before `@vitejs/plugin-react`. TypeScript and some linters may still flag the source the same way they already flag chained modifiers.
+`className:@md`, `className:group-hover/item`, and arbitrary variants like `className:[&>*]` / `className:data-[state=open]` use the same attribute spelling as Vue. UseClassy rewrites them before the JSX/HTML parser runs (bracket-aware so `=` inside `[…]` stays part of the name). Put UseClassy before `@vitejs/plugin-react`.
+
+For editor TypeScript diagnostics, add the language plugin (React `init` does this automatically):
+
+```json
+{
+  "compilerOptions": {
+    "plugins": [{ "name": "useclassy-typescript-plugin" }]
+  }
+}
+```
+
+If your app uses Vite’s split config (`tsconfig.json` with `"files": []` referencing `tsconfig.app.json`), make the root config extend the app config instead — otherwise tsserver stops at the empty file list and never loads the plugin:
+
+```json
+{
+  "extends": "./tsconfig.app.json",
+  "references": [{ "path": "./tsconfig.node.json" }]
+}
+```
+
+Keep `build` on `tsc -p tsconfig.node.json && vite build` so CLI `tsc` does not parse modifier attrs without the plugin.
+
+Use the workspace TypeScript version in VS Code/Cursor (`js/ts.tsdk.path`: `node_modules/typescript/lib`, `js/ts.tsserver.useSyntaxServer`: `never`, enable “Use Workspace Version”). Oxlint and ESLint still parse source text directly, so keep smoke-demo `App.tsx` files ignored unless you add a separate ESLint preprocessor.
+
+The TypeScript plugin only affects diagnostics. For syntax highlighting of `className:@md`, `className:group-hover/item`, and arbitrary variants, install the UseClassy editor extension (`useclassy.useclassy`; React `init` recommends it in `.vscode/extensions.json`). From this repo: `code --install-extension ./vscode-useclassy` (or copy to `~/.cursor/extensions/useclassy.useclassy-0.1.0`), then reload — see [vscode-useclassy/README.md](vscode-useclassy/README.md).
 
 **Svelte.** Quoted modifiers transform; native directives do not. Put UseClassy before `@sveltejs/vite-plugin-svelte`.
 
@@ -152,7 +177,12 @@ UseClassy is variant-first (`class:hover="bg-red"`), not [Attributify](https://u
 
 ```json
 {
-  "tailwindCSS.classAttributes": ["class", "class:[\\w:/@\\[\\]\\-=&*>.]*", "className", "className:[\\w:/@\\[\\]\\-=&*>.]*"]
+  "tailwindCSS.classAttributes": [
+    "class",
+    "class:[\\w:/@\\[\\]\\-=&*>.]*",
+    "className",
+    "className:[\\w:/@\\[\\]\\-=&*>.]*"
+  ]
 }
 ```
 

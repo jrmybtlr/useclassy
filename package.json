@@ -75,6 +75,10 @@
       "types": "./dist/unocss.d.ts",
       "import": "./dist/unocss.js",
       "require": "./dist/unocss.cjs"
+    },
+    "./typescript-plugin": {
+      "types": "./dist/typescript-plugin.d.ts",
+      "require": "./dist/typescript-plugin-tsserver.cjs"
     }
   },
   "repository": {
@@ -97,6 +101,7 @@
     "oxlint": "^1.79.0",
     "typescript": "^5.9.3",
     "typescript-eslint": "^8.62.1",
+    "useclassy-typescript-plugin": "workspace:*",
     "vite": "^8.1.0",
     "vite-plugin-dts": "^4.5.4",
     "vite-plugin-inspect": "^11.4.1",

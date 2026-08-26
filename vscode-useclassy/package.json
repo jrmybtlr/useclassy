@@ -1,0 +1,21 @@
+{
+  "name": "useclassy",
+  "displayName": "UseClassy",
+  "description": "Syntax highlighting for UseClassy React modifier attributes (className:@md, className:group-hover/item, className:[&>*], …).",
+  "version": "0.1.0",
+  "publisher": "useclassy",
+  "engines": {
+    "vscode": "^1.85.0"
+  },
+  "categories": ["Programming Languages"],
+  "keywords": ["useclassy", "tailwind", "jsx", "tsx", "react"],
+  "contributes": {
+    "grammars": [
+      {
+        "scopeName": "useclassy.injection.tsx",
+        "path": "./syntaxes/useclassy.tsx.injection.tmLanguage.json",
+        "injectTo": ["source.tsx", "source.jsx"]
+      }
+    ]
+  }
+}

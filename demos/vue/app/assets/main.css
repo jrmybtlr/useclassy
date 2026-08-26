@@ -165,10 +165,11 @@ code.docs-inline-code {
 
 @utility text-glow {
   text-shadow:
-    0 0 2px rgb(255 255 255 / 0.9),
-    0 0 8px rgb(125 211 252 / 0.95),
-    0 0 18px rgb(56 189 248 / 0.65),
-    0 0 32px rgb(40 83 255 / 0.45);
+    0 0 4px rgb(56 189 248 / 1),
+    0 0 12px rgb(14 165 233 / 1),
+    0 0 24px rgb(40 83 255 / 1),
+    0 0 48px rgb(40 83 255 / 0.8),
+    0 0 80px rgb(40 83 255 / 0.45);
 }
 
 @utility hat-glow {

@@ -1,6 +1,22 @@
 {
   "prettier.enable": false,
   "eslint.format.enable": false,
+  "js/ts.tsdk.path": "node_modules/typescript/lib",
+  "js/ts.tsdk.promptToUseWorkspaceVersion": true,
+  "js/ts.experimental.useTsgo": false,
+  "js/ts.tsserver.useSyntaxServer": "never",
+  "js/ts.tsserver.pluginPaths": [
+    "node_modules",
+    "useclassy-typescript-plugin",
+    "demos/react/node_modules",
+    "demos/unocss-react/node_modules"
+  ],
+  "tailwindCSS.classAttributes": [
+    "class",
+    "className",
+    "class:[\\w:/@\\[\\]\\-=&*>.]*",
+    "className:[\\w:/@\\[\\]\\-=&*>.]*"
+  ],
   "editor.defaultFormatter": "oxc.oxc-vscode",
   "editor.formatOnSave": true,
   "editor.formatOnSaveMode": "file",

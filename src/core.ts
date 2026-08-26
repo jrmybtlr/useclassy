@@ -32,9 +32,8 @@ export type ClassModifierPrefix = 'class:' | 'className:'
 export function readModifierName(
   code: string,
   start: number,
-): { modifiers: string, endIndex: number } | null {
-  if (start >= code.length)
-    return null
+): { modifiers: string; endIndex: number } | null {
+  if (start >= code.length) return null
 
   let i = start
   let depth = 0
@@ -49,8 +48,7 @@ export function readModifierName(
     }
 
     if (ch === ']') {
-      if (depth === 0)
-        return null
+      if (depth === 0) return null
       depth--
       i++
       continue
@@ -64,14 +62,14 @@ export function readModifierName(
 
     // Depth 0: classic variant characters, or `[` handled above.
     if (
-      (ch >= 'a' && ch <= 'z')
-      || (ch >= 'A' && ch <= 'Z')
-      || (ch >= '0' && ch <= '9')
-      || ch === '_'
-      || ch === '-'
-      || ch === ':'
-      || ch === '/'
-      || ch === '@'
+      (ch >= 'a' && ch <= 'z') ||
+      (ch >= 'A' && ch <= 'Z') ||
+      (ch >= '0' && ch <= '9') ||
+      ch === '_' ||
+      ch === '-' ||
+      ch === ':' ||
+      ch === '/' ||
+      ch === '@'
     ) {
       i++
       continue
@@ -80,8 +78,7 @@ export function readModifierName(
     break
   }
 
-  if (i === start || depth !== 0)
-    return null
+  if (i === start || depth !== 0) return null
 
   return {
     modifiers: code.slice(start, i),
@@ -90,15 +87,13 @@ export function readModifierName(
 }
 
 function modifierPrefixesForAttr(classAttrName: string): ClassModifierPrefix[] {
-  return classAttrName === 'className'
-    ? ['className:', 'class:']
-    : ['class:']
+  return classAttrName === 'className' ? ['className:', 'class:'] : ['class:']
 }
 
 function modifierPrefixesForRegex(classModifierRegex: RegExp): ClassModifierPrefix[] {
   if (
-    classModifierRegex === REACT_CLASS_MODIFIER_REGEX
-    || classModifierRegex.source.includes('className')
+    classModifierRegex === REACT_CLASS_MODIFIER_REGEX ||
+    classModifierRegex.source.includes('className')
   ) {
     return ['className:', 'class:']
   }
@@ -129,8 +124,7 @@ export function forEachQuotedClassModifier(
       let from = searchFrom
       while (from < code.length) {
         const idx = code.indexOf(prefix, from)
-        if (idx === -1)
-          break
+        if (idx === -1) break
         if (isClassAttrNameBoundary(code, idx)) {
           if (foundAt === -1 || idx < foundAt) {
             foundAt = idx
@@ -142,8 +136,7 @@ export function forEachQuotedClassModifier(
       }
     }
 
-    if (foundAt === -1 || !foundPrefix)
-      break
+    if (foundAt === -1 || !foundPrefix) break
 
     const nameStart = foundAt + foundPrefix.length
     const name = readModifierName(code, nameStart)
@@ -153,19 +146,17 @@ export function forEachQuotedClassModifier(
     }
 
     let i = name.endIndex
-    while (i < code.length && /\s/.test(code[i]!))
-      i++
+    while (i < code.length && /\s/.test(code[i]!)) i++
 
     if (code[i] !== '=') {
       searchFrom = name.endIndex
       continue
     }
     i++
-    while (i < code.length && /\s/.test(code[i]!))
-      i++
+    while (i < code.length && /\s/.test(code[i]!)) i++
 
     const quote = code[i]
-    if (quote !== '"' && quote !== '\'') {
+    if (quote !== '"' && quote !== "'") {
       searchFrom = name.endIndex
       continue
     }
@@ -177,8 +168,7 @@ export function forEachQuotedClassModifier(
         j += 2
         continue
       }
-      if (code[j] === quote)
-        break
+      if (code[j] === quote) break
       j++
     }
 
@@ -270,12 +260,11 @@ function tokenize(str: string, callback: (token: string) => void): void {
 export function readBalancedJsxExpression(
   code: string,
   openIndex: number,
-): { content: string, endIndex: number } | null {
-  if (code[openIndex] !== '{')
-    return null
+): { content: string; endIndex: number } | null {
+  if (code[openIndex] !== '{') return null
 
   let depth = 0
-  let inQuote: '"' | '\'' | null = null
+  let inQuote: '"' | "'" | null = null
   let inTemplate = false
   let inLineComment = false
   let inBlockComment = false
@@ -285,8 +274,7 @@ export function readBalancedJsxExpression(
     const next = code[i + 1]
 
     if (inLineComment) {
-      if (ch === '\n')
-        inLineComment = false
+      if (ch === '\n') inLineComment = false
       continue
     }
 
@@ -303,8 +291,7 @@ export function readBalancedJsxExpression(
         i++
         continue
       }
-      if (ch === inQuote)
-        inQuote = null
+      if (ch === inQuote) inQuote = null
       continue
     }
 
@@ -319,14 +306,13 @@ export function readBalancedJsxExpression(
       }
       if (ch === '$' && next === '{') {
         const nested = readBalancedJsxExpression(code, i + 1)
-        if (!nested)
-          return null
+        if (!nested) return null
         i = nested.endIndex
       }
       continue
     }
 
-    if (ch === '"' || ch === '\'') {
+    if (ch === '"' || ch === "'") {
       inQuote = ch
       continue
     }
@@ -373,12 +359,8 @@ export function readBalancedJsxExpression(
  * composition Tailwind and UnoCSS use — not the individual `sm:` / `hover:`
  * pieces.
  */
-function buildModifiedClasses(
-  classes: string,
-  modifiers: string,
-): string[] {
-  if (!modifiers.trim())
-    return []
+function buildModifiedClasses(classes: string, modifiers: string): string[] {
+  if (!modifiers.trim()) return []
 
   const modifiedClassesArr: string[] = []
 
@@ -399,31 +381,29 @@ function isNonClassStringLiteral(
   literalEndExclusive: number,
 ): boolean {
   let before = literalStart - 1
-  while (before >= 0 && /\s/.test(expr.charAt(before)))
-    before--
+  while (before >= 0 && /\s/.test(expr.charAt(before))) before--
 
   if (before >= 0) {
     if (
-      (before >= 2 && expr.slice(before - 2, before + 1) === '===')
-      || (before >= 2 && expr.slice(before - 2, before + 1) === '!==')
-      || (before >= 1 && expr.slice(before - 1, before + 1) === '==')
-      || (before >= 1 && expr.slice(before - 1, before + 1) === '!=')
+      (before >= 2 && expr.slice(before - 2, before + 1) === '===') ||
+      (before >= 2 && expr.slice(before - 2, before + 1) === '!==') ||
+      (before >= 1 && expr.slice(before - 1, before + 1) === '==') ||
+      (before >= 1 && expr.slice(before - 1, before + 1) === '!=')
     ) {
       return true
     }
   }
 
   let after = literalEndExclusive
-  while (after < expr.length && /\s/.test(expr.charAt(after)))
-    after++
+  while (after < expr.length && /\s/.test(expr.charAt(after))) after++
 
   if (after < expr.length) {
     if (
-      expr.startsWith('===', after)
-      || expr.startsWith('!==', after)
-      || expr.startsWith('==', after)
-      || expr.startsWith('!=', after)
-      || expr.charAt(after) === '.'
+      expr.startsWith('===', after) ||
+      expr.startsWith('!==', after) ||
+      expr.startsWith('==', after) ||
+      expr.startsWith('!=', after) ||
+      expr.charAt(after) === '.'
     ) {
       return true
     }
@@ -451,14 +431,12 @@ function rewriteClassLiteralsInExpression(
 
   const emitModified = (classStr: string): string => {
     const modified = buildModifiedClasses(classStr, modifiers)
-    if (modified.length === 0)
-      return classStr
+    if (modified.length === 0) return classStr
 
     rewrote = true
     if (onClass) {
       for (const cls of modified) {
-        if (isTrackedGeneratedClass(cls))
-          onClass(cls)
+        if (isTrackedGeneratedClass(cls)) onClass(cls)
       }
     }
     return modified.join(' ')
@@ -472,8 +450,7 @@ function rewriteClassLiteralsInExpression(
     if (ch === '/' && next === '/') {
       const start = i
       i += 2
-      while (i < expr.length && expr[i] !== '\n')
-        i++
+      while (i < expr.length && expr[i] !== '\n') i++
       result += expr.slice(start, i)
       continue
     }
@@ -492,7 +469,7 @@ function rewriteClassLiteralsInExpression(
       continue
     }
 
-    if (ch === '"' || ch === '\'') {
+    if (ch === '"' || ch === "'") {
       const quote = ch
       let j = i + 1
       let content = ''
@@ -502,8 +479,7 @@ function rewriteClassLiteralsInExpression(
           j += 2
           continue
         }
-        if (expr[j] === quote)
-          break
+        if (expr[j] === quote) break
         content += expr[j]
         j++
       }
@@ -587,8 +563,7 @@ function rewriteClassLiteralsInExpression(
         k++
       }
 
-      if (staticPart)
-        rebuilt += emitModified(staticPart)
+      if (staticPart) rebuilt += emitModified(staticPart)
       rebuilt += '`'
 
       result += rebuilt
@@ -624,8 +599,7 @@ function forEachJsxModifier(
       let from = searchFrom
       while (from < code.length) {
         const idx = code.indexOf(prefix, from)
-        if (idx === -1)
-          break
+        if (idx === -1) break
         if (isClassAttrNameBoundary(code, idx)) {
           if (foundAt === -1 || idx < foundAt) {
             foundAt = idx
@@ -637,8 +611,7 @@ function forEachJsxModifier(
       }
     }
 
-    if (foundAt === -1 || !foundPrefix)
-      break
+    if (foundAt === -1 || !foundPrefix) break
 
     const nameStart = foundAt + foundPrefix.length
     const name = readModifierName(code, nameStart)
@@ -648,16 +621,14 @@ function forEachJsxModifier(
     }
 
     let i = name.endIndex
-    while (i < code.length && /\s/.test(code[i]!))
-      i++
+    while (i < code.length && /\s/.test(code[i]!)) i++
 
     if (code[i] !== '=') {
       searchFrom = name.endIndex
       continue
     }
     i++
-    while (i < code.length && /\s/.test(code[i]!))
-      i++
+    while (i < code.length && /\s/.test(code[i]!)) i++
 
     if (code[i] !== '{') {
       // Quoted modifiers are handled separately; skip `="…"`.
@@ -686,7 +657,7 @@ function forEachJsxModifier(
  * Extracts classes from the code, separating base classes and modifier-derived classes.
  */
 function processClassString(classStr: string, allFileClasses: Set<string>): void {
-  tokenize(classStr, cls => allFileClasses.add(cls))
+  tokenize(classStr, (cls) => allFileClasses.add(cls))
 }
 
 /**
@@ -728,8 +699,7 @@ export function extractClasses(
     code,
     modifierPrefixesForRegex(classModifierRegex),
     ({ modifiers, classes }) => {
-      if (!modifiers.trim() || !classes)
-        return
+      if (!modifiers.trim() || !classes) return
       for (const modifiedClass of buildModifiedClasses(classes, modifiers)) {
         allFileClasses.add(modifiedClass)
         modifierDerivedClasses.add(modifiedClass)
@@ -747,12 +717,7 @@ export function extractClasses(
 }
 
 function isTrackedGeneratedClass(cls: string): boolean {
-  return Boolean(
-    cls
-    && !cls.endsWith(':')
-    && !cls.startsWith('\'')
-    && !cls.endsWith('\''),
-  )
+  return Boolean(cls && !cls.endsWith(':') && !cls.startsWith("'") && !cls.endsWith("'"))
 }
 
 /**
@@ -765,17 +730,15 @@ export function transformClassModifiers(
   classAttrName: string,
 ): string {
   const prefixes = modifierPrefixesForAttr(classAttrName)
-  const replacements: Array<{ start: number, end: number, text: string }> = []
+  const replacements: Array<{ start: number; end: number; text: string }> = []
 
   forEachQuotedClassModifier(code, prefixes, ({ fullStart, fullEnd, modifiers, classes }) => {
-    if (!modifiers?.trim())
-      return
+    if (!modifiers?.trim()) return
 
     const modifiedClassesArr = buildModifiedClasses(classes, modifiers)
 
     for (const cls of modifiedClassesArr) {
-      if (isTrackedGeneratedClass(cls))
-        generatedClassesSet.add(cls)
+      if (isTrackedGeneratedClass(cls)) generatedClassesSet.add(cls)
     }
 
     replacements.push({
@@ -788,21 +751,17 @@ export function transformClassModifiers(
   let withStaticModifiers = code
   for (let i = replacements.length - 1; i >= 0; i--) {
     const replacement = replacements[i]
-    if (!replacement)
-      continue
-    withStaticModifiers = withStaticModifiers.slice(0, replacement.start)
-      + replacement.text
-      + withStaticModifiers.slice(replacement.end)
+    if (!replacement) continue
+    withStaticModifiers =
+      withStaticModifiers.slice(0, replacement.start) +
+      replacement.text +
+      withStaticModifiers.slice(replacement.end)
   }
 
   // classModifierRegex retained for API compatibility (language detection in callers).
   void classModifierRegex
 
-  return transformJsxExpressionModifiers(
-    withStaticModifiers,
-    generatedClassesSet,
-    classAttrName,
-  )
+  return transformJsxExpressionModifiers(withStaticModifiers, generatedClassesSet, classAttrName)
 }
 
 /**
@@ -815,22 +774,16 @@ function transformJsxExpressionModifiers(
   generatedClassesSet: Set<string>,
   classAttrName: string,
 ): string {
-  const replacements: Array<{ start: number, end: number, text: string }> = []
+  const replacements: Array<{ start: number; end: number; text: string }> = []
 
   forEachJsxModifier(code, ({ fullStart, fullEnd, modifiers, expression }) => {
-    if (!modifiers.trim())
-      return
+    if (!modifiers.trim()) return
 
-    const rewritten = rewriteClassLiteralsInExpression(
-      expression,
-      modifiers,
-      (cls) => {
-        generatedClassesSet.add(cls)
-      },
-    )
+    const rewritten = rewriteClassLiteralsInExpression(expression, modifiers, (cls) => {
+      generatedClassesSet.add(cls)
+    })
 
-    if (rewritten === null)
-      return
+    if (rewritten === null) return
 
     replacements.push({
       start: fullStart,
@@ -839,18 +792,14 @@ function transformJsxExpressionModifiers(
     })
   })
 
-  if (replacements.length === 0)
-    return code
+  if (replacements.length === 0) return code
 
   // Apply from the end so earlier offsets stay valid.
   let result = code
   for (let i = replacements.length - 1; i >= 0; i--) {
     const replacement = replacements[i]
-    if (!replacement)
-      continue
-    result = result.slice(0, replacement.start)
-      + replacement.text
-      + result.slice(replacement.end)
+    if (!replacement) continue
+    result = result.slice(0, replacement.start) + replacement.text + result.slice(replacement.end)
   }
   return result
 }
@@ -863,27 +812,25 @@ interface ParsedClassAttr {
 }
 
 function isClassAttrNameBoundary(code: string, index: number): boolean {
-  if (index <= 0)
-    return true
+  if (index <= 0) return true
   const prev = code[index - 1]
-  return prev !== ':' && !((prev >= 'a' && prev <= 'z')
-    || (prev >= 'A' && prev <= 'Z')
-    || (prev >= '0' && prev <= '9')
-    || prev === '_')
+  return (
+    prev !== ':' &&
+    !(
+      (prev >= 'a' && prev <= 'z') ||
+      (prev >= 'A' && prev <= 'Z') ||
+      (prev >= '0' && prev <= '9') ||
+      prev === '_'
+    )
+  )
 }
 
-function matchClassAttrAt(
-  code: string,
-  index: number,
-  attrName: string,
-): ParsedClassAttr | null {
-  const names = attrName === 'className' ? ['className', 'class'] as const : ['class'] as const
+function matchClassAttrAt(code: string, index: number, attrName: string): ParsedClassAttr | null {
+  const names = attrName === 'className' ? (['className', 'class'] as const) : (['class'] as const)
 
   for (const name of names) {
-    if (!code.startsWith(`${name}=`, index))
-      continue
-    if (!isClassAttrNameBoundary(code, index))
-      continue
+    if (!code.startsWith(`${name}=`, index)) continue
+    if (!isClassAttrNameBoundary(code, index)) continue
 
     const valueIndex = index + name.length + 1
     const valueCh = code[valueIndex]
@@ -895,12 +842,10 @@ function matchClassAttrAt(
           j += 2
           continue
         }
-        if (code[j] === '"')
-          break
+        if (code[j] === '"') break
         j++
       }
-      if (j >= code.length)
-        return null
+      if (j >= code.length) return null
       return {
         start: index,
         end: j + 1,
@@ -910,8 +855,7 @@ function matchClassAttrAt(
 
     if (valueCh === '{') {
       const balanced = readBalancedJsxExpression(code, valueIndex)
-      if (!balanced)
-        return null
+      if (!balanced) return null
       return {
         start: index,
         end: balanced.endIndex + 1,
@@ -923,10 +867,97 @@ function matchClassAttrAt(
   return null
 }
 
-function mergeParsedClassAttrs(
-  attrs: ParsedClassAttr[],
-  attrName: string,
-): string {
+interface ClassExprFlags {
+  hasTopLevelTernary: boolean
+  hasTopLevelAndOrNullish: boolean
+}
+
+function scanClassJsxExpr(expr: string): ClassExprFlags {
+  let quote: '"' | "'" | '`' | null = null
+  let paren = 0
+  let brace = 0
+  let bracket = 0
+  let hasTopLevelTernary = false
+  let hasTopLevelAndOrNullish = false
+
+  for (let i = 0; i < expr.length; i++) {
+    const ch = expr[i]!
+    const next = expr[i + 1]
+
+    if (quote) {
+      if (ch === '\\') {
+        i++
+        continue
+      }
+      if (ch === quote) quote = null
+      continue
+    }
+
+    if (ch === '"' || ch === "'" || ch === '`') {
+      quote = ch
+      continue
+    }
+
+    if (ch === '/' && next === '/') {
+      while (i < expr.length && expr[i] !== '\n') i++
+      continue
+    }
+
+    if (ch === '/' && next === '*') {
+      i += 2
+      while (i + 1 < expr.length && !(expr[i] === '*' && expr[i + 1] === '/')) i++
+      i++
+      continue
+    }
+
+    if (ch === '(') {
+      paren++
+      continue
+    }
+    if (ch === ')') {
+      paren = Math.max(0, paren - 1)
+      continue
+    }
+    if (ch === '{') {
+      brace++
+      continue
+    }
+    if (ch === '}') {
+      brace = Math.max(0, brace - 1)
+      continue
+    }
+    if (ch === '[') {
+      bracket++
+      continue
+    }
+    if (ch === ']') {
+      bracket = Math.max(0, bracket - 1)
+      continue
+    }
+
+    if (paren !== 0 || brace !== 0 || bracket !== 0) continue
+
+    if (ch === '&' && next === '&') hasTopLevelAndOrNullish = true
+    else if (ch === '?' && next === '?') hasTopLevelAndOrNullish = true
+    else if (ch === '?' && next !== '.') hasTopLevelTernary = true
+  }
+
+  return { hasTopLevelTernary, hasTopLevelAndOrNullish }
+}
+
+function interpolateClassJsxExpr(expr: string): string {
+  if (expr.startsWith('`') && expr.endsWith('`')) return expr.slice(1, -1)
+
+  const { hasTopLevelTernary, hasTopLevelAndOrNullish } = scanClassJsxExpr(expr)
+
+  // String-literal ternaries are always truthy; `|| ''` is TS2872.
+  // Keep coercion for `cond && 'class'` and for values that may be falsy.
+  if (hasTopLevelTernary && !hasTopLevelAndOrNullish) return `\${${expr}}`
+
+  return `\${(${expr}) || ''}`
+}
+
+function mergeParsedClassAttrs(attrs: ParsedClassAttr[], attrName: string): string {
   const staticClasses: string[] = []
   const jsxExprs: string[] = []
 
@@ -936,19 +967,16 @@ function mergeParsedClassAttrs(
       continue
     }
 
-    if (!attr.jsxValue)
-      continue
+    if (!attr.jsxValue) continue
 
     const currentJsx = attr.jsxValue.trim()
-    if (!currentJsx)
-      continue
+    if (!currentJsx) continue
 
     if (currentJsx.startsWith('`') && currentJsx.endsWith('`')) {
       const inner = currentJsx.slice(1, -1)
       if (!inner.includes('${')) {
         const literalContent = inner.trim()
-        if (literalContent)
-          staticClasses.push(literalContent)
+        if (literalContent) staticClasses.push(literalContent)
         continue
       }
     }
@@ -959,24 +987,15 @@ function mergeParsedClassAttrs(
   const combinedStatic = staticClasses.join(' ').trim()
 
   if (jsxExprs.length > 0) {
-    if (jsxExprs.length === 1 && !combinedStatic)
-      return `${attrName}={${jsxExprs[0]}}`
+    if (jsxExprs.length === 1 && !combinedStatic) return `${attrName}={${jsxExprs[0]}}`
 
-    const dynamicParts = jsxExprs.map((expr) => {
-      if (expr.startsWith('`') && expr.endsWith('`'))
-        return expr.slice(1, -1)
-      // Coerce falsy runtime values (e.g. `cond && 'class'`) so template
-      // interpolation does not stringify `false` into the class list.
-      return `\${(${expr}) || ''}`
-    }).join(' ')
+    const dynamicParts = jsxExprs.map(interpolateClassJsxExpr).join(' ')
 
-    if (combinedStatic)
-      return `${attrName}={\`${combinedStatic} ${dynamicParts}\`}`
+    if (combinedStatic) return `${attrName}={\`${combinedStatic} ${dynamicParts}\`}`
 
     return `${attrName}={\`${dynamicParts}\`}`
   }
-  if (combinedStatic)
-    return `${attrName}="${combinedStatic}"`
+  if (combinedStatic) return `${attrName}="${combinedStatic}"`
 
   if (process.env.NODE_ENV !== 'test') {
     console.warn('No classes found in class attribute group')
@@ -984,21 +1003,13 @@ function mergeParsedClassAttrs(
   return ''
 }
 
-function removeAttrWithLeadingWhitespace(
-  attrs: string,
-  start: number,
-  end: number,
-): string {
+function removeAttrWithLeadingWhitespace(attrs: string, start: number, end: number): string {
   let from = start
-  while (from > 0 && /\s/.test(attrs.charAt(from - 1)))
-    from--
+  while (from > 0 && /\s/.test(attrs.charAt(from - 1))) from--
   return attrs.slice(0, from) + attrs.slice(end)
 }
 
-function mergeAttrsInStartTag(
-  attrs: string,
-  attrName: string,
-): string | null {
+function mergeAttrsInStartTag(attrs: string, attrName: string): string | null {
   const matches: ParsedClassAttr[] = []
   let i = 0
 
@@ -1012,29 +1023,22 @@ function mergeAttrsInStartTag(
     i = match.end
   }
 
-  if (matches.length < 2)
-    return null
+  if (matches.length < 2) return null
 
   const merged = mergeParsedClassAttrs(matches, attrName)
   let nextAttrs = attrs
 
   for (let i = matches.length - 1; i >= 1; i--) {
     const match = matches[i]
-    if (!match)
-      continue
+    if (!match) continue
     nextAttrs = removeAttrWithLeadingWhitespace(nextAttrs, match.start, match.end)
   }
 
   const first = matches[0]
-  if (!first)
-    return nextAttrs
+  if (!first) return nextAttrs
 
   if (merged) {
-    return (
-      nextAttrs.slice(0, first.start)
-      + merged
-      + nextAttrs.slice(first.end)
-    )
+    return nextAttrs.slice(0, first.start) + merged + nextAttrs.slice(first.end)
   }
 
   return removeAttrWithLeadingWhitespace(nextAttrs, first.start, first.end)
@@ -1056,8 +1060,7 @@ function findStartTagClose(code: string, from: number): number | null {
         i++
         continue
       }
-      if (ch === quote)
-        quote = null
+      if (ch === quote) quote = null
       continue
     }
 
@@ -1085,8 +1088,7 @@ function findStartTagClose(code: string, from: number): number | null {
       braceDepth = 1
       continue
     }
-    if (ch === '>')
-      return i
+    if (ch === '>') return i
   }
 
   return null
@@ -1118,12 +1120,10 @@ export function mergeClassAttributes(code: string, attrName: string): string {
         // HTML comment: must end at `-->`, not the first `>` inside the body.
         const close = code.indexOf('-->', lt + 4)
         end = close === -1 ? -1 : close + 2
-      }
-      else if (next === '!' && code.startsWith('[CDATA[', lt + 2)) {
+      } else if (next === '!' && code.startsWith('[CDATA[', lt + 2)) {
         const close = code.indexOf(']]>', lt + 9)
         end = close === -1 ? -1 : close + 2
-      }
-      else {
+      } else {
         end = code.indexOf('>', lt + 1)
       }
 
@@ -1173,12 +1173,32 @@ export function mergeClassAttributes(code: string, attrName: string): string {
     const nextAttrs = mergeAttrsInStartTag(attrs, attrName)
     if (nextAttrs === null) {
       result += code.slice(lt, closeIdx + 1)
-    }
-    else {
+    } else {
       result += `<${tagName}${nextAttrs}${end}`
     }
     cursor = closeIdx + 1
   }
 
   return result
+}
+
+/** Extensions rewritten for TypeScript / Vite JSX parsing. */
+const JSX_REWRITE_EXTENSIONS = /\.(?:[mc]?tsx|[mc]?jsx)$/i
+
+/** True when a file path should get UseClassy JSX rewriting. */
+export function shouldRewriteJsxFile(fileName: string): boolean {
+  if (fileName.includes('node_modules')) return false
+  return JSX_REWRITE_EXTENSIONS.test(fileName)
+}
+
+/**
+ * Rewrites React UseClassy modifier attributes so TSX/JSX parsers accept the file.
+ * Same pipeline as the Vite dep-scan hook and the TypeScript language plugin.
+ */
+export function rewriteJsxForTypeScript(code: string): string {
+  if (!code.includes('className:') && !code.includes('class:')) return code
+
+  const classes = new Set<string>()
+  const withMods = transformClassModifiers(code, classes, REACT_CLASS_MODIFIER_REGEX, 'className')
+  return mergeClassAttributes(withMods, 'className')
 }

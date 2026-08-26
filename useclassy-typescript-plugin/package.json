@@ -1,0 +1,8 @@
+{
+  "name": "useclassy-typescript-plugin",
+  "version": "4.0.0",
+  "private": true,
+  "description": "tsserver language plugin for UseClassy React modifier attributes",
+  "main": "index.cjs",
+  "types": "../dist/typescript-plugin.d.ts"
+}
