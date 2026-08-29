@@ -22,7 +22,7 @@
     "noFallthroughCasesInSwitch": true,
     "noUncheckedSideEffectImports": true,
 
-    "plugins": [{ "name": "useclassy-typescript-plugin" }],
+    "plugins": [{ "name": "vite-plugin-useclassy/typescript-plugin" }],
 
     /* Path Aliases */
     "baseUrl": ".",

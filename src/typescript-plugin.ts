@@ -69,7 +69,7 @@ function createUseClassyLanguageServicePlugin(
   patchHostForUseClassy(ts, info.languageServiceHost)
 
   info.project.projectService.logger.info(
-    '[useclassy-typescript-plugin] loaded',
+    '[vite-plugin-useclassy/typescript-plugin] loaded',
   )
 
   return createLanguageServiceProxy(info.languageService)

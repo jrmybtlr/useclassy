@@ -128,12 +128,23 @@ Leave expressions without string literals unchanged (e.g. `className:hover={hove
 <input class="border" class:dark:focus="ring-sky-400" class:focus="outline-none ring-2" />
 ```
 
-## Unsupported arbitrary variant prefix
+## Arbitrary variants as modifiers
 
-Keep arbitrary variants in the base attribute because their prefix cannot be used as an attribute name:
+Use bracket-aware attribute names for arbitrary variants (including `=` inside `[…]`):
 
 ```html
-<ul class="space-y-2 [&>*]:rounded" class:hover="bg-zinc-50">
+<ul class="space-y-2" class:[&>*]="rounded" class:data-[state=open]="block" class:hover="bg-zinc-50">
+  ...
+</ul>
+```
+
+```tsx
+<ul
+  className="space-y-2"
+  className:[&>*]="rounded"
+  className:data-[state=open]="block"
+  className:hover="bg-zinc-50"
+>
   ...
 </ul>
 ```

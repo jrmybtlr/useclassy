@@ -544,7 +544,7 @@ describe('runInitSetup react TypeScript plugin', () => {
     expect(result.messages.some((m) => m.includes('UseClassy TS plugin'))).toBe(true)
   })
 
-  it('recommends useclassy.useclassy in .vscode/extensions.json', () => {
+  it('does not write Marketplace extension recommendations yet', () => {
     const dir = tempDir()
     fs.writeFileSync(path.join(dir, 'package.json'), JSON.stringify({ name: 'app' }), 'utf-8')
     fs.writeFileSync(
@@ -555,11 +555,28 @@ describe('runInitSetup react TypeScript plugin', () => {
 
     const result = runInitSetup({ cwd: dir, language: 'react', dryRun: false })
 
-    expect(result.vscodeExtensions).toContain('extensions.json')
-    const parsed = JSON.parse(
-      fs.readFileSync(path.join(dir, '.vscode', 'extensions.json'), 'utf-8'),
-    ) as { recommendations: string[] }
-    expect(parsed.recommendations).toContain(USECLASSY_VSCODE_EXTENSION_ID)
+    expect(result.vscodeExtensions).toBeUndefined()
+    expect(fs.existsSync(path.join(dir, '.vscode', 'extensions.json'))).toBe(false)
+    expect(
+      result.messages.some((m) => m.includes('not on the Marketplace yet')),
+    ).toBe(true)
+  })
+
+  it('sets tsserver pluginPaths to ./node_modules for React', () => {
+    const dir = tempDir()
+    fs.writeFileSync(path.join(dir, 'package.json'), JSON.stringify({ name: 'app' }), 'utf-8')
+    fs.writeFileSync(
+      path.join(dir, 'tsconfig.json'),
+      JSON.stringify({ compilerOptions: { jsx: 'react-jsx' } }, null, 2),
+      'utf-8',
+    )
+
+    runInitSetup({ cwd: dir, language: 'react', dryRun: false })
+
+    const settings = JSON.parse(
+      fs.readFileSync(path.join(dir, '.vscode', 'settings.json'), 'utf-8'),
+    ) as { 'js/ts.tsserver.pluginPaths': string[] }
+    expect(settings['js/ts.tsserver.pluginPaths']).toEqual(['./node_modules'])
   })
 
   it('extends tsconfig.app.json from empty solution tsconfig when language is react', () => {

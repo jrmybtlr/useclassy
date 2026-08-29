@@ -229,7 +229,7 @@
               <code>
                 <div>{</div>
                 <div class="ml-4">"compilerOptions": {</div>
-                <div class="ml-8 text-white">"plugins": [{ "name": "useclassy-typescript-plugin" }]</div>
+                <div class="ml-8 text-white">"plugins": [{ "name": "vite-plugin-useclassy/typescript-plugin" }]</div>
                 <div class="ml-4">}</div>
                 <div>}</div>
               </code>
@@ -540,7 +540,7 @@ const intelCopy = `{
 
 const tsPluginCopy = `{
   "compilerOptions": {
-    "plugins": [{ "name": "useclassy-typescript-plugin" }]
+    "plugins": [{ "name": "vite-plugin-useclassy/typescript-plugin" }]
   }
 }
 `

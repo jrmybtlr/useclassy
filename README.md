@@ -71,7 +71,7 @@ For editor TypeScript diagnostics, add the language plugin (React `init` does th
 ```json
 {
   "compilerOptions": {
-    "plugins": [{ "name": "useclassy-typescript-plugin" }]
+    "plugins": [{ "name": "vite-plugin-useclassy/typescript-plugin" }]
   }
 }
 ```
@@ -89,7 +89,7 @@ Keep `build` on `tsc -p tsconfig.node.json && vite build` so CLI `tsc` does not 
 
 Use the workspace TypeScript version in VS Code/Cursor (`js/ts.tsdk.path`: `node_modules/typescript/lib`, `js/ts.tsserver.useSyntaxServer`: `never`, enable “Use Workspace Version”). Oxlint and ESLint still parse source text directly, so keep smoke-demo `App.tsx` files ignored unless you add a separate ESLint preprocessor.
 
-The TypeScript plugin only affects diagnostics. For syntax highlighting of `className:@md`, `className:group-hover/item`, and arbitrary variants, install the UseClassy editor extension (`useclassy.useclassy`; React `init` recommends it in `.vscode/extensions.json`). From this repo: `code --install-extension ./vscode-useclassy` (or copy to `~/.cursor/extensions/useclassy.useclassy-0.1.0`), then reload — see [vscode-useclassy/README.md](vscode-useclassy/README.md).
+The TypeScript plugin only affects diagnostics. For syntax highlighting of `className:@md`, `className:group-hover/item`, and arbitrary variants, sideload the UseClassy editor extension from this repo (`code --install-extension ./vscode-useclassy`, or copy to `~/.cursor/extensions/useclassy.useclassy-0.1.0`), then reload — see [vscode-useclassy/README.md](vscode-useclassy/README.md). It is not on the Marketplace yet.
 
 **Svelte.** Quoted modifiers transform; native directives do not. Put UseClassy before `@sveltejs/vite-plugin-svelte`.
 

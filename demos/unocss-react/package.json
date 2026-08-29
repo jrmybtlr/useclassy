@@ -19,7 +19,6 @@
     "@vitejs/plugin-react": "^6.0.3",
     "typescript": "^5.8.3",
     "unocss": "^66.0.0",
-    "useclassy-typescript-plugin": "workspace:*",
     "vite": "^8.1.0"
   }
 }

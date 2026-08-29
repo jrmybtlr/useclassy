@@ -61,7 +61,7 @@ export function patchVsCodeSettings(
     settings['js/ts.tsserver.useSyntaxServer'] = 'never'
     settings['js/ts.tsserver.pluginPaths'] = mergePluginPaths(
       settings['js/ts.tsserver.pluginPaths'] ?? settings['typescript.tsserver.pluginPaths'],
-      ['./node_modules', './useclassy-typescript-plugin'],
+      ['./node_modules'],
     )
     // Drop deprecated typescript.* aliases Cursor still warns about.
     delete settings['typescript.tsdk']
@@ -125,80 +125,33 @@ export function mergeExtensionRecommendations(existing: unknown, additions: stri
 }
 
 /**
- * Recommend the UseClassy editor extension so `className:@md` (and similar)
- * highlight as normal JSX attributes instead of invalid.illegal.
+ * Marketplace extension is not published yet — do not write recommendations.
+ * Keep helpers (`USECLASSY_VSCODE_EXTENSION_ID`, `mergeExtensionRecommendations`)
+ * for when `useclassy.useclassy` ships. Consumers sideload from the repo
+ * (`code --install-extension ./vscode-useclassy`).
  */
 export function patchVsCodeExtensions(
   cwd: string,
-  language: InitLanguage,
-  dryRun: boolean,
+  _language: InitLanguage,
+  _dryRun: boolean,
 ): FilePatchResult {
-  if (language !== 'react') {
-    return {
-      path: path.join(cwd, '.vscode', 'extensions.json'),
-      changed: false,
-    }
+  return {
+    path: path.join(cwd, '.vscode', 'extensions.json'),
+    changed: false,
   }
-
-  const dir = path.join(cwd, '.vscode')
-  const file = path.join(dir, 'extensions.json')
-  let config: { recommendations?: unknown } = {}
-
-  if (fs.existsSync(file)) {
-    try {
-      config = JSON.parse(fs.readFileSync(file, 'utf-8')) as {
-        recommendations?: unknown
-      }
-    } catch {
-      return {
-        path: file,
-        changed: false,
-        error:
-          'Could not parse .vscode/extensions.json; fix JSON or recommend useclassy.useclassy manually.',
-      }
-    }
-  }
-
-  const prev = config.recommendations
-  const next = mergeExtensionRecommendations(prev, [USECLASSY_VSCODE_EXTENSION_ID])
-
-  if (JSON.stringify(prev ?? []) === JSON.stringify(next) && fs.existsSync(file)) {
-    return { path: file, changed: false }
-  }
-
-  config.recommendations = next
-
-  if (!dryRun) {
-    if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true })
-    fs.writeFileSync(file, `${JSON.stringify(config, null, 2)}\n`, 'utf-8')
-  }
-
-  return { path: file, changed: true }
 }
 
 export function pushVsCodeExtensionsMessages(
   result: InitSetupResult,
   patch: FilePatchResult,
-  dryRun: boolean,
+  _dryRun: boolean,
 ): void {
   if (patch.error) {
     result.messages.push(`VS Code extensions: ${patch.error}`)
     return
   }
 
-  if (patch.changed === false && !fs.existsSync(patch.path) && !dryRun) {
-    // Non-react languages skip without writing.
-    return
-  }
-
-  const writeLabel = dryRun ? '[dry-run] Would write' : 'Wrote'
-
-  if (patch.changed) {
-    result.vscodeExtensions = patch.path
-    result.messages.push(`${writeLabel} ${patch.path} (recommend ${USECLASSY_VSCODE_EXTENSION_ID})`)
-    return
-  }
-
-  if (fs.existsSync(patch.path))
-    result.messages.push(`VS Code extensions: no changes (${patch.path})`)
+  result.messages.push(
+    'VS Code: UseClassy syntax highlighting is not on the Marketplace yet. From the UseClassy repo: code --install-extension ./vscode-useclassy (see vscode-useclassy/README.md).',
+  )
 }

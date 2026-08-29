@@ -7,7 +7,6 @@
   "js/ts.tsserver.useSyntaxServer": "never",
   "js/ts.tsserver.pluginPaths": [
     "node_modules",
-    "useclassy-typescript-plugin",
     "demos/react/node_modules",
     "demos/unocss-react/node_modules"
   ],

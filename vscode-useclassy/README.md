@@ -4,6 +4,8 @@ TextMate injection so React UseClassy modifiers highlight like normal JSX attrib
 
 Without this, the built-in TSX grammar treats names with `@`, `/`, or `[…]` as `invalid.illegal.attribute.tsx` (red italic). Simple namespaced forms like `className:hover` already tokenize correctly.
 
+**Not on the VS Code Marketplace yet.** Install from this repo (sideload) until it is published.
+
 ## Install (local)
 
 From the UseClassy repo root, either:

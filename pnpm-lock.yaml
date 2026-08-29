@@ -98,9 +98,6 @@ importers:
       typescript-eslint:
         specifier: ^8.62.1
         version: 8.62.1(eslint@9.39.4(jiti@2.7.0))(typescript@5.9.3)
-      useclassy-typescript-plugin:
-        specifier: workspace:*
-        version: link:useclassy-typescript-plugin
       vite:
         specifier: '>=7.3.2'
         version: 8.1.0(@types/node@24.0.7)(esbuild@0.28.1)(jiti@2.7.0)(terser@5.43.1)(yaml@2.9.0)
@@ -186,9 +183,6 @@ importers:
       typescript:
         specifier: ^5.9.3
         version: 5.9.3
-      useclassy-typescript-plugin:
-        specifier: workspace:*
-        version: link:../../useclassy-typescript-plugin
       vite:
         specifier: '>=7.3.2'
         version: 8.2.2(@types/node@24.0.7)(esbuild@0.28.1)(jiti@2.7.0)(terser@5.43.1)(yaml@2.9.0)
@@ -251,9 +245,6 @@ importers:
       unocss:
         specifier: ^66.0.0
         version: 66.7.5(vite@8.1.0(@types/node@24.0.7)(esbuild@0.28.1)(jiti@2.7.0)(terser@5.43.1)(yaml@2.9.0))
-      useclassy-typescript-plugin:
-        specifier: workspace:*
-        version: link:../../useclassy-typescript-plugin
       vite:
         specifier: '>=7.3.2'
         version: 8.1.0(@types/node@24.0.7)(esbuild@0.28.1)(jiti@2.7.0)(terser@5.43.1)(yaml@2.9.0)
@@ -297,8 +288,6 @@ importers:
       wrangler:
         specifier: ^4.59.1
         version: 4.105.0(@cloudflare/workers-types@4.20260630.1)
-
-  useclassy-typescript-plugin: {}
 
 packages:
 

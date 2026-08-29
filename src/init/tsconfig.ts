@@ -3,7 +3,7 @@ import path from 'path'
 
 import type { FilePatchResult, InitSetupResult } from './types'
 
-export const USECLASSY_TS_PLUGIN_NAME = 'useclassy-typescript-plugin'
+export const USECLASSY_TS_PLUGIN_NAME = 'vite-plugin-useclassy/typescript-plugin'
 
 const TSCONFIG_SOLUTION = 'tsconfig.json'
 const TSCONFIG_APP = 'tsconfig.app.json'

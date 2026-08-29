@@ -69,7 +69,7 @@ class:sm:hover="underline"
 - Put base utilities on `class` / `className`.
 - Vue / Blade / HTML: use `class:modifier="…"`.
 - React: prefer `className:modifier="…"` for static variants, including `className:@md`, `className:group-hover/item`, `className:[&>*]`, and `className:data-[state=open]` (UseClassy rewrites before JSX parse). For runtime conditions that still use string literals, `className:modifier={cond ? 'a' : 'b'}` is valid and will prefix those literals. Leave `className={…}` base expressions unchanged when they are unrelated.
-- React editor setup: add `compilerOptions.plugins: [{ "name": "useclassy-typescript-plugin" }]`, extend `tsconfig.app.json` from `tsconfig.json`, set `js/ts.experimental.useTsgo` to `false`, `js/ts.tsserver.useSyntaxServer` to `never`, and select the workspace TypeScript version in VS Code/Cursor. Oxlint/ESLint still parse source text and may need file ignores on smoke demos.
+- React editor setup: add `compilerOptions.plugins: [{ "name": "vite-plugin-useclassy/typescript-plugin" }]`, extend `tsconfig.app.json` from `tsconfig.json`, set `js/ts.experimental.useTsgo` to `false`, `js/ts.tsserver.useSyntaxServer` to `never`, and select the workspace TypeScript version in VS Code/Cursor. Oxlint/ESLint still parse source text and may need file ignores on smoke demos.
 - Vue: leave `:class` and other dynamic bindings unchanged.
 - **Svelte**: only transform quoted UseClassy modifiers. Native `class:active={cond}` and `class:active` stay untouched — do not rewrite those.
 - Do not move conditional base utilities into modifier attributes on Vue/Svelte/Blade; UseClassy modifiers represent Tailwind variants. React is the exception for `className:mod={…}` expression values.
