@@ -22,9 +22,5 @@
     "noFallthroughCasesInSwitch": true
   },
   "include": ["src"],
-  "references": [
-    { "path": "./tsconfig.node.json" },
-    { "path": "./demos/react" },
-    { "path": "./demos/unocss-react" }
-  ]
+  "references": [{ "path": "./tsconfig.node.json" }]
 } 
