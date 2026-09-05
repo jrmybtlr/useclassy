@@ -162,12 +162,15 @@
               </span>
             </label>
             <Callout v-if="isReactSetup">
-              Also patches
-              <span class="font-mono text-neutral-200">tsconfig</span>
-              and editor TypeScript settings so
-              <span class="font-mono text-neutral-200">className:hover</span>
-              typechecks. Manual setup has those files if you skip init.
+              <span class="font-medium text-neutral-200">React only.</span>
+              <span class="font-mono text-neutral-200">init</span>
+              writes Vite and Tailwind/Uno settings for every framework. For React it also adds
+              optional editor config under
+              <span class="font-mono text-neutral-200">.vscode/</span>
+              (tsserver plugin paths). Pick your editor in the tabs below for syntax and diagnostics
+              setup.
             </Callout>
+            <EditorExtensionInstallBlock />
           </Step>
 
           <Step
@@ -206,7 +209,8 @@
             </CodeBlock>
             <Callout variant="tip">
               Place it before
-              <span v-if="isReactSetup" class="font-mono text-neutral-200">@vitejs/plugin-react</span
+              <span v-if="isReactSetup" class="font-mono text-neutral-200"
+                >@vitejs/plugin-react</span
               ><span v-if="isReactSetup">, </span>
               Tailwind, UnoCSS, or other CSS plugins. UseClassy rewrites
               <span class="font-mono text-neutral-200">{{
@@ -221,15 +225,31 @@
           <Step
             v-if="setupMode === 'manual' && isReactSetup"
             :number="3"
-            title="TypeScript"
-            description="Only needed for .jsx and .tsx files, so the editor can parse className:hover before tsserver does."
+            title="Editor (React)"
+            badge="Optional"
+            description="TypeScript diagnostics and syntax highlighting — not required for dev or build once the Vite plugin is in place."
             wide-description
           >
+            <Callout>
+              UseClassy does not require VS Code. The Vite plugin already rewrites
+              <span class="font-mono text-neutral-200">className:hover</span>
+              at dev and build time in any editor. The steps below are optional: they clean up
+              TypeScript diagnostics in the IDE and syntax coloring for exotic modifier names.
+            </Callout>
+            <p class="text-base text-neutral-400" class:sm="text-sm">
+              <span class="font-medium text-neutral-300">Diagnostics.</span>
+              Add the language plugin so tsserver parses modifier attributes before reporting
+              errors. Any editor whose TypeScript server loads
+              <span class="font-mono text-neutral-200">compilerOptions.plugins</span>
+              can use this — see the editor tabs below for Neovim and Zed.
+            </p>
             <CodeBlock filename="tsconfig.app.json" :copy-text="tsPluginCopy">
               <code>
                 <div>{</div>
                 <div class="ml-4">"compilerOptions": {</div>
-                <div class="ml-8 text-white">"plugins": [{ "name": "vite-plugin-useclassy/typescript-plugin" }]</div>
+                <div class="ml-8 text-white">
+                  "plugins": [{ "name": "vite-plugin-useclassy/typescript-plugin" }]
+                </div>
                 <div class="ml-4">}</div>
                 <div>}</div>
               </code>
@@ -240,9 +260,7 @@
                 <div class="ml-4 text-white">"js/ts.tsdk.path": "node_modules/typescript/lib",</div>
                 <div class="ml-4 text-white">"js/ts.tsdk.promptToUseWorkspaceVersion": true,</div>
                 <div class="ml-4 text-white">"js/ts.tsserver.useSyntaxServer": "never",</div>
-                <div class="ml-4 text-white">
-                  "js/ts.tsserver.pluginPaths": ["./node_modules"]
-                </div>
+                <div class="ml-4 text-white">"js/ts.tsserver.pluginPaths": ["./node_modules"]</div>
                 <div>}</div>
               </code>
             </CodeBlock>
@@ -252,15 +270,27 @@
               is
               <span class="font-mono text-neutral-200">"files": []</span>
               plus a reference to
-              <span class="font-mono text-neutral-200">tsconfig.app.json</span>,
-              change it to
+              <span class="font-mono text-neutral-200">tsconfig.app.json</span>, change it to
               <span class="font-mono text-neutral-200">"extends": "./tsconfig.app.json"</span>
               so tsserver loads the plugin. Keep
               <span class="font-mono text-neutral-200">build</span>
               on
-              <span class="font-mono text-neutral-200">tsc -p tsconfig.node.json</span>.
-              Use the workspace TypeScript version in VS Code/Cursor.
+              <span class="font-mono text-neutral-200">tsc -p tsconfig.node.json</span>. In VS
+              Code–compatible editors, use the workspace TypeScript version and disable the
+              syntax-only TS server so the plugin runs (<span class="font-mono text-neutral-200"
+                >js/ts.tsserver.useSyntaxServer</span
+              >: <span class="font-mono text-neutral-200">never</span>).
             </Callout>
+            <p class="text-base text-neutral-400" class:sm="text-sm">
+              <span class="font-medium text-neutral-300">Syntax highlighting.</span>
+              Optional — pick your editor below. Simple names like
+              <span class="font-mono text-neutral-200">className:hover</span>
+              already tokenize; sideloading fixes red “illegal attribute” styling on
+              <span class="font-mono text-neutral-200">className:@md</span>,
+              <span class="font-mono text-neutral-200">className:group-hover/item</span>, and
+              bracket variants in VS Code and Cursor.
+            </p>
+            <EditorExtensionInstallBlock />
           </Step>
 
           <Step
@@ -323,9 +353,11 @@
                 <div>{</div>
                 <div class="ml-4">"tailwindCSS.classAttributes": [</div>
                 <div class="ml-8">"class",</div>
-                <div class="ml-8 text-white">"class:[\\w:/@-]*",</div>
-                <div class="ml-8">"className",</div>
-                <div class="ml-8 text-white">"className:[\\w:/@-]*"</div>
+                <div class="ml-8 text-white">"class:[\\w:/@\\[\\]\\-=&*>.]*",</div>
+                <div v-if="isReactSetup" class="ml-8">"className",</div>
+                <div v-if="isReactSetup" class="ml-8 text-white">
+                  "className:[\\w:/@\\[\\]\\-=&*>.]*"
+                </div>
                 <div class="ml-4">]</div>
                 <div>}</div>
               </code>
@@ -528,15 +560,25 @@ export default defineConfig({
 });
 `
 
-const intelCopy = `{
+const intelCopy = computed(() =>
+  isReactSetup.value
+    ? `{
   "tailwindCSS.classAttributes": [
     "class",
-    "class:[\\\\w:/@-]*",
+    "class:[\\\\w:/@\\\\[\\\\]\\\\-=&*>.]*",
     "className",
-    "className:[\\\\w:/@-]*"
+    "className:[\\\\w:/@\\\\[\\\\]\\\\-=&*>.]*"
   ]
 }
 `
+    : `{
+  "tailwindCSS.classAttributes": [
+    "class",
+    "class:[\\\\w:/@\\\\[\\\\]\\\\-=&*>.]*"
+  ]
+}
+`,
+)
 
 const tsPluginCopy = `{
   "compilerOptions": {
