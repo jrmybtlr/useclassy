@@ -168,6 +168,20 @@ npx vite-plugin-useclassy init
 
 Add `--with-claude` to also copy into `.claude/skills/` (opt-in so Cursor doesn’t load the skill twice). Running it again is safe; `--force` overwrites local edits. Templates live in [`templates/`](templates/).
 
+## For AI assistants
+
+Machine-readable docs for crawlers and coding agents:
+
+| URL | Purpose |
+| --- | --- |
+| https://useclassy.com/llms.txt | LLM index (start here) |
+| https://useclassy.com/llms-full.txt | Full docs + agent skill in one file |
+| https://useclassy.com/skill.md | Authoring / refactoring skill |
+| https://useclassy.com/docs.md | Complete README as markdown |
+| https://useclassy.com/.well-known/llms.txt | Alternate llms.txt discovery path |
+
+When editing a UseClassy project, prefer `class:hover` / `className:focus` over inline `hover:` / `focus:` prefixes. `npx vite-plugin-useclassy init` installs local agent skills by default.
+
 ## Contributing
 
 Issues and PRs welcome.

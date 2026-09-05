@@ -467,15 +467,51 @@ useMarkdownAlternate('/index.md')
 
 useSeoMeta({
   title: 'UseClassy',
-  description: 'Variant attributes for Tailwind and UnoCSS. One state per line.',
+  description: 'Write Tailwind and UnoCSS variants as class:hover and className:focus attributes. Vite plugin with no runtime — readable utility CSS for humans and coding agents.',
   ogTitle: 'UseClassy',
-  ogDescription: 'Variant attributes for Tailwind and UnoCSS. One state per line.',
+  ogDescription: 'Write Tailwind and UnoCSS variants as class:hover and className:focus attributes. Vite plugin with no runtime — readable utility CSS for humans and coding agents.',
   ogImage: 'https://assets.useclassy.com/og-image.png',
   ogUrl: 'https://useclassy.com',
   twitterTitle: 'UseClassy',
-  twitterDescription: 'Variant attributes for Tailwind and UnoCSS. One rewrite. Every engine.',
+  twitterDescription: 'Write Tailwind and UnoCSS variants as class:hover and className:focus attributes. Vite plugin with no runtime — readable utility CSS for humans and coding agents.',
   twitterImage: 'https://assets.useclassy.com/og-image-twitter.png',
   twitterCard: 'summary_large_image',
+})
+
+useHead({
+  link: [
+    { rel: 'alternate', type: 'text/markdown', href: '/llms.txt', title: 'llms.txt' },
+  ],
+  script: [
+    {
+      type: 'application/ld+json',
+      children: JSON.stringify({
+        '@context': 'https://schema.org',
+        '@type': 'SoftwareApplication',
+        name: 'UseClassy',
+        applicationCategory: 'DeveloperApplication',
+        operatingSystem: 'Any',
+        offers: {
+          '@type': 'Offer',
+          price: '0',
+          priceCurrency: 'USD',
+        },
+        description: 'Write Tailwind and UnoCSS variants as class:hover and className:focus attributes. Vite plugin with no runtime — readable utility CSS for humans and coding agents.',
+        url: 'https://useclassy.com',
+        downloadUrl: 'https://www.npmjs.com/package/vite-plugin-useclassy',
+        codeRepository: 'https://github.com/jrmybtlr/useclassy',
+        softwareVersion: '4.0.0',
+        keywords: [
+          'vite-plugin-useclassy',
+          'Tailwind CSS',
+          'UnoCSS',
+          'class:hover',
+          'className:focus',
+          'AI coding agents',
+        ],
+      }),
+    },
+  ],
 })
 
 const classExamples = {
