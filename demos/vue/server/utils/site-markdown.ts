@@ -100,5 +100,11 @@ ${docs.trim()}
 # Agent skill
 
 ${skillMarkdown.trim()}
+
+---
+
+# Skill examples
+
+${skillExamplesMarkdown.trim()}
 `
 }

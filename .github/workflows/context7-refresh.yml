@@ -69,11 +69,16 @@ jobs:
             add_llms_out="$(curl -sS -w "\n%{http_code}" -X POST "https://context7.com/api/v2/add/llmstxt" \
               -H "Content-Type: application/json" \
               -H "$auth_header" \
-              -d "{\"url\": \"${LLMS_TXT_URL}\"}" || true)"
+              -d "{\"url\": \"${LLMS_TXT_URL}\"}")"
             add_llms_body="$(printf '%s' "$add_llms_out" | sed '$d')"
             add_llms_code="$(printf '%s' "$add_llms_out" | tail -n1)"
             echo "Add llms.txt HTTP ${add_llms_code}"
             echo "$add_llms_body"
+
+            if [ "$add_llms_code" != "200" ] && [ "$add_llms_code" != "202" ] && [ "$add_llms_code" != "409" ]; then
+              echo "Failed to submit llms.txt to Context7."
+              exit 1
+            fi
 
             echo "Refreshing after submit..."
             refresh_out="$(refresh)"
