@@ -367,6 +367,9 @@ const setupMode = ref<'quick' | 'manual'>('quick')
 const cssEngine = ref<'tailwind' | 'unocss'>('tailwind')
 const packageManager = ref<'npm' | 'pnpm' | 'yarn'>('npm')
 const withSkills = ref(true)
+const {
+  public: { packageVersion },
+} = useRuntimeConfig()
 
 const packageManagerOptions = [
   { value: 'npm', label: 'npm' },
@@ -589,7 +592,7 @@ useHead({
         url: 'https://useclassy.com',
         downloadUrl: 'https://www.npmjs.com/package/vite-plugin-useclassy',
         codeRepository: 'https://github.com/jrmybtlr/useclassy',
-        softwareVersion: '4.0.0',
+        softwareVersion: packageVersion,
         keywords: [
           'vite-plugin-useclassy',
           'Tailwind CSS',

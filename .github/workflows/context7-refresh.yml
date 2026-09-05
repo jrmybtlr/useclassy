@@ -87,8 +87,7 @@ jobs:
             echo "Refresh HTTP ${refresh_code}"
             echo "$refresh_body"
 
-            if [ "$refresh_code" = "200" ] || [ "$refresh_code" = "202" ] || [ "$refresh_code" = "404" ]; then
-              # 404 right after submit can mean indexing has not finished yet.
+            if [ "$refresh_code" = "200" ] || [ "$refresh_code" = "202" ]; then
               echo "Context7 submit/refresh completed (indexing may still be in progress)."
               exit 0
             fi
