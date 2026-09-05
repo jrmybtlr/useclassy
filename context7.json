@@ -1,0 +1,30 @@
+{
+  "$schema": "https://context7.com/schema/context7.json",
+  "projectTitle": "UseClassy",
+  "description": "Vite plugin that rewrites class:hover and className:focus into Tailwind CSS and UnoCSS utilities. No runtime.",
+  "branch": "main",
+  "folders": [],
+  "excludeFolders": [
+    "demos",
+    "node_modules",
+    "dist",
+    "tasks",
+    "scripts",
+    ".github",
+    "coverage"
+  ],
+  "excludeFiles": [
+    "CHANGELOG.md",
+    "SECURITY.md",
+    "LICENSE",
+    "pnpm-lock.yaml"
+  ],
+  "rules": [
+    "Prefer class:hover / className:focus modifier attributes over inline hover: / focus: / sm: / md: prefixes on class or className.",
+    "Put UseClassy before Tailwind or UnoCSS in the Vite plugins array so rewritten utilities are visible to the CSS engine.",
+    "Vue, Svelte, Blade, and HTML use class:modifier=\"…\". React prefers className:modifier=\"…\" (class:… is also accepted).",
+    "Do not rewrite Vue :class, native Svelte class:name={cond} directives, or arbitrary variants such as [&>*]:mt-2 or data-[state=open]:block into UseClassy attributes.",
+    "class:sm:hover=\"underline\" emits sm:hover:underline only — the same composition as Tailwind/UnoCSS.",
+    "npx vite-plugin-useclassy init installs agent skills by default; pass --no-skills to skip."
+  ]
+}

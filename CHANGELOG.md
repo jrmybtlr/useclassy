@@ -1,6 +1,7 @@
 ## Unreleased
 
 ### Improvements
+- **docs:** Add `context7.json` and Context7 submission notes so MCP agents can index UseClassy.
 - **site:** Enrich AI SEO surfaces — richer `llms.txt`, public `/skill.md`, `.well-known/llms.txt`, `sitemap.xml`, and clearer npm discovery metadata.
 - **cli:** Install agent skill, Cursor rules, and `AGENTS.md` by default on `init`; opt out with `--no-skills`.
 - **agents:** Add an always-apply Cursor project rule and broaden the skill description trigger phrases so agents pick up UseClassy more reliably.

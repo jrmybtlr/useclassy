@@ -84,6 +84,7 @@ Do not rewrite Vue \`:class\`, native Svelte \`class:name={cond}\` directives, o
 - [Full documentation](${SITE}/llms-full.txt): Home plus the complete README in one file
 - [Sitemap](${SITE}/sitemap.xml): HTML and markdown routes
 - [Well-known llms.txt](${SITE}/.well-known/llms.txt): Alternate discovery path
+- [Context7](https://context7.com): MCP docs index (submit repo + this llms.txt)
 - [GitHub](${GITHUB}): Source code
 `
 

@@ -182,6 +182,18 @@ Machine-readable docs for crawlers and coding agents:
 
 When editing a UseClassy project, prefer `class:hover` / `className:focus` over inline `hover:` / `focus:` prefixes. `npx vite-plugin-useclassy init` installs local agent skills by default.
 
+### Context7
+
+[`context7.json`](context7.json) tells [Context7](https://context7.com) how to index this repo for MCP-powered coding agents.
+
+After this lands on `main`, submit the library (once) at [context7.com/add-library](https://context7.com/add-library):
+
+1. **GitHub repo:** `https://github.com/jrmybtlr/useclassy`
+2. **llms.txt:** `https://useclassy.com/llms.txt` (optional second source)
+3. Claim ownership when prompted so refresh/version settings stay under your account
+
+Refresh after releases if docs drift. Root markdown and `templates/useclassy-skill/` are the primary sources; demos and build artifacts are excluded.
+
 ## Contributing
 
 Issues and PRs welcome.
