@@ -26,8 +26,9 @@ npx vite-plugin-useclassy init
 | ---------------- | ------------ | ---------------------------------------------------------------------------------- |
 | `--language`     | `'vue'`      | `'vue'` \| `'react'` \| `'blade'` \| `'svelte'`                                    |
 | `--engine`       | auto-detect  | `'tailwind'` \| `'unocss'`; Tailwind wins if both are installed                    |
-| `--with-skills`  | `false`      | Agent skill, Cursor rules, and `AGENTS.md`                                         |
-| `--with-claude`  | `false`      | Also copy to `.claude/skills/` (requires `--with-skills`)                          |
+| `--with-skills`  | `true`       | Agent skill, Cursor rules, and `AGENTS.md` (default on)                            |
+| `--no-skills`    | —            | Skip agent skill / Cursor rules / `AGENTS.md`                                      |
+| `--with-claude`  | `false`      | Also copy to `.claude/skills/` (incompatible with `--no-skills`)                   |
 | `--force`        | `false`      | Overwrite locally edited skill files                                               |
 | `--dry-run`      | `false`      | Print planned edits                                                                |
 
@@ -152,15 +153,18 @@ Vue-only projects can omit the `className` entries. UnoCSS projects should use t
 
 ## Agent skill
 
+`init` installs agent resources by default so coding agents discover UseClassy syntax:
+
 ```bash
-npx vite-plugin-useclassy init --with-skills
+npx vite-plugin-useclassy init
+# skip agent files: npx vite-plugin-useclassy init --no-skills
 ```
 
-| Path                            | Used by                            |
-| ------------------------------- | ---------------------------------- |
-| `.agents/skills/useclassy/`     | Cursor, Codex, Copilot             |
-| `.cursor/rules/useclassy-*.mdc` | Cursor                             |
-| `AGENTS.md` (fenced block)      | Windsurf, Aider, Cline, and others |
+| Path                              | Used by                            |
+| --------------------------------- | ---------------------------------- |
+| `.agents/skills/useclassy/`       | Cursor, Codex, Copilot             |
+| `.cursor/rules/useclassy-*.mdc`   | Cursor (includes an always-on tip) |
+| `AGENTS.md` (fenced block)        | Windsurf, Aider, Cline, and others |
 
 Add `--with-claude` to also copy into `.claude/skills/` (opt-in so Cursor doesn’t load the skill twice). Running it again is safe; `--force` overwrites local edits. Templates live in [`templates/`](templates/).
 

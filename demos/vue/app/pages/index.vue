@@ -155,10 +155,11 @@
                 </span>
               </span>
               <span class="min-w-0 text-pretty">
-                <span class="font-medium text-neutral-200">With skills.</span>
-                Installs the UseClassy skill so Cursor, Codex, and Copilot keep writing
+                <span class="font-medium text-neutral-200">Agent skills.</span>
+                On by default so Cursor, Codex, and Copilot keep writing
                 <span class="font-mono text-neutral-200">class:hover</span>
-                instead of stuffing variants back into one string.
+                instead of stuffing variants back into one string. Turn off to pass
+                <span class="font-mono text-neutral-200">--no-skills</span>.
               </span>
             </label>
           </Step>
@@ -265,8 +266,8 @@
             v-if="setupMode === 'manual'"
             :number="cssEngine === 'tailwind' ? 5 : 4"
             title="Skills"
-            badge="Optional"
-            description="So Cursor, Codex, and Copilot keep writing class:hover."
+            badge="Default"
+            description="init installs agent skills by default so Cursor, Codex, and Copilot keep writing class:hover. Pass --no-skills to skip."
             wide-description
             last
           >
@@ -397,10 +398,10 @@ const quickInitTokens = computed((): CliToken[] => {
     { text: ' ', class: 'text-neutral-600' },
     { text: format, class: 'text-orange-300' },
   )
-  if (withSkills.value) {
+  if (!withSkills.value) {
     tokens.push(
       { text: ' ', class: 'text-neutral-600' },
-      { text: '--with-skills', class: 'text-amber-400' },
+      { text: '--no-skills', class: 'text-amber-400' },
     )
   }
   return tokens
@@ -414,8 +415,6 @@ const skillsInitTokens: CliToken[] = [
   { text: 'vite-plugin-useclassy', class: 'text-emerald-400' },
   space,
   { text: 'init', class: 'text-neutral-100' },
-  space,
-  { text: '--with-skills', class: 'text-amber-400' },
 ]
 
 const skillsInitCopy = skillsInitTokens.map((t) => t.text).join('')

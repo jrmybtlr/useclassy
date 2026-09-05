@@ -1,10 +1,12 @@
 ---
 name: useclassy
 description: >-
-  Write and refactor Vue, React, Svelte, Blade, and HTML markup using
-  vite-plugin-useclassy modifier attributes such as class:hover and
-  className:focus. Use when authoring UI, converting existing Tailwind variant
-  classes to UseClassy, or reviewing and fixing UseClassy markup.
+  Write and refactor Vue, React, Svelte, Blade, and HTML with vite-plugin-useclassy
+  (UseClassy) modifier attributes: class:hover, class:focus, class:sm, class:md,
+  class:dark, className:hover, className:focus, class:sm:hover, and similar.
+  Use when authoring UI, writing Tailwind or UnoCSS hover/focus/responsive/dark
+  variants, converting hover: focus: sm: md: prefixes into UseClassy attributes,
+  refactoring className variant tokens, or reviewing and fixing UseClassy markup.
 ---
 
 # Authoring with UseClassy
