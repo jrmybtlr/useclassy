@@ -35,8 +35,9 @@ function App() {
         <p className="max-w-xl text-sm text-zinc-400">
           Prefer <code className="text-zinc-200">className:hover</code> over
           attributify. UseClassy rewrites source before Uno’s Vite pipeline;
-          the HTML manifest is a filesystem backstop. Chained modifiers match
-          Uno variant composition.
+          the HTML manifest is a filesystem backstop. Also covers{" "}
+          <code className="text-zinc-200">@md</code>, named groups, arbitrary
+          variants, and single-quoted values.
         </p>
       </header>
 
@@ -166,13 +167,80 @@ function App() {
 
         <Case
           title="Chained modifier"
-          detail='className:sm:hover="underline" emits sm:hover:underline. Underline only when sm AND hover.'
+          detail="className:sm:hover emits sm:hover:underline. Underline only when sm AND hover."
         >
           <p
             className="rounded-lg border border-zinc-700 bg-zinc-900 px-5 py-3 text-zinc-100"
             className:sm:hover="underline"
           >
             Resize below/above sm, then hover.
+          </p>
+        </Case>
+
+        <Case
+          title="@md container query"
+          detail="className:@md — drag the box; padding/text grow when the container is wide."
+        >
+          <div className="@container resize-x overflow-auto w-48 min-w-40 max-w-full rounded-lg border border-dashed border-zinc-600">
+            <div
+              className="bg-zinc-900 p-2 text-xs text-zinc-500"
+              className:@md="p-6 text-base text-emerald-300"
+            >
+              Drag the right edge
+            </div>
+          </div>
+        </Case>
+
+        <Case
+          title="Named group"
+          detail='className:group-hover/item — hover the card (group/item).'
+        >
+          <div className="group/item rounded-lg border border-zinc-700 bg-zinc-900 p-4">
+            <p
+              className="rounded px-3 py-2 text-zinc-400 transition"
+              className:group-hover/item="bg-red-500 text-white"
+            >
+              Hover anywhere on this card
+            </p>
+          </div>
+        </Case>
+
+        <Case
+          title="Arbitrary child variant"
+          detail="className:[&>*] — each direct child gets the chip styles."
+        >
+          <div
+            className="rounded-lg border border-zinc-700 bg-zinc-900 p-4"
+            className:[&>*]="mt-2 block rounded bg-zinc-800 px-2 py-1 text-sm"
+          >
+            <span>first</span>
+            <span>second</span>
+            <span>third</span>
+          </div>
+        </Case>
+
+        <Case
+          title="Arbitrary data variant"
+          detail="className:data-[state=open] — toggle isActive. Inner = stays part of the name."
+        >
+          <div
+            data-state={isActive ? "open" : "closed"}
+            className="rounded-lg border border-zinc-700 bg-zinc-900 px-4 py-3 text-zinc-300"
+            className:data-[state=open]="ring-2 ring-emerald-400 bg-emerald-950 text-emerald-200"
+          >
+            data-state={isActive ? "open" : "closed"}
+          </div>
+        </Case>
+
+        <Case
+          title="Single-quoted modifier"
+          detail="Single-quoted className:hover values parse the same as double quotes."
+        >
+          <p
+            className="rounded-lg border border-zinc-700 bg-zinc-900 px-4 py-3 text-zinc-100"
+            className:hover='underline'
+          >
+            Hover for underline (single-quoted value)
           </p>
         </Case>
 
@@ -211,7 +279,7 @@ function App() {
 
         <Case
           title="Mixed static + dual conditionals"
-          detail='className:sm:hover="underline" on this button is sm:hover:underline only.'
+          detail="className:sm:hover on this button is sm:hover:underline only."
         >
           <button
             type="button"

@@ -58,13 +58,7 @@ describe('core module', () => {
       const allClasses = new Set<string>()
       const modifierClasses = new Set<string>()
 
-      extractClasses(
-        code,
-        allClasses,
-        modifierClasses,
-        CLASS_REGEX,
-        CLASS_MODIFIER_REGEX,
-      )
+      extractClasses(code, allClasses, modifierClasses, CLASS_REGEX, CLASS_MODIFIER_REGEX)
 
       expect(allClasses.size).toBe(3)
       expect(allClasses.has('flex')).toBeTruthy()
@@ -78,13 +72,7 @@ describe('core module', () => {
       const allClasses = new Set<string>()
       const modifierClasses = new Set<string>()
 
-      extractClasses(
-        code,
-        allClasses,
-        modifierClasses,
-        CLASS_REGEX,
-        CLASS_MODIFIER_REGEX,
-      )
+      extractClasses(code, allClasses, modifierClasses, CLASS_REGEX, CLASS_MODIFIER_REGEX)
 
       expect(allClasses.size).toBe(2)
       expect(modifierClasses.size).toBe(2)
@@ -99,13 +87,7 @@ describe('core module', () => {
       const allClasses = new Set<string>()
       const modifierClasses = new Set<string>()
 
-      extractClasses(
-        code,
-        allClasses,
-        modifierClasses,
-        CLASS_REGEX,
-        CLASS_MODIFIER_REGEX,
-      )
+      extractClasses(code, allClasses, modifierClasses, CLASS_REGEX, CLASS_MODIFIER_REGEX)
 
       expect(allClasses.size).toBe(1)
       expect(modifierClasses.size).toBe(1)
@@ -118,8 +100,8 @@ describe('core module', () => {
     })
 
     it('should extract multiple classes from React code', () => {
-      const code
-        = '<div className="flex items-center" className:hover="text-blue-500">Content</div>'
+      const code =
+        '<div className="flex items-center" className:hover="text-blue-500">Content</div>'
       const allClasses = new Set<string>()
       const modifierClasses = new Set<string>()
 
@@ -138,8 +120,7 @@ describe('core module', () => {
     })
 
     it('should handle JSX expressions in className', () => {
-      const code
-        = '<div className={`flex ${active ? "bg-blue-500" : ""}`}>Content</div>'
+      const code = '<div className={`flex ${active ? "bg-blue-500" : ""}`}>Content</div>'
       const allClasses = new Set<string>()
       const modifierClasses = new Set<string>()
 
@@ -157,8 +138,7 @@ describe('core module', () => {
     })
 
     it('should extract classes from conditional className:modifier JSX expressions', () => {
-      const code
-        = `<div className:hover={isActive ? 'bg-blue-500' : 'bg-gray-200'}>Content</div>`
+      const code = `<div className:hover={isActive ? 'bg-blue-500' : 'bg-gray-200'}>Content</div>`
       const allClasses = new Set<string>()
       const modifierClasses = new Set<string>()
 
@@ -177,8 +157,7 @@ describe('core module', () => {
     })
 
     it('should extract nested modifier classes from JSX expressions', () => {
-      const code
-        = `<div className:sm:hover={cond ? 'text-lg' : "text-sm"}>Content</div>`
+      const code = `<div className:sm:hover={cond ? 'text-lg' : "text-sm"}>Content</div>`
       const allClasses = new Set<string>()
       const modifierClasses = new Set<string>()
 
@@ -215,8 +194,7 @@ describe('core module', () => {
     })
 
     it('should not extract comparison string operands from JSX expressions', () => {
-      const code
-        = `<div className:hover={status === 'active' ? 'bg-blue-500' : 'bg-gray-200'}>X</div>`
+      const code = `<div className:hover={status === 'active' ? 'bg-blue-500' : 'bg-gray-200'}>X</div>`
       const allClasses = new Set<string>()
       const modifierClasses = new Set<string>()
 
@@ -239,31 +217,18 @@ describe('core module', () => {
       const allClasses = new Set<string>()
       const modifierClasses = new Set<string>()
 
-      extractClasses(
-        code,
-        allClasses,
-        modifierClasses,
-        CLASS_REGEX,
-        CLASS_MODIFIER_REGEX,
-      )
+      extractClasses(code, allClasses, modifierClasses, CLASS_REGEX, CLASS_MODIFIER_REGEX)
 
       expect(allClasses.size).toBe(0)
       expect(modifierClasses.size).toBe(0)
     })
 
     it('should handle mixed standard and modifier classes', () => {
-      const code
-        = '<div class="flex" class:hover="text-blue-500">Content</div>'
+      const code = '<div class="flex" class:hover="text-blue-500">Content</div>'
       const allClasses = new Set<string>()
       const modifierClasses = new Set<string>()
 
-      extractClasses(
-        code,
-        allClasses,
-        modifierClasses,
-        CLASS_REGEX,
-        CLASS_MODIFIER_REGEX,
-      )
+      extractClasses(code, allClasses, modifierClasses, CLASS_REGEX, CLASS_MODIFIER_REGEX)
 
       expect(allClasses.size).toBe(2)
       expect(modifierClasses.size).toBe(1)
@@ -273,18 +238,12 @@ describe('core module', () => {
     })
 
     it('should not include modified classes from standard class attributes in modifierClasses', () => {
-      const code
-        = '<div class="flex items-center dark:text-gray-500 hover:text-white">Content</div>'
+      const code =
+        '<div class="flex items-center dark:text-gray-500 hover:text-white">Content</div>'
       const allClasses = new Set<string>()
       const modifierClasses = new Set<string>()
 
-      extractClasses(
-        code,
-        allClasses,
-        modifierClasses,
-        CLASS_REGEX,
-        CLASS_MODIFIER_REGEX,
-      )
+      extractClasses(code, allClasses, modifierClasses, CLASS_REGEX, CLASS_MODIFIER_REGEX)
 
       // All classes should be in allClasses
       expect(allClasses.size).toBe(4)
@@ -310,13 +269,7 @@ describe('core module', () => {
       const allClasses = new Set<string>()
       const modifierClasses = new Set<string>()
 
-      extractClasses(
-        code,
-        allClasses,
-        modifierClasses,
-        CLASS_REGEX,
-        CLASS_MODIFIER_REGEX,
-      )
+      extractClasses(code, allClasses, modifierClasses, CLASS_REGEX, CLASS_MODIFIER_REGEX)
 
       // All classes should be in allClasses
       expect(allClasses.size).toBe(5)
@@ -339,12 +292,7 @@ describe('core module', () => {
       const code = '<div class:hover="text-blue-500">Content</div>'
       const classes = new Set<string>()
 
-      const result = transformClassModifiers(
-        code,
-        classes,
-        CLASS_MODIFIER_REGEX,
-        'class',
-      )
+      const result = transformClassModifiers(code, classes, CLASS_MODIFIER_REGEX, 'class')
 
       expect(result).toBe('<div class="hover:text-blue-500">Content</div>')
       expect(classes.has('hover:text-blue-500')).toBeTruthy()
@@ -354,32 +302,19 @@ describe('core module', () => {
       const code = '<div class:sm:hover="text-blue-500">Content</div>'
       const classes = new Set<string>()
 
-      const result = transformClassModifiers(
-        code,
-        classes,
-        CLASS_MODIFIER_REGEX,
-        'class',
-      )
+      const result = transformClassModifiers(code, classes, CLASS_MODIFIER_REGEX, 'class')
 
-      expect(result).toBe(
-        '<div class="sm:hover:text-blue-500">Content</div>',
-      )
+      expect(result).toBe('<div class="sm:hover:text-blue-500">Content</div>')
       expect(classes.has('sm:hover:text-blue-500')).toBeTruthy()
       expect(classes.has('sm:text-blue-500')).toBeFalsy()
       expect(classes.has('hover:text-blue-500')).toBeFalsy()
     })
 
     it('transforms named-group and container-query modifier names', () => {
-      const code
-        = '<div class:group-hover/item="bg-red-500" class:@md="p-4">Content</div>'
+      const code = '<div class:group-hover/item="bg-red-500" class:@md="p-4">Content</div>'
       const classes = new Set<string>()
 
-      const result = transformClassModifiers(
-        code,
-        classes,
-        CLASS_MODIFIER_REGEX,
-        'class',
-      )
+      const result = transformClassModifiers(code, classes, CLASS_MODIFIER_REGEX, 'class')
 
       expect(result).toContain('class="group-hover/item:bg-red-500"')
       expect(result).toContain('class="@md:p-4"')
@@ -387,33 +322,119 @@ describe('core module', () => {
       expect(classes.has('@md:p-4')).toBeTruthy()
     })
 
+    it('transforms React className:@md and className:group-hover/item', () => {
+      const code =
+        '<div className="@container" className:group-hover/item="bg-red-500" className:@md="p-4">X</div>'
+      const classes = new Set<string>()
+
+      const result = transformClassModifiers(code, classes, REACT_CLASS_MODIFIER_REGEX, 'className')
+
+      expect(result).toContain('group-hover/item:bg-red-500')
+      expect(result).toContain('@md:p-4')
+      expect(result).not.toContain('className:@md')
+      expect(result).not.toContain('className:group-hover/item')
+      expect(classes.has('group-hover/item:bg-red-500')).toBeTruthy()
+      expect(classes.has('@md:p-4')).toBeTruthy()
+    })
+
+    it('transforms arbitrary variants with brackets and inner =', () => {
+      const code =
+        '<div class:[&>*]="mt-2" class:data-[state=open]="block" className:[&_p]:hover="underline">X</div>'
+      const vueClasses = new Set<string>()
+      const vueResult = transformClassModifiers(code, vueClasses, CLASS_MODIFIER_REGEX, 'class')
+      expect(vueResult).toContain('[&>*]:mt-2')
+      expect(vueResult).toContain('data-[state=open]:block')
+      expect(vueResult).not.toContain('class:[&>*]')
+      expect(vueResult).not.toContain('class:data-[state=open]')
+      expect(vueClasses.has('[&>*]:mt-2')).toBeTruthy()
+      expect(vueClasses.has('data-[state=open]:block')).toBeTruthy()
+
+      const reactClasses = new Set<string>()
+      const reactResult = transformClassModifiers(
+        '<div className:[&>*]="mt-2" className:data-[state=open]="block">X</div>',
+        reactClasses,
+        REACT_CLASS_MODIFIER_REGEX,
+        'className',
+      )
+      expect(reactResult).toContain('[&>*]:mt-2')
+      expect(reactResult).toContain('data-[state=open]:block')
+      expect(reactResult).not.toContain('className:[&>*]')
+      expect(reactClasses.has('data-[state=open]:block')).toBeTruthy()
+    })
+
+    it('transforms single-quoted modifier values', () => {
+      const vueClasses = new Set<string>()
+      const vueResult = transformClassModifiers(
+        `<div class:hover='bg-red-500' class:data-[state=open]='block'>X</div>`,
+        vueClasses,
+        CLASS_MODIFIER_REGEX,
+        'class',
+      )
+      expect(vueResult).toContain('hover:bg-red-500')
+      expect(vueResult).toContain('data-[state=open]:block')
+      expect(vueResult).not.toContain(`class:hover='`)
+      expect(vueClasses.has('hover:bg-red-500')).toBeTruthy()
+      expect(vueClasses.has('data-[state=open]:block')).toBeTruthy()
+
+      const reactClasses = new Set<string>()
+      const reactResult = transformClassModifiers(
+        `<div className:hover = 'text-lg' className:@md='p-4'>X</div>`,
+        reactClasses,
+        REACT_CLASS_MODIFIER_REGEX,
+        'className',
+      )
+      expect(reactResult).toContain('hover:text-lg')
+      expect(reactResult).toContain('@md:p-4')
+      expect(reactResult).not.toContain(`className:hover`)
+      expect(reactClasses.has('@md:p-4')).toBeTruthy()
+    })
+
+    it('transforms JSX expression arbitrary modifiers', () => {
+      const code = `<div className:data-[state=open]={on ? 'block' : 'hidden'}>X</div>`
+      const classes = new Set<string>()
+      const result = transformClassModifiers(code, classes, REACT_CLASS_MODIFIER_REGEX, 'className')
+      expect(result).toContain('data-[state=open]:block')
+      expect(result).toContain('data-[state=open]:hidden')
+      expect(result).not.toContain('className:data-[state=open]')
+    })
+
+    it('extracts React className:@md and named-group modifiers', () => {
+      const code =
+        '<div className:group-hover/item="bg-red-500" className:@md="p-4 text-base">X</div>'
+      const allClasses = new Set<string>()
+      const modifierClasses = new Set<string>()
+
+      extractClasses(
+        code,
+        allClasses,
+        modifierClasses,
+        REACT_CLASS_REGEX,
+        REACT_CLASS_MODIFIER_REGEX,
+      )
+
+      expect(allClasses.has('@md:p-4')).toBeTruthy()
+      expect(allClasses.has('@md:text-base')).toBeTruthy()
+      expect(allClasses.has('group-hover/item:bg-red-500')).toBeTruthy()
+      expect(modifierClasses.has('@md:p-4')).toBeTruthy()
+      expect(modifierClasses.has('group-hover/item:bg-red-500')).toBeTruthy()
+    })
+
     it('leaves arbitrary variant prefixes in the base class string', () => {
       const code = '<div class="[&>*]:mt-2" class:hover="underline">Content</div>'
       const classes = new Set<string>()
 
-      const result = transformClassModifiers(
-        code,
-        classes,
-        CLASS_MODIFIER_REGEX,
-        'class',
-      )
+      const result = transformClassModifiers(code, classes, CLASS_MODIFIER_REGEX, 'class')
 
       expect(result).toContain('class="[&>*]:mt-2"')
       expect(result).toContain('class="hover:underline"')
-      expect(result).not.toMatch(/class:\[&\>\*\]/)
+      expect(result).not.toContain('class:[&>*]')
     })
 
     it('should transform multiple class modifiers', () => {
-      const code
-        = '<div class:hover="text-blue-500" class:focus="outline-none">Content</div>'
+      const code = '<div class:hover="text-blue-500" class:focus="outline-none">Content</div>'
       const classes = new Set<string>()
 
-      const result = transformClassModifiers(
-        code,
-        classes,
-        CLASS_MODIFIER_REGEX,
-        'class',
-      )
+      const result = transformClassModifiers(code, classes, CLASS_MODIFIER_REGEX, 'class')
 
       expect(result).toContain('class="hover:text-blue-500"')
       expect(result).toContain('class="focus:outline-none"')
@@ -425,28 +446,17 @@ describe('core module', () => {
       const code = '<div className:hover="text-blue-500">Content</div>'
       const classes = new Set<string>()
 
-      const result = transformClassModifiers(
-        code,
-        classes,
-        REACT_CLASS_MODIFIER_REGEX,
-        'className',
-      )
+      const result = transformClassModifiers(code, classes, REACT_CLASS_MODIFIER_REGEX, 'className')
 
       expect(result).toBe('<div className="hover:text-blue-500">Content</div>')
       expect(classes.has('hover:text-blue-500')).toBeTruthy()
     })
 
     it('should transform conditional className:modifier JSX expressions', () => {
-      const code
-        = `<div className:hover={isActive ? 'bg-blue-500' : 'bg-gray-200'}>Content</div>`
+      const code = `<div className:hover={isActive ? 'bg-blue-500' : 'bg-gray-200'}>Content</div>`
       const classes = new Set<string>()
 
-      const result = transformClassModifiers(
-        code,
-        classes,
-        REACT_CLASS_MODIFIER_REGEX,
-        'className',
-      )
+      const result = transformClassModifiers(code, classes, REACT_CLASS_MODIFIER_REGEX, 'className')
 
       expect(result).toBe(
         `<div className={isActive ? 'hover:bg-blue-500' : 'hover:bg-gray-200'}>Content</div>`,
@@ -456,16 +466,10 @@ describe('core module', () => {
     })
 
     it('should not rewrite comparison string operands inside JSX expressions', () => {
-      const code
-        = `<div className:hover={status === 'active' ? 'bg-blue-500' : 'bg-gray-200'}>X</div>`
+      const code = `<div className:hover={status === 'active' ? 'bg-blue-500' : 'bg-gray-200'}>X</div>`
       const classes = new Set<string>()
 
-      const result = transformClassModifiers(
-        code,
-        classes,
-        REACT_CLASS_MODIFIER_REGEX,
-        'className',
-      )
+      const result = transformClassModifiers(code, classes, REACT_CLASS_MODIFIER_REGEX, 'className')
 
       expect(result).toBe(
         `<div className={status === 'active' ? 'hover:bg-blue-500' : 'hover:bg-gray-200'}>X</div>`,
@@ -478,16 +482,10 @@ describe('core module', () => {
     })
 
     it('should not rewrite string method receivers inside JSX expressions', () => {
-      const code
-        = `<div className:hover={'primary'.includes(kind) ? 'bg-blue-500' : 'bg-gray-200'}>X</div>`
+      const code = `<div className:hover={'primary'.includes(kind) ? 'bg-blue-500' : 'bg-gray-200'}>X</div>`
       const classes = new Set<string>()
 
-      const result = transformClassModifiers(
-        code,
-        classes,
-        REACT_CLASS_MODIFIER_REGEX,
-        'className',
-      )
+      const result = transformClassModifiers(code, classes, REACT_CLASS_MODIFIER_REGEX, 'className')
 
       expect(result).toBe(
         `<div className={'primary'.includes(kind) ? 'hover:bg-blue-500' : 'hover:bg-gray-200'}>X</div>`,
@@ -497,16 +495,10 @@ describe('core module', () => {
     })
 
     it('should allow whitespace around = and { on JSX modifiers', () => {
-      const code
-        = `<div className:hover = {isActive ? 'bg-blue-500' : 'bg-gray-200'}>X</div>`
+      const code = `<div className:hover = {isActive ? 'bg-blue-500' : 'bg-gray-200'}>X</div>`
       const classes = new Set<string>()
 
-      const result = transformClassModifiers(
-        code,
-        classes,
-        REACT_CLASS_MODIFIER_REGEX,
-        'className',
-      )
+      const result = transformClassModifiers(code, classes, REACT_CLASS_MODIFIER_REGEX, 'className')
 
       expect(result).toBe(
         `<div className={isActive ? 'hover:bg-blue-500' : 'hover:bg-gray-200'}>X</div>`,
@@ -516,8 +508,7 @@ describe('core module', () => {
     })
 
     it('should ignore string literals inside comments in JSX expressions', () => {
-      const withBlock
-        = `<div className:hover={/* 'skip-me' */ isActive ? 'bg-blue-500' : 'bg-gray-200'}>X</div>`
+      const withBlock = `<div className:hover={/* 'skip-me' */ isActive ? 'bg-blue-500' : 'bg-gray-200'}>X</div>`
       const withLine = `<div className:hover={
   // 'skip-me'
   isActive ? 'bg-blue-500' : 'bg-gray-200'
@@ -554,12 +545,7 @@ describe('core module', () => {
       const code = `<button className:disabled={isDisabled && 'opacity-50 cursor-not-allowed'}>Go</button>`
       const classes = new Set<string>()
 
-      const result = transformClassModifiers(
-        code,
-        classes,
-        REACT_CLASS_MODIFIER_REGEX,
-        'className',
-      )
+      const result = transformClassModifiers(code, classes, REACT_CLASS_MODIFIER_REGEX, 'className')
 
       expect(result).toBe(
         `<button className={isDisabled && 'disabled:opacity-50 disabled:cursor-not-allowed'}>Go</button>`,
@@ -572,16 +558,9 @@ describe('core module', () => {
       const code = `<div className:sm:hover={on ? 'text-lg' : 'text-sm'}>X</div>`
       const classes = new Set<string>()
 
-      const result = transformClassModifiers(
-        code,
-        classes,
-        REACT_CLASS_MODIFIER_REGEX,
-        'className',
-      )
+      const result = transformClassModifiers(code, classes, REACT_CLASS_MODIFIER_REGEX, 'className')
 
-      expect(result).toBe(
-        `<div className={on ? 'sm:hover:text-lg' : 'sm:hover:text-sm'}>X</div>`,
-      )
+      expect(result).toBe(`<div className={on ? 'sm:hover:text-lg' : 'sm:hover:text-sm'}>X</div>`)
       expect(classes.has('sm:hover:text-lg')).toBeTruthy()
       expect(classes.has('hover:text-sm')).toBeFalsy()
     })
@@ -590,28 +569,17 @@ describe('core module', () => {
       const code = '<div className:hover={hoverClasses}>Content</div>'
       const classes = new Set<string>()
 
-      const result = transformClassModifiers(
-        code,
-        classes,
-        REACT_CLASS_MODIFIER_REGEX,
-        'className',
-      )
+      const result = transformClassModifiers(code, classes, REACT_CLASS_MODIFIER_REGEX, 'className')
 
       expect(result).toBe(code)
       expect(classes.size).toBe(0)
     })
 
     it('should rewrite string literals inside nested JSX braces', () => {
-      const code
-        = `<div className:hover={cn({ 'bg-blue-500': isActive, 'bg-gray-200': !isActive })}>X</div>`
+      const code = `<div className:hover={cn({ 'bg-blue-500': isActive, 'bg-gray-200': !isActive })}>X</div>`
       const classes = new Set<string>()
 
-      const result = transformClassModifiers(
-        code,
-        classes,
-        REACT_CLASS_MODIFIER_REGEX,
-        'className',
-      )
+      const result = transformClassModifiers(code, classes, REACT_CLASS_MODIFIER_REGEX, 'className')
 
       expect(result).toBe(
         `<div className={cn({ 'hover:bg-blue-500': isActive, 'hover:bg-gray-200': !isActive })}>X</div>`,
@@ -624,16 +592,9 @@ describe('core module', () => {
       const code = '<div class:hover="text-blue-500 bg-gray-100">Content</div>'
       const classes = new Set<string>()
 
-      const result = transformClassModifiers(
-        code,
-        classes,
-        CLASS_MODIFIER_REGEX,
-        'class',
-      )
+      const result = transformClassModifiers(code, classes, CLASS_MODIFIER_REGEX, 'class')
 
-      expect(result).toBe(
-        '<div class="hover:text-blue-500 hover:bg-gray-100">Content</div>',
-      )
+      expect(result).toBe('<div class="hover:text-blue-500 hover:bg-gray-100">Content</div>')
       expect(classes.has('hover:text-blue-500')).toBeTruthy()
       expect(classes.has('hover:bg-gray-100')).toBeTruthy()
     })
@@ -642,12 +603,7 @@ describe('core module', () => {
       const code = '<div class:=""="text-blue-500">Content</div>'
       const classes = new Set<string>()
 
-      const result = transformClassModifiers(
-        code,
-        classes,
-        CLASS_MODIFIER_REGEX,
-        'class',
-      )
+      const result = transformClassModifiers(code, classes, CLASS_MODIFIER_REGEX, 'class')
 
       expect(result).toBe(code)
       expect(classes.size).toBe(0)
@@ -655,18 +611,12 @@ describe('core module', () => {
 
     it('should filter out invalid classes', () => {
       // Classes with quotes or ending with colons would be invalid
-      const code
-        = '<div class:hover="\'invalid\' text-blue-500:">Content</div>'
+      const code = '<div class:hover="\'invalid\' text-blue-500:">Content</div>'
       const classes = new Set<string>()
 
-      const result = transformClassModifiers(
-        code,
-        classes,
-        CLASS_MODIFIER_REGEX,
-        'class',
-      )
+      const result = transformClassModifiers(code, classes, CLASS_MODIFIER_REGEX, 'class')
 
-      expect(result).toContain('hover:\'invalid\' hover:text-blue-500:')
+      expect(result).toContain("hover:'invalid' hover:text-blue-500:")
       // Only valid classes should be added to the set
       expect(classes.size).toBe(0)
     })
@@ -675,12 +625,7 @@ describe('core module', () => {
       const code = '<div class:null="text-blue-500">Content</div>'
       const classes = new Set<string>()
 
-      const result = transformClassModifiers(
-        code,
-        classes,
-        CLASS_MODIFIER_REGEX,
-        'class',
-      )
+      const result = transformClassModifiers(code, classes, CLASS_MODIFIER_REGEX, 'class')
 
       // The function should transform even "null" as a modifier
       expect(result).toContain('null:text-blue-500')
@@ -691,12 +636,7 @@ describe('core module', () => {
       const code = '<div class:"   "="text-blue-500">Content</div>'
       const classes = new Set<string>()
 
-      const result = transformClassModifiers(
-        code,
-        classes,
-        CLASS_MODIFIER_REGEX,
-        'class',
-      )
+      const result = transformClassModifiers(code, classes, CLASS_MODIFIER_REGEX, 'class')
 
       expect(result).toBe(code)
       expect(classes.size).toBe(0)
@@ -711,16 +651,12 @@ describe('core module', () => {
       const classes = new Set<string>()
       const modifierClasses = new Set<string>()
 
-      extractClasses(
-        code,
-        classes,
-        modifierClasses,
-        CLASS_REGEX,
-        CLASS_MODIFIER_REGEX,
-      )
+      extractClasses(code, classes, modifierClasses, CLASS_REGEX, CLASS_MODIFIER_REGEX)
 
       expect(modifierClasses.size).toBe(1)
-      expect(modifierClasses.has('sm:md:lg:xl:2xl:hover:focus:active:disabled:text-blue-500')).toBeTruthy()
+      expect(
+        modifierClasses.has('sm:md:lg:xl:2xl:hover:focus:active:disabled:text-blue-500'),
+      ).toBeTruthy()
       expect(modifierClasses.has('sm:text-blue-500')).toBeFalsy()
       expect(modifierClasses.has('md:text-blue-500')).toBeFalsy()
       expect(modifierClasses.has('hover:text-blue-500')).toBeFalsy()
@@ -734,12 +670,7 @@ describe('core module', () => {
       `
       const classes = new Set<string>()
 
-      const result = transformClassModifiers(
-        code,
-        classes,
-        REACT_CLASS_MODIFIER_REGEX,
-        'className',
-      )
+      const result = transformClassModifiers(code, classes, REACT_CLASS_MODIFIER_REGEX, 'className')
 
       expect(classes.size).toBe(2)
       expect(classes.has('sm:md:lg:xl:2xl:hover:text-blue-500')).toBeTruthy()
@@ -758,13 +689,7 @@ describe('core module', () => {
       const classes = new Set<string>()
       const modifierClasses = new Set<string>()
 
-      extractClasses(
-        code,
-        classes,
-        modifierClasses,
-        CLASS_REGEX,
-        CLASS_MODIFIER_REGEX,
-      )
+      extractClasses(code, classes, modifierClasses, CLASS_REGEX, CLASS_MODIFIER_REGEX)
 
       // Should handle empty modifiers without errors
       expect(classes.size).toBeGreaterThanOrEqual(0)
@@ -775,13 +700,7 @@ describe('core module', () => {
       const classes = new Set<string>()
       const modifierClasses = new Set<string>()
 
-      extractClasses(
-        code,
-        classes,
-        modifierClasses,
-        CLASS_REGEX,
-        CLASS_MODIFIER_REGEX,
-      )
+      extractClasses(code, classes, modifierClasses, CLASS_REGEX, CLASS_MODIFIER_REGEX)
 
       // Should not extract any modifier classes when class is part of a larger word
       expect(classes.size).toBe(0)
@@ -793,13 +712,7 @@ describe('core module', () => {
       const classes = new Set<string>()
       const modifierClasses = new Set<string>()
 
-      extractClasses(
-        code,
-        classes,
-        modifierClasses,
-        CLASS_REGEX,
-        CLASS_MODIFIER_REGEX,
-      )
+      extractClasses(code, classes, modifierClasses, CLASS_REGEX, CLASS_MODIFIER_REGEX)
 
       // Should not match Vue's :class pattern
       expect(classes.size).toBe(0)
@@ -811,13 +724,7 @@ describe('core module', () => {
       const classes = new Set<string>()
       const modifierClasses = new Set<string>()
 
-      extractClasses(
-        code,
-        classes,
-        modifierClasses,
-        REACT_CLASS_REGEX,
-        REACT_CLASS_MODIFIER_REGEX,
-      )
+      extractClasses(code, classes, modifierClasses, REACT_CLASS_REGEX, REACT_CLASS_MODIFIER_REGEX)
 
       // Should not extract any modifier classes when className is part of a larger word
       expect(classes.size).toBe(0)
@@ -833,13 +740,7 @@ describe('core module', () => {
       const modifierClasses = new Set<string>()
 
       const startTime = performance.now()
-      extractClasses(
-        code,
-        classes,
-        modifierClasses,
-        CLASS_REGEX,
-        CLASS_MODIFIER_REGEX,
-      )
+      extractClasses(code, classes, modifierClasses, CLASS_REGEX, CLASS_MODIFIER_REGEX)
       const endTime = performance.now()
 
       // Should complete quickly even with many classes
@@ -850,8 +751,7 @@ describe('core module', () => {
 
   describe('mergeClassAttributes', () => {
     it('should merge multiple class attributes', () => {
-      const code
-        = '<div class="flex" class="items-center" class="p-4">Content</div>'
+      const code = '<div class="flex" class="items-center" class="p-4">Content</div>'
 
       const result = mergeClassAttributes(code, 'class')
 
@@ -859,8 +759,7 @@ describe('core module', () => {
     })
 
     it('should merge React className attributes', () => {
-      const code
-        = '<div className="flex" className="items-center">Content</div>'
+      const code = '<div className="flex" className="items-center">Content</div>'
 
       const result = mergeClassAttributes(code, 'className')
 
@@ -876,19 +775,15 @@ describe('core module', () => {
     })
 
     it('should handle JSX expressions', () => {
-      const code
-        = '<div className="flex" className={active ? "bg-blue-500" : ""}>Content</div>'
+      const code = '<div className="flex" className={active ? "bg-blue-500" : ""}>Content</div>'
 
       const result = mergeClassAttributes(code, 'className')
 
-      expect(result).toBe(
-        '<div className={`flex ${(active ? "bg-blue-500" : "") || \'\'}`}>Content</div>',
-      )
+      expect(result).toBe('<div className={`flex ${active ? "bg-blue-500" : ""}`}>Content</div>')
     })
 
     it('should handle function calls in JSX expressions', () => {
-      const code
-        = '<div className="flex" className={getClassNames()}>Content</div>'
+      const code = '<div className="flex" className={getClassNames()}>Content</div>'
 
       const result = mergeClassAttributes(code, 'className')
 
@@ -899,8 +794,8 @@ describe('core module', () => {
     })
 
     it('should handle template literals in JSX expressions', () => {
-      const code
-        = '<div className="flex" className={`items-center ${active ? "bg-blue-500" : ""}`}>Content</div>'
+      const code =
+        '<div className="flex" className={`items-center ${active ? "bg-blue-500" : ""}`}>Content</div>'
 
       const result = mergeClassAttributes(code, 'className')
 
@@ -943,7 +838,8 @@ describe('core module', () => {
     })
 
     it('should handle function calls with nested parentheses', () => {
-      const code = '<div className="flex" className={getClassNames(theme, isActive ? "active" : "inactive")}>Content</div>'
+      const code =
+        '<div className="flex" className={getClassNames(theme, isActive ? "active" : "inactive")}>Content</div>'
 
       const result = mergeClassAttributes(code, 'className')
 
@@ -964,17 +860,19 @@ describe('core module', () => {
     })
 
     it('should handle multiple JSX expressions', () => {
-      const code = '<div className="flex" className={active ? "bg-blue-500" : ""} className={theme}>Content</div>'
+      const code =
+        '<div className="flex" className={active ? "bg-blue-500" : ""} className={theme}>Content</div>'
 
       const result = mergeClassAttributes(code, 'className')
 
       expect(result).toBe(
-        '<div className={`flex ${(active ? "bg-blue-500" : "") || \'\'} ${(theme) || \'\'}`}>Content</div>',
+        '<div className={`flex ${active ? "bg-blue-500" : ""} ${(theme) || \'\'}`}>Content</div>',
       )
     })
 
     it('should handle template literals with complex expressions', () => {
-      const code = '<div className="flex" className={`${baseClass} ${active ? "bg-blue-500" : "bg-gray-100"}`}>Content</div>'
+      const code =
+        '<div className="flex" className={`${baseClass} ${active ? "bg-blue-500" : "bg-gray-100"}`}>Content</div>'
 
       const result = mergeClassAttributes(code, 'className')
 
@@ -1031,20 +929,15 @@ describe('core module', () => {
 
       const result = mergeClassAttributes(code, 'class')
 
-      expect(result).toBe(
-        '<div class="base hover:text-blue-500" id="x">Content</div>',
-      )
+      expect(result).toBe('<div class="base hover:text-blue-500" id="x">Content</div>')
     })
 
     it('should merge React className attributes separated by other attributes', () => {
-      const code
-        = '<div className="base" id="x" className="hover:text-blue-500">Content</div>'
+      const code = '<div className="base" id="x" className="hover:text-blue-500">Content</div>'
 
       const result = mergeClassAttributes(code, 'className')
 
-      expect(result).toBe(
-        '<div className="base hover:text-blue-500" id="x">Content</div>',
-      )
+      expect(result).toBe('<div className="base hover:text-blue-500" id="x">Content</div>')
     })
 
     it('should not merge class attributes inside HTML comments that contain >', () => {
@@ -1072,26 +965,21 @@ describe('core module', () => {
 
       const result = mergeClassAttributes(code, 'class')
 
-      expect(result).toContain(
-        'const html = \'<div class="a b" id="i">x</div>\'',
-      )
+      expect(result).toContain('const html = \'<div class="a b" id="i">x</div>\'')
       expect(result).toContain('<div class="c d">y</div>')
     })
 
     it('should merge class attributes when another attribute value contains >', () => {
-      const code
-        = '<div class="base" title="a>b" class="hover:text-blue-500">Content</div>'
+      const code = '<div class="base" title="a>b" class="hover:text-blue-500">Content</div>'
 
       const result = mergeClassAttributes(code, 'class')
 
-      expect(result).toBe(
-        '<div class="base hover:text-blue-500" title="a>b">Content</div>',
-      )
+      expect(result).toBe('<div class="base hover:text-blue-500" title="a>b">Content</div>')
     })
 
     it('should merge class attributes when a JSX expression contains >', () => {
-      const code
-        = '<div className="base" title={foo > bar ? "x" : "y"} className="text-lg">Content</div>'
+      const code =
+        '<div className="base" title={foo > bar ? "x" : "y"} className="text-lg">Content</div>'
 
       const result = mergeClassAttributes(code, 'className')
 
@@ -1117,8 +1005,8 @@ describe('core module', () => {
     })
 
     it('should merge class attributes on namespaced Svelte tags', () => {
-      const code
-        = '<svelte:element this="div" class="a" class:active={on} class="b">x</svelte:element>'
+      const code =
+        '<svelte:element this="div" class="a" class:active={on} class="b">x</svelte:element>'
 
       const result = mergeClassAttributes(code, 'class')
 
@@ -1138,26 +1026,13 @@ describe('core module', () => {
       const classes = new Set<string>()
       const modifierClasses = new Set<string>()
 
-      extractClasses(
-        code,
-        classes,
-        modifierClasses,
-        CLASS_REGEX,
-        CLASS_MODIFIER_REGEX,
-      )
+      extractClasses(code, classes, modifierClasses, CLASS_REGEX, CLASS_MODIFIER_REGEX)
 
-      const afterModifiers = transformClassModifiers(
-        code,
-        classes,
-        CLASS_MODIFIER_REGEX,
-        'class',
-      )
+      const afterModifiers = transformClassModifiers(code, classes, CLASS_MODIFIER_REGEX, 'class')
       const result = mergeClassAttributes(afterModifiers, 'class')
 
       expect(result).toContain('class="min-w-0 flex-1 hover:text-blue-500"')
-      expect(result).toContain(
-        ':class="active ? \'bg-white\' : \'text-zinc-400\'"',
-      )
+      expect(result).toContain(":class=\"active ? 'bg-white' : 'text-zinc-400'\"")
       expect(result).not.toContain('class:hover')
     })
   })
@@ -1180,7 +1055,7 @@ describe('core module', () => {
 
       expect(result).toBe(
         `<button
-        className={\`px-4 py-2 \${(isActive ? 'hover:bg-blue-500' : 'hover:bg-gray-200') || ''}\`}
+        className={\`px-4 py-2 \${isActive ? 'hover:bg-blue-500' : 'hover:bg-gray-200'}\`}
       >Save</button>`,
       )
       expect(classes.has('hover:bg-blue-500')).toBeTruthy()
@@ -1189,8 +1064,7 @@ describe('core module', () => {
     })
 
     it('should merge nested-brace conditional modifiers with static classes', () => {
-      const code
-        = `<div className="flex" className:hover={cn({ 'bg-blue-500': on })}>X</div>`
+      const code = `<div className="flex" className:hover={cn({ 'bg-blue-500': on })}>X</div>`
       const classes = new Set<string>()
 
       const afterModifiers = transformClassModifiers(
@@ -1225,7 +1099,7 @@ describe('core module', () => {
 
       expect(result).toBe(
         `<button
-        className={\`px-4 \${(isActive ? 'hover:bg-blue-500' : 'hover:bg-gray-200') || ''} \${(isDisabled && 'disabled:opacity-50') || ''}\`}
+        className={\`px-4 \${isActive ? 'hover:bg-blue-500' : 'hover:bg-gray-200'} \${(isDisabled && 'disabled:opacity-50') || ''}\`}
       >Save</button>`,
       )
       expect(classes.has('hover:bg-blue-500')).toBeTruthy()
@@ -1264,9 +1138,7 @@ describe('core module', () => {
       )
       const result = mergeClassAttributes(afterModifiers, 'class')
 
-      expect(result).toContain(
-        'class="px-4 py-2 hover:bg-blue-700 sm:hover:scale-105"',
-      )
+      expect(result).toContain('class="px-4 py-2 hover:bg-blue-700 sm:hover:scale-105"')
       expect(result.match(/(?<![:\w])class="/g)).toHaveLength(1)
       expect(result).not.toContain('class:hover')
       expect(result).not.toContain('class:sm:hover')

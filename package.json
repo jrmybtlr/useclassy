@@ -3,7 +3,7 @@
   "version": "4.0.0",
   "description": "Vite plugin that rewrites class:hover and className:focus attributes into Tailwind CSS and UnoCSS utilities. Cleaner variant classes with no runtime — built for humans and coding agents.",
   "scripts": {
-    "dev": "pnpm -r dev",
+    "dev": "pnpm -r --parallel --filter './demos/**' dev",
     "test": "vitest run src/*",
     "test:watch": "vitest src/*",
     "lint": "oxlint",
@@ -88,6 +88,10 @@
       "types": "./dist/unocss.d.ts",
       "import": "./dist/unocss.js",
       "require": "./dist/unocss.cjs"
+    },
+    "./typescript-plugin": {
+      "types": "./dist/typescript-plugin.d.ts",
+      "require": "./dist/typescript-plugin-tsserver.cjs"
     }
   },
   "repository": {
@@ -163,7 +167,10 @@
       "nuxt>vite": "7.3.6",
       "@nuxt/vite-builder>vite": "7.3.6",
       "ajv": ">=6.14.0",
-      "brace-expansion": ">=5.0.6",
+      "brace-expansion@<1.1.18": "1.1.18",
+      "brace-expansion@>=2.0.0 <2.1.4": "2.1.4",
+      "brace-expansion@>=3.0.0 <3.0.6": "3.0.6",
+      "brace-expansion@>=5.0.0 <5.0.9": "5.0.9",
       "@eslint/plugin-kit": ">=0.3.4"
     }
   }

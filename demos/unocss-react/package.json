@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "tsc && vite build && node scripts/assert-generated-css.mjs",
+    "build": "tsc -p tsconfig.node.json && vite build && node scripts/assert-generated-css.mjs",
     "preview": "vite preview"
   },
   "dependencies": {

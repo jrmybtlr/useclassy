@@ -21,7 +21,9 @@
     "noUnusedParameters": true,
     "noFallthroughCasesInSwitch": true,
     "noUncheckedSideEffectImports": true,
-    
+
+    "plugins": [{ "name": "vite-plugin-useclassy/typescript-plugin" }],
+
     /* Path Aliases */
     "baseUrl": ".",
     "paths": {

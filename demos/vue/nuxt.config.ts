@@ -14,6 +14,9 @@ const skillExamples = readFileSync(
   path.resolve(rootDir, '../../templates/useclassy-skill/examples.md'),
   'utf8',
 )
+const packageVersion = JSON.parse(
+  readFileSync(path.resolve(rootDir, '../../package.json'), 'utf8'),
+) as { version: string }
 
 export default defineNuxtConfig({
   modules: ['@nuxt/fonts', '@nuxthub/core', '@nuxt/icon'],
@@ -36,6 +39,16 @@ export default defineNuxtConfig({
   },
 
   css: ['~/assets/main.css'],
+
+  devServer: {
+    port: 3000,
+  },
+
+  runtimeConfig: {
+    public: {
+      packageVersion: packageVersion.version,
+    },
+  },
 
   nitro: {
     prerender: {

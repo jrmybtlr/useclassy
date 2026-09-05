@@ -54,10 +54,43 @@ If detection fails, follow the [manual setup](#vite) below.
 <button
   className="px-4 py-2 rounded"
   className:hover={isActive ? 'bg-blue-500 text-white' : 'bg-gray-200'}
+  className:@md="px-6"
+  className:group-hover/item="bg-red-500"
+  className:[&>*]="mt-2"
+  className:data-[state=open]="block"
 />
 ```
 
 Expressions with no string literals (`className:hover={hoverClasses}`) are left alone. Import types with `import 'vite-plugin-useclassy/react'` (or `ClassyProps`). React 18/19 is an optional peer, only needed for those helpers.
+
+Quoted modifier values may use `"` or `'`. Prefer `"` in docs and new code.
+
+`className:@md`, `className:group-hover/item`, and arbitrary variants like `className:[&>*]` / `className:data-[state=open]` use the same attribute spelling as Vue. UseClassy rewrites them before the JSX/HTML parser runs (bracket-aware so `=` inside `[…]` stays part of the name). Put UseClassy before `@vitejs/plugin-react`.
+
+For editor TypeScript diagnostics, add the language plugin (React `init` does this automatically):
+
+```json
+{
+  "compilerOptions": {
+    "plugins": [{ "name": "vite-plugin-useclassy/typescript-plugin" }]
+  }
+}
+```
+
+If your app uses Vite’s split config (`tsconfig.json` with `"files": []` referencing `tsconfig.app.json`), make the root config extend the app config instead — otherwise tsserver stops at the empty file list and never loads the plugin:
+
+```json
+{
+  "extends": "./tsconfig.app.json",
+  "references": [{ "path": "./tsconfig.node.json" }]
+}
+```
+
+Keep `build` on `tsc -p tsconfig.node.json && vite build` so CLI `tsc` does not parse modifier attrs without the plugin.
+
+Use the workspace TypeScript version in VS Code/Cursor (`js/ts.tsdk.path`: `node_modules/typescript/lib`, `js/ts.tsserver.useSyntaxServer`: `never`, enable “Use Workspace Version”). Oxlint and ESLint still parse source text directly, so keep smoke-demo `App.tsx` files ignored unless you add a separate ESLint preprocessor.
+
+The TypeScript plugin only affects diagnostics. For syntax highlighting of `className:@md`, `className:group-hover/item`, and arbitrary variants, sideload the UseClassy editor extension from this repo (`code --install-extension ./vscode-useclassy`, or copy to `~/.cursor/extensions/useclassy.useclassy-0.1.0`), then reload — see [vscode-useclassy/README.md](vscode-useclassy/README.md). It is not on the Marketplace yet.
 
 **Svelte.** Quoted modifiers transform; native directives do not. Put UseClassy before `@sveltejs/vite-plugin-svelte`.
 
@@ -71,7 +104,7 @@ Expressions with no string literals (`className:hover={hoverClasses}`) are left 
 
 `class:sm:hover="underline"` emits `sm:hover:underline` only, the same composition as Tailwind / UnoCSS, not the individual `sm:` and `hover:` pieces.
 
-Modifier names may include letters, digits, `_`, `-`, `:`, `/` (`group-hover/item`), and `@` (`@md`). Arbitrary variants (`[&>*]`, `data-[state=open]`) cannot be attribute names, so leave those on the base class. In React JSX, `/` is invalid in an attribute name, so named groups stay on `className`.
+Modifier names may include letters, digits, `_`, `-`, `:`, `/` (`group-hover/item`), `@` (`@md`), and arbitrary variants with `[…]` (`[&>*]`, `data-[state=open]`). UseClassy parses modifier names with bracket depth so an `=` inside `[…]` is not treated as the attribute separator. React uses the same modifier attributes as Vue; UseClassy rewrites them before JSX/HTML parse.
 
 ## Vite
 
@@ -145,7 +178,12 @@ UseClassy is variant-first (`class:hover="bg-red"`), not [Attributify](https://u
 
 ```json
 {
-  "tailwindCSS.classAttributes": ["class", "class:[\\w:/@-]*", "className", "className:[\\w:/@-]*"]
+  "tailwindCSS.classAttributes": [
+    "class",
+    "class:[\\w:/@\\[\\]\\-=&*>.]*",
+    "className",
+    "className:[\\w:/@\\[\\]\\-=&*>.]*"
+  ]
 }
 ```
 

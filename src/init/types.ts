@@ -2,10 +2,10 @@ export type TailwindFlavor = 'v4' | 'v3' | 'unknown'
 export type CssEngineDetection = 'tailwind' | 'unocss' | 'both' | 'unknown'
 
 export const INIT_LANGUAGES = ['vue', 'react', 'blade', 'svelte'] as const
-export type InitLanguage = typeof INIT_LANGUAGES[number]
+export type InitLanguage = (typeof INIT_LANGUAGES)[number]
 
 export const INIT_ENGINES = ['tailwind', 'unocss'] as const
-export type InitEngine = typeof INIT_ENGINES[number]
+export type InitEngine = (typeof INIT_ENGINES)[number]
 
 export type FilePatchResult = {
   path: string
@@ -20,6 +20,8 @@ export interface InitSetupResult {
   tailwind?: string
   unocss?: string
   vscodeSettings?: string
+  vscodeExtensions?: string
+  tsConfig?: string
   agentFiles?: string[]
   messages: string[]
 }

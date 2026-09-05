@@ -7,16 +7,18 @@
       aria-label="Markup format"
       :copy-text="expandedCopy"
     >
-      <code @pointerenter="pointerInside = true" @pointerleave="onPointerLeave">
+      <code class="text-white" @pointerenter="pointerInside = true" @pointerleave="onPointerLeave">
         <div
           v-for="(value, key) in examples"
           :key="key"
-          class="cursor-pointer transition-[opacity,text-shadow] duration-200"
+          class="cursor-pointer text-white transition-[opacity,color,text-shadow] duration-200"
           :class="sectionHighlight(key)"
           @pointerenter="hoveredSection = key"
         >
-          <span class="text-sky-300"> {{ attrName }}{{ key === 'base' ? '' : ':' + key }} </span>
-          <span class="text-neutral-300">="{{ value }}"</span>
+          <span :class="activeSection === key ? 'text-sky-400' : 'text-sky-300'">
+            {{ attrName }}{{ key === 'base' ? '' : ':' + key }}
+          </span>
+          <span class="text-white">="{{ value }}"</span>
         </div>
       </code>
     </CodeBlock>
@@ -33,13 +35,13 @@
       <template #filename-prefix>
         <span class="text-base leading-none" aria-hidden="true">🎩</span>
       </template>
-      <code @pointerenter="pointerInside = true" @pointerleave="onPointerLeave">
-        <span class="text-sky-300">{{ attrName }}="</span>
-        <span class="text-neutral-300">
+      <code class="text-white" @pointerenter="pointerInside = true" @pointerleave="onPointerLeave">
+        <span>{{ attrName }}="</span>
+        <span>
           <template v-for="(value, key) in examples" :key="key">
             <span
               :ref="(el) => setOutputSectionRef(key, el)"
-              class="mx-1 transition-[opacity,text-shadow] duration-200"
+              class="mx-1 transition-[opacity,color,text-shadow] duration-200"
               class:first="ml-0"
               class:last="mr-0"
               :class="sectionHighlight(key)"
@@ -53,7 +55,7 @@
             </span>
           </template>
         </span>
-        <span class="text-sky-300">"</span>
+        <span>"</span>
       </code>
     </CodeBlock>
   </div>
@@ -163,8 +165,8 @@ watch([activeSection, outputWrap], async ([key, wrap]) => {
 })
 
 const sectionHighlight = (key: string) => ({
-  'opacity-30': activeSection.value && activeSection.value !== key,
-  'text-glow': activeSection.value === key,
+  'opacity-80': activeSection.value && activeSection.value !== key,
+  'text-glow text-white': activeSection.value === key,
 })
 
 let cycleTimer: ReturnType<typeof setInterval> | undefined

@@ -162,6 +162,13 @@
                 <span class="font-mono text-neutral-200">--no-skills</span>.
               </span>
             </label>
+            <Callout v-if="isReactSetup">
+              Also patches
+              <span class="font-mono text-neutral-200">tsconfig</span>
+              and editor TypeScript settings so
+              <span class="font-mono text-neutral-200">className:hover</span>
+              typechecks. Manual setup has those files if you skip init.
+            </Callout>
           </Step>
 
           <Step
@@ -170,7 +177,12 @@
             title="Vite"
             description="Add useClassy to your Vite config."
           >
-            <CodeBlock filename="vite.config.ts" :copy-text="viteCopy">
+            <CodeBlock
+              v-model="initFramework"
+              :tabs="initFrameworkOptions"
+              aria-label="Framework for Vite config"
+              :copy-text="viteCopy"
+            >
               <code>
                 <div class="text-white">import useClassy from 'vite-plugin-useclassy';</div>
                 <div class="mt-2">export default {</div>
@@ -184,9 +196,23 @@
                 <div>};</div>
               </code>
             </CodeBlock>
+            <CodeBlock v-if="demoFormat === 'blade'" :copy-text="composerCopy">
+              <code>
+                <span class="text-sky-300">composer</span>
+                <span class="text-neutral-600">{{ ' ' }}</span>
+                <span class="text-neutral-100">require</span>
+                <span class="text-neutral-600">{{ ' ' }}</span>
+                <span class="text-emerald-400">useclassy/laravel</span>
+              </code>
+            </CodeBlock>
             <Callout variant="tip">
-              Place it before Tailwind, UnoCSS, or other CSS plugins. UseClassy rewrites
-              <span class="font-mono text-neutral-200">class:hover</span>
+              Place it before
+              <span v-if="isReactSetup" class="font-mono text-neutral-200">@vitejs/plugin-react</span
+              ><span v-if="isReactSetup">, </span>
+              Tailwind, UnoCSS, or other CSS plugins. UseClassy rewrites
+              <span class="font-mono text-neutral-200">{{
+                isReactSetup ? 'className:hover' : 'class:hover'
+              }}</span>
               into
               <span class="font-mono text-neutral-200">hover:…</span>
               so the engine’s scanner sees normal utilities.
@@ -194,8 +220,53 @@
           </Step>
 
           <Step
-            v-if="setupMode === 'manual' && cssEngine === 'tailwind'"
+            v-if="setupMode === 'manual' && isReactSetup"
             :number="3"
+            title="TypeScript"
+            description="Only needed for .jsx and .tsx files, so the editor can parse className:hover before tsserver does."
+            wide-description
+          >
+            <CodeBlock filename="tsconfig.app.json" :copy-text="tsPluginCopy">
+              <code>
+                <div>{</div>
+                <div class="ml-4">"compilerOptions": {</div>
+                <div class="ml-8 text-white">"plugins": [{ "name": "vite-plugin-useclassy/typescript-plugin" }]</div>
+                <div class="ml-4">}</div>
+                <div>}</div>
+              </code>
+            </CodeBlock>
+            <CodeBlock filename=".vscode/settings.json" :copy-text="tsServerCopy">
+              <code>
+                <div>{</div>
+                <div class="ml-4 text-white">"js/ts.tsdk.path": "node_modules/typescript/lib",</div>
+                <div class="ml-4 text-white">"js/ts.tsdk.promptToUseWorkspaceVersion": true,</div>
+                <div class="ml-4 text-white">"js/ts.tsserver.useSyntaxServer": "never",</div>
+                <div class="ml-4 text-white">
+                  "js/ts.tsserver.pluginPaths": ["./node_modules"]
+                </div>
+                <div>}</div>
+              </code>
+            </CodeBlock>
+            <Callout>
+              If the root
+              <span class="font-mono text-neutral-200">tsconfig.json</span>
+              is
+              <span class="font-mono text-neutral-200">"files": []</span>
+              plus a reference to
+              <span class="font-mono text-neutral-200">tsconfig.app.json</span>,
+              change it to
+              <span class="font-mono text-neutral-200">"extends": "./tsconfig.app.json"</span>
+              so tsserver loads the plugin. Keep
+              <span class="font-mono text-neutral-200">build</span>
+              on
+              <span class="font-mono text-neutral-200">tsc -p tsconfig.node.json</span>.
+              Use the workspace TypeScript version in VS Code/Cursor.
+            </Callout>
+          </Step>
+
+          <Step
+            v-if="setupMode === 'manual' && cssEngine === 'tailwind'"
+            :number="3 + reactOffset"
             title="Tailwind"
             description="Point Tailwind at the generated class manifest."
           >
@@ -209,7 +280,7 @@
 
           <Step
             v-if="setupMode === 'manual' && cssEngine === 'unocss'"
-            :number="3"
+            :number="3 + reactOffset"
             title="UnoCSS"
             description="Point Uno at the UseClassy manifest as a filesystem backstop. Vite pipeline extract is the primary path when UseClassy runs first."
           >
@@ -244,7 +315,7 @@
 
           <Step
             v-if="setupMode === 'manual' && cssEngine === 'tailwind'"
-            :number="4"
+            :number="4 + reactOffset"
             title="IntelliSense"
             badge="Optional"
           >
@@ -264,7 +335,7 @@
 
           <Step
             v-if="setupMode === 'manual'"
-            :number="cssEngine === 'tailwind' ? 5 : 4"
+            :number="(cssEngine === 'tailwind' ? 5 : 4) + reactOffset"
             title="Skills"
             badge="Default"
             description="init installs agent skills by default so Cursor, Codex, and Copilot keep writing class:hover. Pass --no-skills to skip."
@@ -296,6 +367,9 @@ const setupMode = ref<'quick' | 'manual'>('quick')
 const cssEngine = ref<'tailwind' | 'unocss'>('tailwind')
 const packageManager = ref<'npm' | 'pnpm' | 'yarn'>('npm')
 const withSkills = ref(true)
+const {
+  public: { packageVersion },
+} = useRuntimeConfig()
 
 const packageManagerOptions = [
   { value: 'npm', label: 'npm' },
@@ -334,6 +408,9 @@ const initFrameworkOptions: {
   { value: 'react', label: 'React' },
   { value: 'laravel', label: 'Laravel' },
 ]
+
+const isReactSetup = computed(() => demoFormat.value === 'react')
+const reactOffset = computed(() => (isReactSetup.value ? 1 : 0))
 
 type CliToken = { text: string; class: string }
 
@@ -463,6 +540,21 @@ const intelCopy = `{
 }
 `
 
+const tsPluginCopy = `{
+  "compilerOptions": {
+    "plugins": [{ "name": "vite-plugin-useclassy/typescript-plugin" }]
+  }
+}
+`
+
+const tsServerCopy = `{
+  "js/ts.tsdk.path": "node_modules/typescript/lib",
+  "js/ts.tsdk.promptToUseWorkspaceVersion": true,
+  "js/ts.tsserver.useSyntaxServer": "never",
+  "js/ts.tsserver.pluginPaths": ["./node_modules"]
+}
+`
+
 useMarkdownAlternate('/index.md')
 
 useSeoMeta({
@@ -500,7 +592,7 @@ useHead({
         url: 'https://useclassy.com',
         downloadUrl: 'https://www.npmjs.com/package/vite-plugin-useclassy',
         codeRepository: 'https://github.com/jrmybtlr/useclassy',
-        softwareVersion: '4.0.0',
+        softwareVersion: packageVersion,
         keywords: [
           'vite-plugin-useclassy',
           'Tailwind CSS',

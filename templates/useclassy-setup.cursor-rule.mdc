@@ -9,7 +9,7 @@ When adding or fixing UseClassy in this project:
 2. In `vite.config.*`, import `useClassy` from `vite-plugin-useclassy` and add `useClassy({ language: 'vue' | 'react' | 'blade' | 'svelte' })` to `plugins` **before** `@tailwindcss/vite` or other CSS plugins. For Svelte, also place it **before** `@sveltejs/vite-plugin-svelte`.
 3. **Tailwind v4** (CSS uses `@import "tailwindcss"`): In that stylesheet, add an `@source` line pointing at the generated manifest. Default manifest path is `.classy/output.classy.html` from the project root; the `@source` path must be **relative to the CSS file**. In JavaScript configs you can compute the line with `getUseClassyTailwindSourceDirective(cssAbsolutePath, projectRoot)` from `vite-plugin-useclassy`.
 4. **Tailwind v3**: Add `./.classy/output.classy.html` to `content` in `tailwind.config.*` (or use `getUseClassyTailwindV3ContentEntry()` from the package for the default path).
-5. **VS Code** (Tailwind only): Merge `tailwindCSS.classAttributes` to include `class:[\\w:/@-]*` and, for React, `className:[\\w:/@-]*`. Skip this for UnoCSS — use the UnoCSS extension.
+5. **VS Code** (Tailwind only): Merge `tailwindCSS.classAttributes` to include `class:[\\w:/@\\[\\]\\-=&*>.]*` and, for React, `className:[\\w:/@\\[\\]\\-=&*>.]*`. Skip this for UnoCSS — use the UnoCSS extension.
 6. Run dev once so `.classy/output.classy.html` is generated.
 
 Prefer `npx vite-plugin-useclassy init` (after installing the package) instead of hand-editing when possible. `init` installs the UseClassy authoring skill (`.agents/skills`), these Cursor rules, and an `AGENTS.md` section by default. Pass `--no-skills` to skip agent files. Add `--with-claude` if you also use Claude Code.

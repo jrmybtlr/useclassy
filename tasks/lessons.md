@@ -1,5 +1,21 @@
 # Lessons
 
+## ClassExample highlight keeps class values white (2026-08-26)
+
+- Highlighted lines use `text-glow` plus a stronger attr-name blue (`text-sky-400`).
+- Do not paint the whole line with `[&_span]:text-sky-*`. Quoted class values and the output tokens stay `text-white` when highlighted.
+
+## brace-expansion override must stay per-major (2026-08-24)
+
+- A global `"brace-expansion": ">=5.0.6"` remaps minimatch 3 (ESLint) onto v5, which dropped the CJS `expand` export → `expand is not a function`.
+- Pin patched versions per major (`1.1.18`, `2.1.4`, `3.0.6`, `5.0.9`) instead of collapsing every consumer onto v5.
+
+## pnpm `-r` default concurrency starves later demos (2026-08-24)
+
+- `pnpm -r` (without `--parallel`) caps workspace concurrency at 4.
+- Five long-running demo `dev` servers means Vue (last in the list) never starts, so nothing listens on 3000.
+- Root `dev` must be `pnpm -r --parallel --filter './demos/**' dev`. Pin Nuxt `devServer.port` to 3000.
+
 ## Nitro cannot load Vite `?raw` (2026-08-23)
 
 - `import x from 'file.md?raw'` works in Vite (app code) and fails in Nitro (`ENOENT …/README.md?raw`).
@@ -75,7 +91,14 @@
 - Do not rewrite UseClassy smoke demos into a polished fictional product UI (Harbor-style inbox, design-system cards, etc.) unless the user has approved a mock after seeing it.
 - Coverage pages can stay labeled and a bit clinical; that is easier to scan than a realistic layout that hides the cases. Prefer smaller visual cleanup (copy, titles, spacing) over a full scene rewrite.
 
-## JSX conditional class rewrites (2026-07-21)
+## React `@` / `/` / arbitrary modifiers (2026-08-25)
+
+- UseClassy rewrites `className:@md`, `className:group-hover/item`, `className:[&>*]`, and `className:data-[state=open]` before JSX/HTML parse — same pipeline as `className:sm:hover`.
+- Parse modifier names with bracket depth so `=` inside `[…]` is not treated as the attribute separator. Do not invent substitute characters or a separate `mods()` helper.
+- TypeScript / some linters may still flag the source the same way they already flag chained modifiers. Ignore `demos/*/src/App.tsx` in oxlint/oxfmt/ESLint; they parse source before the Vite plugin rewrites. For tsserver, add `vite-plugin-useclassy/typescript-plugin` via `compilerOptions.plugins`, extend `tsconfig.app.json` from `tsconfig.json` (not `"files": []` only), put `src/tsconfig.json` extending the app config, and use the workspace TypeScript version. The plugin ships inside `vite-plugin-useclassy` (no separate package).
+- VS Code/Cursor’s syntax-only tsserver does not load language-service plugins. Set `js/ts.tsserver.useSyntaxServer` to `never` and add `js/ts.tsserver.pluginPaths` to `./node_modules` (React `init` does this) so modifier rewrites run before TSX parse diagnostics.
+- Vite’s default React `tsconfig.json` uses `"files": []` plus a reference to `tsconfig.app.json`. `tsserver` stops at the empty root config, so the UseClassy plugin in `tsconfig.app.json` never loads. React `init` rewrites the solution config to `"extends": "./tsconfig.app.json"`; keep `build` on `tsc -p tsconfig.node.json` so CLI `tsc` does not parse modifier attrs without the plugin.
+- Do not put `className:mod='value'` (or `class:mod="value"`) inside another double-quoted JSX attribute. The scanner treats `"` as a name boundary and rewrites the substring, which breaks the outer quotes. Describe the syntax in prose instead.
 
 - When rewriting string literals inside `className:modifier={…}`, never blindly prefix every quoted string.
 - Comparison operands (`===` / `!==` / `==` / `!=`) and string method receivers (`'x'.includes`) must stay untouched.

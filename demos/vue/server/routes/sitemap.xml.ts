@@ -27,7 +27,7 @@ export default defineEventHandler((event) => {
   const urls = routes.map((path) => {
     if (path === '/' || path === '/docs')
       return entry(path, '1.0')
-    if (path === '/llms.txt' || path === '/docs.md' || path === '/skill.md')
+    if (path === '/index.md' || path === '/llms.txt' || path === '/docs.md' || path === '/skill.md')
       return entry(path, '0.9')
     return entry(path, '0.7')
   })

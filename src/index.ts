@@ -12,6 +12,7 @@ import {
   extractClasses,
   transformClassModifiers,
   mergeClassAttributes,
+  rewriteJsxForTypeScript,
 } from './core'
 
 import {
@@ -311,8 +312,8 @@ export default function useClassy(options: ClassyOptions = {}): PluginOption {
       return null
 
     try {
-      const { transformedCode } = processCode(code)
-      return transformedCode === code ? null : transformedCode
+      const rewritten = rewriteJsxForTypeScript(code)
+      return rewritten === code ? null : rewritten
     }
     catch {
       return null

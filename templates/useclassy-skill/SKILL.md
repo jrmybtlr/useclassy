@@ -27,16 +27,16 @@ Use UseClassy to separate Tailwind variants from base utilities:
 
 ## Syntax
 
-| Language | Base | Modifiers |
-|----------|------|-----------|
-| Vue / Blade | `class="…"` | `class:hover="…"`, `class:sm:hover="…"` |
-| React | `className="…"` | `className:hover="…"` (also accepts `class:…`); JSX expressions allowed |
-| Svelte | `class="…"` | Quoted only: `class:hover="…"` |
+| Language    | Base            | Modifiers                                                               |
+| ----------- | --------------- | ----------------------------------------------------------------------- |
+| Vue / Blade | `class="…"`     | `class:hover="…"`, `class:sm:hover="…"`                                 |
+| React       | `className="…"` | `className:hover="…"`, `className:@md="…"`, `className:group-hover/item="…"`, `className:[&>*]="…"`, `className:data-[state=open]="…"`; JSX expressions allowed |
+| Svelte      | `class="…"`     | Quoted only: `class:hover="…"`                                          |
 
-Modifier names may contain letters, numbers, `_`, `-`, `:`, `/` (named groups such as `group-hover/item`), and `@` (container queries such as `@md`). Arbitrary variants (`[&>*]`, `data-[state=open]`) cannot be attribute names — leave those tokens on the base class. In React JSX, `/` in an attribute name is invalid, so named groups must stay on `className`.
+Modifier names may contain letters, numbers, `_`, `-`, `:`, `/` (named groups such as `group-hover/item`), `@` (container queries such as `@md`), and arbitrary variants with `[…]` (`[&>*]`, `data-[state=open]`). UseClassy parses modifier names with bracket depth so `=` inside `[…]` is not the attribute separator. React uses the same modifier attributes as Vue; UseClassy rewrites them before JSX/HTML parse.
 
-- **Vue / Blade / Svelte / HTML:** modifier values must be double-quoted static class strings.
-- **React:** prefer double-quoted static strings. JSX expressions are also supported when string literals inside the expression should receive the variant prefix, e.g. `className:hover={on ? 'bg-blue-500' : 'bg-gray-200'}`.
+- **Vue / Blade / Svelte / HTML:** modifier values must be quoted static class strings (`"` or `'`).
+- **React:** prefer quoted static strings (`"` or `'`). JSX expressions are also supported when string literals inside the expression should receive the variant prefix, e.g. `className:hover={on ? 'bg-blue-500' : 'bg-gray-200'}`.
 
 ## Refactor existing code
 
@@ -55,7 +55,6 @@ When asked to convert markup to UseClassy:
 Convert only static tokens that can be represented safely. Do not rewrite:
 
 - Dynamic expressions, template interpolations, conditional class helpers, Vue `:class`, or Svelte directives — unless you are intentionally using React's `className:mod={…}` expression form with string literals.
-- Arbitrary variant prefixes such as `[&>*]:mt-2` or `data-[state=open]:block`; their characters are not valid in a UseClassy modifier name.
 - Variant tokens embedded in variables or function calls (leave those variables unchanged, or store already-prefixed class names).
 
 ## Chained modifiers
@@ -71,7 +70,8 @@ class:sm:hover="underline"
 
 - Put base utilities on `class` / `className`.
 - Vue / Blade / HTML: use `class:modifier="…"`.
-- React: prefer `className:modifier="…"` for static variants. For runtime conditions that still use string literals, `className:modifier={cond ? 'a' : 'b'}` is valid and will prefix those literals. Leave `className={…}` base expressions unchanged when they are unrelated.
+- React: prefer `className:modifier="…"` for static variants, including `className:@md`, `className:group-hover/item`, `className:[&>*]`, and `className:data-[state=open]` (UseClassy rewrites before JSX parse). For runtime conditions that still use string literals, `className:modifier={cond ? 'a' : 'b'}` is valid and will prefix those literals. Leave `className={…}` base expressions unchanged when they are unrelated.
+- React editor setup: add `compilerOptions.plugins: [{ "name": "vite-plugin-useclassy/typescript-plugin" }]`, extend `tsconfig.app.json` from `tsconfig.json`, set `js/ts.experimental.useTsgo` to `false`, `js/ts.tsserver.useSyntaxServer` to `never`, and select the workspace TypeScript version in VS Code/Cursor. Oxlint/ESLint still parse source text and may need file ignores on smoke demos.
 - Vue: leave `:class` and other dynamic bindings unchanged.
 - **Svelte**: only transform quoted UseClassy modifiers. Native `class:active={cond}` and `class:active` stay untouched — do not rewrite those.
 - Do not move conditional base utilities into modifier attributes on Vue/Svelte/Blade; UseClassy modifiers represent Tailwind variants. React is the exception for `className:mod={…}` expression values.

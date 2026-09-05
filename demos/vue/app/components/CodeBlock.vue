@@ -25,7 +25,7 @@
             :class="
               modelValue === tab.value
                 ? 'border-white text-white'
-                : 'border-transparent text-neutral-500'
+                : 'border-transparent text-neutral-400'
             "
             :aria-selected="modelValue === tab.value"
             @click="modelValue = tab.value"

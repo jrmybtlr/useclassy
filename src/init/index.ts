@@ -8,7 +8,13 @@ import {
 } from './tailwind'
 import { patchUnoConfig, pushUnoMessages } from './unocss'
 import { patchViteConfig, pushViteMessages } from './vite'
-import { patchVsCodeSettings, pushVsCodeMessages } from './vscode'
+import {
+  patchVsCodeExtensions,
+  patchVsCodeSettings,
+  pushVsCodeExtensionsMessages,
+  pushVsCodeMessages,
+} from './vscode'
+import { patchTsConfig, pushTsConfigMessages } from './tsconfig'
 import type { InitEngine, InitLanguage, InitSetupResult } from './types'
 
 export type {
@@ -21,10 +27,7 @@ export type {
 } from './types'
 export { INIT_ENGINES, INIT_LANGUAGES } from './types'
 
-export {
-  detectCssEngine,
-  resolveInitEngine,
-} from './detect'
+export { detectCssEngine, resolveInitEngine } from './detect'
 export {
   detectTailwindFlavor,
   findTailwindConfigFile,
@@ -41,15 +44,21 @@ export {
   patchUnoConfig,
   patchUnoConfigContent,
 } from './unocss'
+export { findViteConfigFile, patchViteConfig, patchViteConfigContent } from './vite'
 export {
-  findViteConfigFile,
-  patchViteConfig,
-  patchViteConfigContent,
-} from './vite'
-export {
+  mergeExtensionRecommendations,
   mergeTailwindClassAttributes,
+  patchVsCodeExtensions,
   patchVsCodeSettings,
+  USECLASSY_VSCODE_EXTENSION_ID,
 } from './vscode'
+export {
+  findTsConfigFile,
+  patchTsConfig,
+  patchTsConfigContent,
+  pushTsConfigMessages,
+  USECLASSY_TS_PLUGIN_NAME,
+} from './tsconfig'
 export {
   installAgentResources,
   patchAgentsMd,
@@ -67,14 +76,7 @@ export function runInitSetup(options: {
   withClaude?: boolean
   force?: boolean
 }): InitSetupResult {
-  const {
-    cwd,
-    language,
-    dryRun,
-    withSkills = true,
-    withClaude = false,
-    force = false,
-  } = options
+  const { cwd, language, dryRun, withSkills = true, withClaude = false, force = false } = options
   const result: InitSetupResult = { messages: [] }
 
   const detected = detectCssEngine(cwd)
@@ -88,24 +90,17 @@ export function runInitSetup(options: {
     )
   }
 
-  pushViteMessages(
-    result,
-    patchViteConfig(cwd, language, dryRun, engine),
-    dryRun,
-  )
+  pushViteMessages(result, patchViteConfig(cwd, language, dryRun, engine), dryRun)
 
   if (engine === 'unocss') {
     pushUnoMessages(result, patchUnoConfig(cwd, dryRun), dryRun)
-  }
-  else {
+  } else {
     const flavor = detectTailwindFlavor(cwd)
     if (flavor === 'v4') {
       pushTailwindMessages(result, 'v4', patchTailwindV4(cwd, dryRun), dryRun)
-    }
-    else if (flavor === 'v3') {
+    } else if (flavor === 'v3') {
       pushTailwindMessages(result, 'v3', patchTailwindV3(cwd, dryRun), dryRun)
-    }
-    else {
+    } else {
       result.messages.push(
         'Tailwind: could not detect v3 vs v4. Add the manifest to Tailwind manually (see README).',
       )
@@ -118,17 +113,17 @@ export function runInitSetup(options: {
     result.messages.push(
       'VS Code: skipped Tailwind CSS IntelliSense (UnoCSS uses the Uno extension).',
     )
-  }
-  else {
+  } else {
     pushVsCodeMessages(result, patchVsCodeSettings(cwd, language, dryRun), dryRun)
   }
 
+  if (language === 'react') {
+    pushVsCodeExtensionsMessages(result, patchVsCodeExtensions(cwd, language, dryRun), dryRun)
+    pushTsConfigMessages(result, patchTsConfig(cwd, dryRun), dryRun)
+  }
+
   if (withSkills) {
-    pushAgentMessages(
-      result,
-      installAgentResources(cwd, dryRun, { force, withClaude }),
-      dryRun,
-    )
+    pushAgentMessages(result, installAgentResources(cwd, dryRun, { force, withClaude }), dryRun)
   }
 
   return result
