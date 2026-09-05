@@ -20,6 +20,10 @@ const CLAUDE_SKILL_DIR = path.join('.claude', 'skills', SKILL_NAME)
 /** Cursor-specific glob-scoped rules; other tools use AGENTS.md. */
 const CURSOR_RULE_FILES = [
   {
+    from: 'useclassy-project.cursor-rule.mdc',
+    to: path.join('.cursor', 'rules', 'useclassy-project.mdc'),
+  },
+  {
     from: 'useclassy-setup.cursor-rule.mdc',
     to: path.join('.cursor', 'rules', 'useclassy-setup.mdc'),
   },

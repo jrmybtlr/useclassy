@@ -24,16 +24,18 @@ Options:
   --language <vue|react|blade|svelte>   Framework language for useClassy (default: vue)
   --engine <tailwind|unocss>           CSS engine to configure (default: auto-detect;
                                        prefers Tailwind when both are present)
-  --with-skills                    Install the UseClassy agent skill (.agents/skills),
-                                   Cursor rules, and an AGENTS.md section
-  --with-claude                    With --with-skills: also copy the skill to
-                                   .claude/skills for Claude Code
+  --with-skills                    Install agent skill, Cursor rules, and AGENTS.md
+                                   (default: on)
+  --no-skills                      Skip agent skill / Cursor rules / AGENTS.md install
+  --with-claude                    Also copy the skill to .claude/skills for Claude Code
   --force                          Overwrite skill/rule files that differ from templates
   --dry-run                        Print actions without writing files
   -h, --help                       Show this message
 
 Notes:
   --with-cursor is an alias for --with-skills.
+  Agent resources install by default so coding agents pick up UseClassy syntax.
+  Pass --no-skills to opt out. --with-claude still works with the default install.
 `)
 }
 
@@ -50,7 +52,7 @@ function parseArgs(argv: string[]): {
   let language: InitLanguage = 'vue'
   let engine: InitEngine | undefined
   let dryRun = false
-  let withSkills = false
+  let withSkills = true
   let withClaude = false
   let force = false
   let cmd: string | null = null
@@ -68,6 +70,10 @@ function parseArgs(argv: string[]): {
     }
     if (arg === '--with-skills' || arg === '--with-cursor') {
       withSkills = true
+      continue
+    }
+    if (arg === '--no-skills') {
+      withSkills = false
       continue
     }
     if (arg === '--with-claude') {
@@ -134,7 +140,7 @@ function main(): void {
   }
 
   if (withClaude && !withSkills) {
-    console.error('--with-claude requires --with-skills')
+    console.error('--with-claude cannot be used with --no-skills')
     exitWithHelp(1)
   }
 

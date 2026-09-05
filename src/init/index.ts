@@ -76,7 +76,7 @@ export function runInitSetup(options: {
   withClaude?: boolean
   force?: boolean
 }): InitSetupResult {
-  const { cwd, language, dryRun, withSkills = false, withClaude = false, force = false } = options
+  const { cwd, language, dryRun, withSkills = true, withClaude = false, force = false } = options
   const result: InitSetupResult = { messages: [] }
 
   const detected = detectCssEngine(cwd)

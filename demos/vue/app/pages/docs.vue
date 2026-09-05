@@ -25,13 +25,13 @@ useMarkdownAlternate('/docs.md')
 
 useSeoMeta({
   title: 'Docs — UseClassy',
-  description: 'Install and use UseClassy with Tailwind CSS or UnoCSS.',
+  description: 'Install vite-plugin-useclassy and write class:hover / className:focus modifiers for Tailwind CSS and UnoCSS. Includes agent skill setup for Cursor, Codex, and Copilot.',
   ogTitle: 'Docs — UseClassy',
-  ogDescription: 'Install and use UseClassy with Tailwind CSS or UnoCSS.',
+  ogDescription: 'Install vite-plugin-useclassy and write class:hover / className:focus modifiers for Tailwind CSS and UnoCSS. Includes agent skill setup for Cursor, Codex, and Copilot.',
   ogImage: 'https://assets.useclassy.com/og-image.png',
   ogUrl: 'https://useclassy.com/docs',
   twitterTitle: 'Docs — UseClassy',
-  twitterDescription: 'Install and use UseClassy with Tailwind CSS or UnoCSS.',
+  twitterDescription: 'Install vite-plugin-useclassy and write class:hover / className:focus modifiers for Tailwind CSS and UnoCSS. Includes agent skill setup for Cursor, Codex, and Copilot.',
   twitterImage: 'https://assets.useclassy.com/og-image-twitter.png',
   twitterCard: 'summary_large_image',
 })

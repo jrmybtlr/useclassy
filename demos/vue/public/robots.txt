@@ -1,8 +1,13 @@
 User-agent: *
 Allow: /
 
-# LLM indexes
+# LLM / AI crawler indexes
 Allow: /llms.txt
 Allow: /llms-full.txt
+Allow: /.well-known/llms.txt
 Allow: /index.md
 Allow: /docs.md
+Allow: /skill.md
+Allow: /skill/examples.md
+
+Sitemap: https://useclassy.com/sitemap.xml

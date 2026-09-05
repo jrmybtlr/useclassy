@@ -22,14 +22,15 @@ npx vite-plugin-useclassy init
 
 `init` patches Vite and your CSS engine, plus VS Code IntelliSense for Tailwind. Run it from the app root (the folder with `package.json` and `vite.config.*`).
 
-| Option          | Default     | Notes                                                           |
-| --------------- | ----------- | --------------------------------------------------------------- |
-| `--language`    | `'vue'`     | `'vue'` \| `'react'` \| `'blade'` \| `'svelte'`                 |
-| `--engine`      | auto-detect | `'tailwind'` \| `'unocss'`; Tailwind wins if both are installed |
-| `--with-skills` | `false`     | Agent skill, Cursor rules, and `AGENTS.md`                      |
-| `--with-claude` | `false`     | Also copy to `.claude/skills/` (requires `--with-skills`)       |
-| `--force`       | `false`     | Overwrite locally edited skill files                            |
-| `--dry-run`     | `false`     | Print planned edits                                             |
+| Option           | Default      | Notes                                                                              |
+| ---------------- | ------------ | ---------------------------------------------------------------------------------- |
+| `--language`     | `'vue'`      | `'vue'` \| `'react'` \| `'blade'` \| `'svelte'`                                    |
+| `--engine`       | auto-detect  | `'tailwind'` \| `'unocss'`; Tailwind wins if both are installed                    |
+| `--with-skills`  | `true`       | Agent skill, Cursor rules, and `AGENTS.md` (default on)                            |
+| `--no-skills`    | —            | Skip agent skill / Cursor rules / `AGENTS.md`                                      |
+| `--with-claude`  | `false`      | Also copy to `.claude/skills/` (incompatible with `--no-skills`)                   |
+| `--force`        | `false`      | Overwrite locally edited skill files                                               |
+| `--dry-run`      | `false`      | Print planned edits                                                                |
 
 If detection fails, follow the [manual setup](#vite) below.
 
@@ -190,17 +191,48 @@ Vue-only projects can omit the `className` entries. UnoCSS projects should use t
 
 ## Agent skill
 
+`init` installs agent resources by default so coding agents discover UseClassy syntax:
+
 ```bash
-npx vite-plugin-useclassy init --with-skills
+npx vite-plugin-useclassy init
+# skip agent files: npx vite-plugin-useclassy init --no-skills
 ```
 
-| Path                            | Used by                            |
-| ------------------------------- | ---------------------------------- |
-| `.agents/skills/useclassy/`     | Cursor, Codex, Copilot             |
-| `.cursor/rules/useclassy-*.mdc` | Cursor                             |
-| `AGENTS.md` (fenced block)      | Windsurf, Aider, Cline, and others |
+| Path                              | Used by                            |
+| --------------------------------- | ---------------------------------- |
+| `.agents/skills/useclassy/`       | Cursor, Codex, Copilot             |
+| `.cursor/rules/useclassy-*.mdc`   | Cursor (includes an always-on tip) |
+| `AGENTS.md` (fenced block)        | Windsurf, Aider, Cline, and others |
 
 Add `--with-claude` to also copy into `.claude/skills/` (opt-in so Cursor doesn’t load the skill twice). Running it again is safe; `--force` overwrites local edits. Templates live in [`templates/`](templates/).
+
+## For AI assistants
+
+Machine-readable docs for crawlers and coding agents:
+
+| URL | Purpose |
+| --- | --- |
+| https://useclassy.com/llms.txt | LLM index (start here) |
+| https://useclassy.com/llms-full.txt | Full docs + agent skill in one file |
+| https://useclassy.com/skill.md | Authoring / refactoring skill |
+| https://useclassy.com/docs.md | Complete README as markdown |
+| https://useclassy.com/.well-known/llms.txt | Alternate llms.txt discovery path |
+
+When editing a UseClassy project, prefer `class:hover` / `className:focus` over inline `hover:` / `focus:` prefixes. `npx vite-plugin-useclassy init` installs local agent skills by default.
+
+### Context7
+
+[`context7.json`](context7.json) tells [Context7](https://context7.com) how to index this repo for MCP-powered coding agents.
+
+**CI sync:** [`.github/workflows/context7-refresh.yml`](.github/workflows/context7-refresh.yml) runs on every `main` push. It refreshes the library when it already exists, and auto-submits the GitHub repo (+ `llms.txt`) on first run if Context7 returns 404.
+
+Setup:
+
+1. Create an API key at [context7.com/dashboard](https://context7.com/dashboard)
+2. Add repo secret `CONTEXT7_API_KEY`
+3. Merge to `main` (or run the workflow manually). First successful run submits; later runs only refresh.
+
+Optional: claim the library in the Context7 UI so refresh limits and settings stay under your account. Root markdown and `templates/useclassy-skill/` are the primary sources; demos and build artifacts are excluded via `context7.json`.
 
 ## Contributing
 

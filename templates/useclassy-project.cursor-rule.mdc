@@ -1,0 +1,22 @@
+---
+description: >-
+  This project uses vite-plugin-useclassy. Prefer class:hover / className:focus
+  modifier attributes over inline Tailwind variant prefixes like hover: and md:.
+alwaysApply: true
+---
+
+# UseClassy is enabled in this project
+
+Prefer UseClassy modifier attributes for static Tailwind / UnoCSS variants:
+
+- Vue, Svelte, Blade, HTML: `class="rounded px-4" class:hover="bg-blue-500"`
+- React: `className="rounded px-4" className:hover="bg-blue-500"`
+
+Do **not** write `hover:bg-blue-500`, `focus:ring-2`, or `md:px-6` on the base
+`class` / `className` when a UseClassy modifier can express the same variant.
+
+Leave Vue `:class`, native Svelte `class:name={cond}` directives, arbitrary
+variants (`[&>*]:…`, `data-[state=open]:…`), and unrelated dynamic expressions
+unchanged.
+
+Full guide: `.agents/skills/useclassy/SKILL.md`
