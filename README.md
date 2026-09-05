@@ -186,13 +186,15 @@ When editing a UseClassy project, prefer `class:hover` / `className:focus` over 
 
 [`context7.json`](context7.json) tells [Context7](https://context7.com) how to index this repo for MCP-powered coding agents.
 
-After this lands on `main`, submit the library (once) at [context7.com/add-library](https://context7.com/add-library):
+**CI sync:** [`.github/workflows/context7-refresh.yml`](.github/workflows/context7-refresh.yml) runs on every `main` push. It refreshes the library when it already exists, and auto-submits the GitHub repo (+ `llms.txt`) on first run if Context7 returns 404.
 
-1. **GitHub repo:** `https://github.com/jrmybtlr/useclassy`
-2. **llms.txt:** `https://useclassy.com/llms.txt` (optional second source)
-3. Claim ownership when prompted so refresh/version settings stay under your account
+Setup:
 
-Refresh after releases if docs drift. Root markdown and `templates/useclassy-skill/` are the primary sources; demos and build artifacts are excluded.
+1. Create an API key at [context7.com/dashboard](https://context7.com/dashboard)
+2. Add repo secret `CONTEXT7_API_KEY`
+3. Merge to `main` (or run the workflow manually). First successful run submits; later runs only refresh.
+
+Optional: claim the library in the Context7 UI so refresh limits and settings stay under your account. Root markdown and `templates/useclassy-skill/` are the primary sources; demos and build artifacts are excluded via `context7.json`.
 
 ## Contributing
 

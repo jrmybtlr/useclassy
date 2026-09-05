@@ -1,6 +1,7 @@
 ## Unreleased
 
 ### Improvements
+- **ci:** Add Context7 refresh workflow that auto-submits on first run, then refreshes on every `main` push.
 - **docs:** Add `context7.json` and Context7 submission notes so MCP agents can index UseClassy.
 - **site:** Enrich AI SEO surfaces — richer `llms.txt`, public `/skill.md`, `.well-known/llms.txt`, `sitemap.xml`, and clearer npm discovery metadata.
 - **cli:** Install agent skill, Cursor rules, and `AGENTS.md` by default on `init`; opt out with `--no-skills`.

@@ -88,3 +88,5 @@
 - For AI/LLM discoverability of a library: ship a rich `/llms.txt` (when-to-use, syntax, anti-patterns, agent install), expose the authoring skill at a stable public URL (`/skill.md`), add `/.well-known/llms.txt`, include those routes in `robots.txt` + `sitemap.xml`, and put AI-related npm keywords/`description` plus a README "For AI assistants" table. Defaulting agent skill install on `init` is the in-repo half of the same problem.
 
 - When adding Context7 support: ship a root `context7.json` (exclude demos/build noise, add agent `rules`), document the one-time submit at context7.com/add-library (GitHub repo + public llms.txt), and claim ownership so refreshes are controllable. Do not put claiming `public_key` in the repo until the owner generates it in the Context7 UI.
+
+- Context7 CI: use refresh on every main push; only call add/repo when refresh returns 404. Do not submit on every push (409 once indexed). Soft-skip when `CONTEXT7_API_KEY` is missing so forks/PRs stay green.
