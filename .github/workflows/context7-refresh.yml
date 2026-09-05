@@ -1,0 +1,95 @@
+name: Refresh Context7 Docs
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions: {}
+
+jobs:
+  refresh:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Ensure library exists, then refresh
+        env:
+          CONTEXT7_API_KEY: ${{ secrets.CONTEXT7_API_KEY }}
+          LIBRARY_ID: /${{ github.repository }}
+          REPO_URL: ${{ github.server_url }}/${{ github.repository }}
+          LLMS_TXT_URL: https://useclassy.com/llms.txt
+        run: |
+          set -euo pipefail
+
+          if [ -z "${CONTEXT7_API_KEY:-}" ]; then
+            echo "CONTEXT7_API_KEY secret not set; skipping Context7 sync."
+            echo "Add the secret from https://context7.com/dashboard, then re-run."
+            exit 0
+          fi
+
+          auth_header="Authorization: Bearer ${CONTEXT7_API_KEY}"
+
+          refresh() {
+            curl -sS -w "\n%{http_code}" -X POST "https://context7.com/api/v1/refresh" \
+              -H "Content-Type: application/json" \
+              -H "$auth_header" \
+              -d "{\"libraryName\": \"${LIBRARY_ID}\"}"
+          }
+
+          echo "Refreshing ${LIBRARY_ID}..."
+          refresh_out="$(refresh)"
+          refresh_body="$(printf '%s' "$refresh_out" | sed '$d')"
+          refresh_code="$(printf '%s' "$refresh_out" | tail -n1)"
+          echo "Refresh HTTP ${refresh_code}"
+          echo "$refresh_body"
+
+          if [ "$refresh_code" = "200" ] || [ "$refresh_code" = "202" ]; then
+            echo "Context7 refresh started."
+            exit 0
+          fi
+
+          # 404 => library not indexed yet — submit once, then refresh.
+          if [ "$refresh_code" = "404" ]; then
+            echo "Library not found; submitting GitHub repo ${REPO_URL}..."
+            add_repo_out="$(curl -sS -w "\n%{http_code}" -X POST "https://context7.com/api/v2/add/repo/github" \
+              -H "Content-Type: application/json" \
+              -H "$auth_header" \
+              -d "{\"docsRepoUrl\": \"${REPO_URL}\"}")"
+            add_repo_body="$(printf '%s' "$add_repo_out" | sed '$d')"
+            add_repo_code="$(printf '%s' "$add_repo_out" | tail -n1)"
+            echo "Add repo HTTP ${add_repo_code}"
+            echo "$add_repo_body"
+
+            if [ "$add_repo_code" != "200" ] && [ "$add_repo_code" != "202" ] && [ "$add_repo_code" != "409" ]; then
+              echo "Failed to submit GitHub repo to Context7."
+              exit 1
+            fi
+
+            echo "Submitting llms.txt ${LLMS_TXT_URL} (optional second source)..."
+            add_llms_out="$(curl -sS -w "\n%{http_code}" -X POST "https://context7.com/api/v2/add/llmstxt" \
+              -H "Content-Type: application/json" \
+              -H "$auth_header" \
+              -d "{\"url\": \"${LLMS_TXT_URL}\"}" || true)"
+            add_llms_body="$(printf '%s' "$add_llms_out" | sed '$d')"
+            add_llms_code="$(printf '%s' "$add_llms_out" | tail -n1)"
+            echo "Add llms.txt HTTP ${add_llms_code}"
+            echo "$add_llms_body"
+
+            echo "Refreshing after submit..."
+            refresh_out="$(refresh)"
+            refresh_body="$(printf '%s' "$refresh_out" | sed '$d')"
+            refresh_code="$(printf '%s' "$refresh_out" | tail -n1)"
+            echo "Refresh HTTP ${refresh_code}"
+            echo "$refresh_body"
+
+            if [ "$refresh_code" = "200" ] || [ "$refresh_code" = "202" ] || [ "$refresh_code" = "404" ]; then
+              # 404 right after submit can mean indexing has not finished yet.
+              echo "Context7 submit/refresh completed (indexing may still be in progress)."
+              exit 0
+            fi
+
+            exit 1
+          fi
+
+          echo "Context7 refresh failed with HTTP ${refresh_code}."
+          exit 1

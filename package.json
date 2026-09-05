@@ -1,7 +1,7 @@
 {
   "name": "vite-plugin-useclassy",
   "version": "4.0.0",
-  "description": "UseClassy automatically appends class attributes to your components and lets you separate media queries, hover states, and other styles.",
+  "description": "Vite plugin that rewrites class:hover and className:focus attributes into Tailwind CSS and UnoCSS utilities. Cleaner variant classes with no runtime — built for humans and coding agents.",
   "scripts": {
     "dev": "pnpm -r dev",
     "test": "vitest run src/*",
@@ -29,13 +29,26 @@
     "nuxt",
     "react",
     "next",
-    "svelte"
+    "svelte",
+    "vite",
+    "tailwindcss",
+    "class:hover",
+    "classname:focus",
+    "variant",
+    "cursor",
+    "ai",
+    "llm",
+    "agent",
+    "agents-md",
+    "skill",
+    "copilot",
+    "codex"
   ],
   "engines": {
     "node": ">=22"
   },
   "license": "MIT",
-  "homepage": "https://github.com/jrmybtlr/useclassy#readme",
+  "homepage": "https://useclassy.com",
   "bugs": "https://github.com/jrmybtlr/useclassy/issues",
   "author": "Jeremy Butler <jeremy@jeremymbutler.com>",
   "contributors": [

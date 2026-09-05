@@ -71,7 +71,7 @@ export function runInitSetup(options: {
     cwd,
     language,
     dryRun,
-    withSkills = false,
+    withSkills = true,
     withClaude = false,
     force = false,
   } = options

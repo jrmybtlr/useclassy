@@ -381,20 +381,22 @@ describe('installAgentResources', () => {
       'utf-8',
     )
 
-    // 1 skill dir x 2 files + 2 cursor rules + AGENTS.md
+    // 1 skill dir x 2 files + 3 cursor rules + AGENTS.md
     const dry = installAgentResources(dir, true)
     expect(dry.every(r => !r.error)).toBe(true)
-    expect(dry.filter(r => r.changed)).toHaveLength(5)
+    expect(dry.filter(r => r.changed)).toHaveLength(6)
     expect(
       fs.existsSync(path.join(dir, '.agents', 'skills', 'useclassy', 'SKILL.md')),
     ).toBe(false)
 
     const written = installAgentResources(dir, false)
-    expect(written.filter(r => r.changed)).toHaveLength(5)
+    expect(written.filter(r => r.changed)).toHaveLength(6)
 
     const agentsSkill = path.join(dir, '.agents', 'skills', 'useclassy', 'SKILL.md')
     const skill = fs.readFileSync(agentsSkill, 'utf-8')
     expect(skill).toContain('name: useclassy')
+    expect(skill).toContain('class:hover')
+    expect(skill).toContain('converting hover:')
     expect(skill).toContain('## Refactor existing code')
     expect(skill).not.toContain('## Setup')
 
@@ -405,6 +407,9 @@ describe('installAgentResources', () => {
     ).toBe(true)
 
     expect(
+      fs.existsSync(path.join(dir, '.cursor', 'rules', 'useclassy-project.mdc')),
+    ).toBe(true)
+    expect(
       fs.existsSync(path.join(dir, '.cursor', 'rules', 'useclassy-setup.mdc')),
     ).toBe(true)
     expect(
@@ -412,6 +417,12 @@ describe('installAgentResources', () => {
         path.join(dir, '.cursor', 'rules', 'useclassy-authoring.mdc'),
       ),
     ).toBe(true)
+    expect(
+      fs.readFileSync(
+        path.join(dir, '.cursor', 'rules', 'useclassy-project.mdc'),
+        'utf-8',
+      ),
+    ).toContain('alwaysApply: true')
 
     expect(fs.readFileSync(path.join(dir, 'AGENTS.md'), 'utf-8')).toContain(
       '## UseClassy',
@@ -424,7 +435,7 @@ describe('installAgentResources', () => {
   it('copies into .claude/skills only when withClaude is set', () => {
     const dir = tempDir()
     const written = installAgentResources(dir, false, { withClaude: true })
-    expect(written.filter(r => r.changed)).toHaveLength(7)
+    expect(written.filter(r => r.changed)).toHaveLength(8)
 
     const agentsSkill = fs.readFileSync(
       path.join(dir, '.agents', 'skills', 'useclassy', 'SKILL.md'),
@@ -469,7 +480,7 @@ describe('installAgentResources', () => {
     )
   })
 
-  it('runInitSetup --with-skills installs agent files', () => {
+  it('runInitSetup installs agent files by default', () => {
     const dir = tempDir()
     fs.writeFileSync(
       path.join(dir, 'package.json'),
@@ -495,7 +506,6 @@ describe('installAgentResources', () => {
       cwd: dir,
       language: 'vue',
       dryRun: true,
-      withSkills: true,
     })
 
     expect(result.messages.some(m => m.includes('[dry-run] Would write')
@@ -504,9 +514,10 @@ describe('installAgentResources', () => {
       false,
     )
     expect(result.messages.some(m => m.includes('AGENTS.md'))).toBe(true)
+    expect(result.messages.some(m => m.includes(path.join('.cursor', 'rules', 'useclassy-project.mdc')))).toBe(true)
   })
 
-  it('leaves agent files alone without the flag', () => {
+  it('leaves agent files alone when withSkills is false', () => {
     const dir = tempDir()
     fs.writeFileSync(
       path.join(dir, 'package.json'),
@@ -514,7 +525,12 @@ describe('installAgentResources', () => {
       'utf-8',
     )
 
-    const result = runInitSetup({ cwd: dir, language: 'vue', dryRun: false })
+    const result = runInitSetup({
+      cwd: dir,
+      language: 'vue',
+      dryRun: false,
+      withSkills: false,
+    })
 
     expect(result.agentFiles).toBeUndefined()
     expect(fs.existsSync(path.join(dir, '.agents'))).toBe(false)

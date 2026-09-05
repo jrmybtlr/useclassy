@@ -6,6 +6,14 @@ import tailwindcss from '@tailwindcss/vite'
 
 const rootDir = path.dirname(fileURLToPath(import.meta.url))
 const readme = readFileSync(path.resolve(rootDir, '../../README.md'), 'utf8')
+const skill = readFileSync(
+  path.resolve(rootDir, '../../templates/useclassy-skill/SKILL.md'),
+  'utf8',
+)
+const skillExamples = readFileSync(
+  path.resolve(rootDir, '../../templates/useclassy-skill/examples.md'),
+  'utf8',
+)
 
 export default defineNuxtConfig({
   modules: ['@nuxt/fonts', '@nuxthub/core', '@nuxt/icon'],
@@ -31,10 +39,23 @@ export default defineNuxtConfig({
 
   nitro: {
     prerender: {
-      routes: ['/llms.txt', '/llms-full.txt', '/llm.txt', '/index.md', '/docs.md'],
+      routes: [
+        '/llms.txt',
+        '/llms-full.txt',
+        '/llm.txt',
+        '/index.md',
+        '/docs.md',
+        '/skill.md',
+        '/skill/examples.md',
+        '/.well-known/llms.txt',
+        '/sitemap.xml',
+      ],
     },
     virtual: {
       'virtual:site-readme': () => `export default ${JSON.stringify(readme)}`,
+      'virtual:site-skill': () => `export default ${JSON.stringify(skill)}`,
+      'virtual:site-skill-examples': () =>
+        `export default ${JSON.stringify(skillExamples)}`,
     },
   },
 

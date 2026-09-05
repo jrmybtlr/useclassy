@@ -155,10 +155,11 @@
                 </span>
               </span>
               <span class="min-w-0 text-pretty">
-                <span class="font-medium text-neutral-200">With skills.</span>
-                Installs the UseClassy skill so Cursor, Codex, and Copilot keep writing
+                <span class="font-medium text-neutral-200">Agent skills.</span>
+                On by default so Cursor, Codex, and Copilot keep writing
                 <span class="font-mono text-neutral-200">class:hover</span>
-                instead of stuffing variants back into one string.
+                instead of stuffing variants back into one string. Turn off to pass
+                <span class="font-mono text-neutral-200">--no-skills</span>.
               </span>
             </label>
           </Step>
@@ -265,8 +266,8 @@
             v-if="setupMode === 'manual'"
             :number="cssEngine === 'tailwind' ? 5 : 4"
             title="Skills"
-            badge="Optional"
-            description="So Cursor, Codex, and Copilot keep writing class:hover."
+            badge="Default"
+            description="init installs agent skills by default so Cursor, Codex, and Copilot keep writing class:hover. Pass --no-skills to skip."
             wide-description
             last
           >
@@ -397,10 +398,10 @@ const quickInitTokens = computed((): CliToken[] => {
     { text: ' ', class: 'text-neutral-600' },
     { text: format, class: 'text-orange-300' },
   )
-  if (withSkills.value) {
+  if (!withSkills.value) {
     tokens.push(
       { text: ' ', class: 'text-neutral-600' },
-      { text: '--with-skills', class: 'text-amber-400' },
+      { text: '--no-skills', class: 'text-amber-400' },
     )
   }
   return tokens
@@ -414,8 +415,6 @@ const skillsInitTokens: CliToken[] = [
   { text: 'vite-plugin-useclassy', class: 'text-emerald-400' },
   space,
   { text: 'init', class: 'text-neutral-100' },
-  space,
-  { text: '--with-skills', class: 'text-amber-400' },
 ]
 
 const skillsInitCopy = skillsInitTokens.map((t) => t.text).join('')
@@ -468,15 +467,51 @@ useMarkdownAlternate('/index.md')
 
 useSeoMeta({
   title: 'UseClassy',
-  description: 'Variant attributes for Tailwind and UnoCSS. One state per line.',
+  description: 'Write Tailwind and UnoCSS variants as class:hover and className:focus attributes. Vite plugin with no runtime — readable utility CSS for humans and coding agents.',
   ogTitle: 'UseClassy',
-  ogDescription: 'Variant attributes for Tailwind and UnoCSS. One state per line.',
+  ogDescription: 'Write Tailwind and UnoCSS variants as class:hover and className:focus attributes. Vite plugin with no runtime — readable utility CSS for humans and coding agents.',
   ogImage: 'https://assets.useclassy.com/og-image.png',
   ogUrl: 'https://useclassy.com',
   twitterTitle: 'UseClassy',
-  twitterDescription: 'Variant attributes for Tailwind and UnoCSS. One rewrite. Every engine.',
+  twitterDescription: 'Write Tailwind and UnoCSS variants as class:hover and className:focus attributes. Vite plugin with no runtime — readable utility CSS for humans and coding agents.',
   twitterImage: 'https://assets.useclassy.com/og-image-twitter.png',
   twitterCard: 'summary_large_image',
+})
+
+useHead({
+  link: [
+    { rel: 'alternate', type: 'text/markdown', href: '/llms.txt', title: 'llms.txt' },
+  ],
+  script: [
+    {
+      type: 'application/ld+json',
+      children: JSON.stringify({
+        '@context': 'https://schema.org',
+        '@type': 'SoftwareApplication',
+        name: 'UseClassy',
+        applicationCategory: 'DeveloperApplication',
+        operatingSystem: 'Any',
+        offers: {
+          '@type': 'Offer',
+          price: '0',
+          priceCurrency: 'USD',
+        },
+        description: 'Write Tailwind and UnoCSS variants as class:hover and className:focus attributes. Vite plugin with no runtime — readable utility CSS for humans and coding agents.',
+        url: 'https://useclassy.com',
+        downloadUrl: 'https://www.npmjs.com/package/vite-plugin-useclassy',
+        codeRepository: 'https://github.com/jrmybtlr/useclassy',
+        softwareVersion: '4.0.0',
+        keywords: [
+          'vite-plugin-useclassy',
+          'Tailwind CSS',
+          'UnoCSS',
+          'class:hover',
+          'className:focus',
+          'AI coding agents',
+        ],
+      }),
+    },
+  ],
 })
 
 const classExamples = {

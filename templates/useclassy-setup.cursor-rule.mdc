@@ -12,4 +12,4 @@ When adding or fixing UseClassy in this project:
 5. **VS Code** (Tailwind only): Merge `tailwindCSS.classAttributes` to include `class:[\\w:/@-]*` and, for React, `className:[\\w:/@-]*`. Skip this for UnoCSS — use the UnoCSS extension.
 6. Run dev once so `.classy/output.classy.html` is generated.
 
-Prefer `npx vite-plugin-useclassy init` (after installing the package) instead of hand-editing when possible. Use `--with-skills` to install the UseClassy authoring skill (`.agents/skills`) plus these Cursor rules. Add `--with-claude` if you also use Claude Code.
+Prefer `npx vite-plugin-useclassy init` (after installing the package) instead of hand-editing when possible. `init` installs the UseClassy authoring skill (`.agents/skills`), these Cursor rules, and an `AGENTS.md` section by default. Pass `--no-skills` to skip agent files. Add `--with-claude` if you also use Claude Code.
