@@ -1,0 +1,40 @@
+---
+title: Tailwind
+description: Point Tailwind at the UseClassy class manifest
+---
+
+UseClassy writes discovered utilities to `.classy/output.classy.html` (gitignored). Tailwind v4 does not scan gitignored files unless you `@source` them. The plugin injects that directive into stylesheets that `@import "tailwindcss"`. `init` also writes it into your CSS.
+
+```css
+@import 'tailwindcss';
+@source "./.classy/output.classy.html";
+```
+
+`@source` paths are relative to the CSS file. If the stylesheet lives in `src/`, use `../.classy/output.classy.html`.
+
+## Tailwind v3
+
+Add the manifest to `content`:
+
+```js
+content: ["./.classy/output.classy.html"],
+```
+
+Path helpers: `getUseClassyTailwindSourceDirective`, `getUseClassyTailwindV3ContentEntry` from `vite-plugin-useclassy` or `vite-plugin-useclassy/tailwind`. Pass the same `outputDir` / `outputFileName` you use in the plugin.
+
+## IntelliSense
+
+`init` merges this into `.vscode/settings.json` for Tailwind projects:
+
+```json
+{
+  "tailwindCSS.classAttributes": [
+    "class",
+    "class:[\\w:/@\\[\\]\\-=&*>.]*",
+    "className",
+    "className:[\\w:/@\\[\\]\\-=&*>.]*"
+  ]
+}
+```
+
+Vue-only projects can omit the `className` entries. UnoCSS projects should use the [UnoCSS VS Code extension](https://unocss.dev/integrations/vscode) instead.

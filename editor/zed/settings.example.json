@@ -1,0 +1,21 @@
+{
+  "lsp": {
+    "vtsls": {
+      "settings": {
+        "vtsls": {
+          "autoUseWorkspaceTsdk": true
+        },
+        "typescript": {
+          "tsserver": {
+            "pluginPaths": ["./node_modules"]
+          }
+        },
+        "javascript": {
+          "tsserver": {
+            "pluginPaths": ["./node_modules"]
+          }
+        }
+      }
+    }
+  }
+}

@@ -1,6 +1,7 @@
 import fs from 'fs'
 import path from 'path'
 
+import { editorExtensionInstallHint } from './editor-extension'
 import type { FilePatchResult, InitLanguage, InitSetupResult } from './types'
 
 const VSCODE_CLASS_PATTERNS_VUE = ['class:[\\w:/@\\[\\]\\-=&*>.]*']
@@ -127,8 +128,8 @@ export function mergeExtensionRecommendations(existing: unknown, additions: stri
 /**
  * Marketplace extension is not published yet — do not write recommendations.
  * Keep helpers (`USECLASSY_VSCODE_EXTENSION_ID`, `mergeExtensionRecommendations`)
- * for when `useclassy.useclassy` ships. Consumers sideload from the repo
- * (`code --install-extension ./vscode-useclassy`).
+ * for when `useclassy.useclassy` ships. Consumers sideload from node_modules
+ * (`code --install-extension ./node_modules/vite-plugin-useclassy/vscode-useclassy`).
  */
 export function patchVsCodeExtensions(
   cwd: string,
@@ -151,7 +152,5 @@ export function pushVsCodeExtensionsMessages(
     return
   }
 
-  result.messages.push(
-    'VS Code: UseClassy syntax highlighting is not on the Marketplace yet. From the UseClassy repo: code --install-extension ./vscode-useclassy (see vscode-useclassy/README.md).',
-  )
+  result.messages.push(editorExtensionInstallHint())
 }

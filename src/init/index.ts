@@ -27,6 +27,12 @@ export type {
 } from './types'
 export { INIT_ENGINES, INIT_LANGUAGES } from './types'
 
+export {
+  EDITOR_EXTENSION_INSTALL_COMMANDS,
+  editorExtensionInstallHint,
+  formatEditorExtensionInstallCopy,
+  type EditorInstallCommand,
+} from './editor-extension'
 export { detectCssEngine, resolveInitEngine } from './detect'
 export {
   detectTailwindFlavor,

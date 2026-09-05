@@ -1,0 +1,31 @@
+---
+title: Vite
+description: Plugin options and framework placement
+---
+
+```ts
+import useClassy from 'vite-plugin-useclassy'
+
+export default {
+  plugins: [
+    useClassy({
+      language: 'vue', // 'react' | 'blade' | 'svelte'
+      // engine: "unocss",
+    }),
+    // Tailwind / UnoCSS after UseClassy
+  ],
+}
+```
+
+| Option | Default | Notes |
+| --- | --- | --- |
+| `language` | `'vue'` | `'vue'` \| `'react'` \| `'blade'` \| `'svelte'` |
+| `engine` | `'tailwind'` | `'unocss'` skips Tailwind `@source` inject |
+| `outputDir` / `outputFileName` | `.classy` / `output.classy.html` | Class manifest Tailwind and Uno scan |
+| `manifestRoot` | Vite `root` | Set when Vite’s root is a subfolder (e.g. Nuxt `srcDir: "app/"`) |
+| `injectTailwindSource` | `true` | Tailwind v4 only; ignored for UnoCSS |
+| `debug` | `false` | Log transform and manifest writes |
+
+Processes `.vue`, `.svelte`, `.ts`, `.tsx`, `.js`, `.jsx`, `.html`, and `.blade.php`. Skips `node_modules`, gitignored paths, and virtual modules.
+
+Place UseClassy **before** `@vitejs/plugin-react`, `@sveltejs/vite-plugin-svelte`, Tailwind, or UnoCSS so those tools see rewritten utilities.

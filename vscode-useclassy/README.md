@@ -4,24 +4,41 @@ TextMate injection so React UseClassy modifiers highlight like normal JSX attrib
 
 Without this, the built-in TSX grammar treats names with `@`, `/`, or `[…]` as `invalid.illegal.attribute.tsx` (red italic). Simple namespaced forms like `className:hover` already tokenize correctly.
 
-**Not on the VS Code Marketplace yet.** Install from this repo (sideload) until it is published.
+Works in any editor that loads VS Code extensions (VS Code, Cursor, VSCodium, Insiders, Windsurf, …).
 
-## Install (local)
+For **Neovim**, **Zed**, and other IDEs, see [`editor/`](../editor/README.md).
 
-From the UseClassy repo root, either:
+**Not on the VS Code Marketplace yet.** Sideload from the installed npm package until it is published. To publish: [`editor/README.md`](../editor/README.md#publish-vs-code-extension).
+
+## Install
+
+After installing the plugin in your app:
 
 ```bash
-# Prefer: VS Code / Cursor CLI (folder extension)
-code --install-extension ./vscode-useclassy
-# or, if `cursor` is on your PATH:
-cursor --install-extension ./vscode-useclassy
+# After: npm i -D vite-plugin-useclassy
+code --install-extension ./node_modules/vite-plugin-useclassy/vscode-useclassy
+cursor --install-extension ./node_modules/vite-plugin-useclassy/vscode-useclassy
+codium --install-extension ./node_modules/vite-plugin-useclassy/vscode-useclassy
+code-insiders --install-extension ./node_modules/vite-plugin-useclassy/vscode-useclassy
+windsurf --install-extension ./node_modules/vite-plugin-useclassy/vscode-useclassy
 ```
 
-If the CLI rejects a folder path, copy into the extensions directory then reload the window:
+From a clone of this repo (contributors), use `./vscode-useclassy` instead of the `node_modules` path.
+
+The list lives in [`install-commands.json`](./install-commands.json) — add a row there when a new VS Code–compatible editor ships a CLI.
+
+If the CLI rejects a folder path, copy into that editor’s extensions directory, then reload the window:
+
+| Editor | Extensions directory |
+| --- | --- |
+| VS Code | `~/.vscode/extensions/useclassy.useclassy-0.1.0` |
+| Cursor | `~/.cursor/extensions/useclassy.useclassy-0.1.0` |
+| VSCodium | `~/.vscode-oss/extensions/useclassy.useclassy-0.1.0` |
+| VS Code Insiders | `~/.vscode-insiders/extensions/useclassy.useclassy-0.1.0` |
+| Windsurf | `~/.codeium/windsurf/extensions/useclassy.useclassy-0.1.0` |
 
 ```bash
-cp -R ./vscode-useclassy ~/.cursor/extensions/useclassy.useclassy-0.1.0
-# VS Code: ~/.vscode/extensions/useclassy.useclassy-0.1.0
+cp -R ./node_modules/vite-plugin-useclassy/vscode-useclassy ~/.vscode/extensions/useclassy.useclassy-0.1.0
 ```
 
 Reload the window after installing (`Developer: Reload Window`).

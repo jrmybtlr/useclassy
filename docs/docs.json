@@ -1,0 +1,23 @@
+{
+  "theme": "mint",
+  "name": "UseClassy",
+  "colors": {
+    "primary": "#2853FF"
+  },
+  "navigation": {
+    "groups": [
+      {
+        "group": "Get started",
+        "pages": ["index", "install", "usage"]
+      },
+      {
+        "group": "Configure",
+        "pages": ["vite", "tailwind", "unocss"]
+      },
+      {
+        "group": "Editors and agents",
+        "pages": ["editors", "agents"]
+      }
+    ]
+  }
+}

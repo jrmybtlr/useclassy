@@ -4,6 +4,7 @@
   "description": "UseClassy automatically appends class attributes to your components and lets you separate media queries, hover states, and other styles.",
   "scripts": {
     "dev": "pnpm -r --parallel --filter './demos/**' dev",
+    "docs:dev": "npx @upstash/docs7 dev ./docs",
     "test": "vitest run src/*",
     "test:watch": "vitest src/*",
     "lint": "oxlint",
@@ -47,7 +48,9 @@
   ],
   "files": [
     "dist",
-    "templates"
+    "templates",
+    "editor",
+    "vscode-useclassy"
   ],
   "bin": {
     "vite-plugin-useclassy": "./dist/cli.js"

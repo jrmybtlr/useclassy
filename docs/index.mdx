@@ -1,0 +1,24 @@
+---
+title: Introduction
+description: Readable utility CSS. No horizontal scroll.
+---
+
+A Vite plugin that automatically rewrites conditional class attributes like `class:hover` or `class:focus` into standard utility classes usable by Tailwind CSS and UnoCSS. UseClassy lets you write cleaner, more maintainable variant styles in your HTML, Vue, React, Blade, and Svelte code, with no runtime overhead.
+
+```html
+<button
+  class="@container rounded px-4 bg-blue-600 text-white"
+  class:hover="bg-blue-700"
+  class:focus="ring-2 ring-blue-300"
+  class:@md="px-6"
+></button>
+```
+
+becomes `class="@container rounded px-4 bg-blue-600 text-white hover:bg-blue-700 focus:ring-2 focus:ring-blue-300 @md:px-6"`. There is no runtime. Put UseClassy before Tailwind or UnoCSS so those engines see the rewritten utilities.
+
+## Next
+
+- [Install](/install) — package + `init`
+- [Usage](/usage) — Vue, React, Svelte, Blade
+- [Vite](/vite) — plugin options
+- [Editors](/editors) — optional IDE support

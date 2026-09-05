@@ -1,0 +1,59 @@
+---
+title: Usage
+description: Modifier attributes in Vue, React, Svelte, and Blade
+---
+
+## Vue / HTML
+
+Use `class` plus `class:modifier`:
+
+```vue
+<button
+  class="px-4 py-2 rounded bg-blue-600 text-white"
+  class:hover="bg-blue-700 scale-105"
+  class:focus="ring-2 ring-blue-300"
+  class:disabled="opacity-50 cursor-not-allowed"
+  class:dark="bg-sky-700"
+/>
+```
+
+## React
+
+Use `className` and `className:hover`. JSX expressions work when the class tokens are string literals:
+
+```tsx
+<button
+  className="px-4 py-2 rounded"
+  className:hover={isActive ? 'bg-blue-500 text-white' : 'bg-gray-200'}
+  className:@md="px-6"
+  className:group-hover/item="bg-red-500"
+  className:[&>*]="mt-2"
+  className:data-[state=open]="block"
+/>
+```
+
+Expressions with no string literals (`className:hover={hoverClasses}`) are left alone. Import types with `import 'vite-plugin-useclassy/react'` (or `ClassyProps`). React 18/19 is an optional peer, only needed for those helpers.
+
+Quoted modifier values may use `"` or `'`. Prefer `"` in docs and new code.
+
+`className:@md`, `className:group-hover/item`, and arbitrary variants like `className:[&>*]` / `className:data-[state=open]` use the same attribute spelling as Vue. UseClassy rewrites them before the JSX/HTML parser runs (bracket-aware so `=` inside `[…]` stays part of the name). Put UseClassy before `@vitejs/plugin-react`.
+
+For TypeScript diagnostics and syntax highlighting, see [Editors](/editors).
+
+## Svelte
+
+Quoted modifiers transform; native directives do not. Put UseClassy before `@sveltejs/vite-plugin-svelte`.
+
+```svelte
+<button class="px-4 py-2 rounded" class:hover="bg-blue-700" class:active={isActive}>
+```
+
+## Laravel Blade
+
+`composer require useclassy/laravel`, then `language: "blade"`. PHP ^8.2, Laravel ^11–13. Blade files sit outside Vite’s module graph, so keep the class manifest registered with [Tailwind](/tailwind) or [UnoCSS](/unocss).
+
+## Chained modifiers
+
+`class:sm:hover="underline"` emits `sm:hover:underline` only, the same composition as Tailwind / UnoCSS, not the individual `sm:` and `hover:` pieces.
+
+Modifier names may include letters, digits, `_`, `-`, `:`, `/` (`group-hover/item`), `@` (`@md`), and arbitrary variants with `[…]` (`[&>*]`, `data-[state=open]`). UseClassy parses modifier names with bracket depth so an `=` inside `[…]` is not treated as the attribute separator. React uses the same modifier attributes as Vue; UseClassy rewrites them before JSX/HTML parse.

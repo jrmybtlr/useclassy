@@ -1,0 +1,22 @@
+---
+title: Install
+description: Add vite-plugin-useclassy and run init
+---
+
+```bash
+npm i -D vite-plugin-useclassy
+npx vite-plugin-useclassy init
+```
+
+`init` patches Vite and your CSS engine, plus VS Code IntelliSense for Tailwind. Run it from the app root (the folder with `package.json` and `vite.config.*`).
+
+| Option | Default | Notes |
+| --- | --- | --- |
+| `--language` | `'vue'` | `'vue'` \| `'react'` \| `'blade'` \| `'svelte'` |
+| `--engine` | auto-detect | `'tailwind'` \| `'unocss'`; Tailwind wins if both are installed |
+| `--with-skills` | `false` | Agent skill, Cursor rules, and `AGENTS.md` |
+| `--with-claude` | `false` | Also copy to `.claude/skills/` (requires `--with-skills`) |
+| `--force` | `false` | Overwrite locally edited skill files |
+| `--dry-run` | `false` | Print planned edits |
+
+If detection fails, follow the [manual Vite setup](/vite).

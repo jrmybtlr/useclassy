@@ -1,0 +1,22 @@
+---
+title: UnoCSS
+description: Use UseClassy with UnoCSS as the CSS engine
+---
+
+```ts
+useClassy({ language: 'react', engine: 'unocss' })
+```
+
+Place it before `unocss/vite`. After the rewrite, Uno’s Vite pipeline already sees `hover:` classes. Register the HTML manifest as a filesystem source for files Uno does not extract (plain `.ts` / `.js`, Blade, HTML that never enter Vite):
+
+```ts
+import { defineConfig, presetUno } from 'unocss'
+import { getUseClassyUnoFilesystemEntry } from 'vite-plugin-useclassy/unocss'
+
+export default defineConfig({
+  presets: [presetUno()],
+  content: { filesystem: [getUseClassyUnoFilesystemEntry()] },
+})
+```
+
+UseClassy is variant-first (`class:hover="bg-red"`), not [Attributify](https://unocss.dev/presets/attributify) (`bg="hover:..."`). Don’t enable both on the same attributes.

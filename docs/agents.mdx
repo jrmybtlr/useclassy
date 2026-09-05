@@ -1,0 +1,16 @@
+---
+title: Agent skill
+description: Install UseClassy authoring guidance for coding agents
+---
+
+```bash
+npx vite-plugin-useclassy init --with-skills
+```
+
+| Path | Used by |
+| --- | --- |
+| `.agents/skills/useclassy/` | Cursor, Codex, Copilot |
+| `.cursor/rules/useclassy-*.mdc` | Cursor |
+| `AGENTS.md` (fenced block) | Windsurf, Aider, Cline, and others |
+
+Add `--with-claude` to also copy into `.claude/skills/` (opt-in so Cursor doesn’t load the skill twice). Running it again is safe; `--force` overwrites local edits. Templates live in the package’s `templates/` folder.

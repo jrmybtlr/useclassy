@@ -1,0 +1,7 @@
+[
+  { "name": "VS Code", "cli": "code" },
+  { "name": "Cursor", "cli": "cursor" },
+  { "name": "VSCodium", "cli": "codium" },
+  { "name": "VS Code Insiders", "cli": "code-insiders" },
+  { "name": "Windsurf", "cli": "windsurf" }
+]
