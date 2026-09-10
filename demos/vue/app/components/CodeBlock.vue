@@ -86,7 +86,7 @@
       }"
     >
       <div
-        class="scrollbar-faint overflow-x-auto py-5 text-neutral-500"
+        class="scrollbar-faint overflow-x-auto scroll-auto py-5 text-neutral-500"
         :class="[fadeX && !wrap ? 'relative z-0' : padClass, { 'whitespace-nowrap': !wrap }]"
       >
         <div
