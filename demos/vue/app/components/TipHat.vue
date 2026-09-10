@@ -1,7 +1,7 @@
 <template>
   <canvas
     ref="emberCanvasRef"
-    class="pointer-events-none absolute inset-0 z-10 size-full max-h-none max-w-none contain-paint will-change-[contents]"
+    class="pointer-events-none absolute inset-0 z-10 size-full max-h-none max-w-none contain-paint"
     aria-hidden="true"
   ></canvas>
   <button
@@ -82,7 +82,7 @@ interface Ember {
   size: number
   alpha: number
   decay: number
-  color: string
+  colorIndex: number
   kind: EmberKind
 }
 
@@ -91,8 +91,22 @@ const PALETTE = Array.from(
   (_, i) => `hsl(${(i * 15) % 360} 95% ${64 + (i % 4) * 4}%)`,
 )
 
-function emberColor() {
-  return PALETTE[(Math.random() * PALETTE.length) | 0]!
+/** Pre-bucketed rgb fills so we can draw same-color embers with one fillStyle. */
+const PALETTE_RGB = PALETTE.map((hsl) => {
+  const match = /hsl\((\d+) 95% (\d+)%\)/.exec(hsl)
+  const h = Number(match?.[1] ?? 0) / 360
+  const l = Number(match?.[2] ?? 64) / 100
+  const s = 0.95
+  const a = s * Math.min(l, 1 - l)
+  const f = (n: number) => {
+    const k = (n + h * 12) % 12
+    return l - a * Math.max(Math.min(k - 3, 9 - k, 1), -1)
+  }
+  return `rgb(${Math.round(f(0) * 255)},${Math.round(f(8) * 255)},${Math.round(f(4) * 255)})`
+})
+
+function emberColorIndex() {
+  return (Math.random() * PALETTE.length) | 0
 }
 
 function isCheapDevice(): boolean {
@@ -142,7 +156,8 @@ function useEmbers() {
     const canvas = emberCanvasRef.value
     const host = hostEl()
     if (!canvas || !ctx || !host) return
-    const dpr = cheap ? 1 : Math.min(window.devicePixelRatio || 1, 2)
+    // Pixel squares — a retina backing store only doubles clear/fill cost.
+    const dpr = 1
     // Size from the header, never from canvas.clientWidth — the buffer attributes are
     // intrinsic size and can fight Tailwind’s canvas { max-width:100%; height:auto }.
     cssW = Math.max(1, host.clientWidth)
@@ -194,7 +209,7 @@ function useEmbers() {
       recycled.size = size
       recycled.alpha = alpha
       recycled.decay = decay
-      recycled.color = emberColor()
+      recycled.colorIndex = emberColorIndex()
       recycled.kind = kind
       embers.push(recycled)
       return
@@ -207,7 +222,7 @@ function useEmbers() {
       size,
       alpha,
       decay,
-      color: emberColor(),
+      colorIndex: emberColorIndex(),
       kind,
     })
   }
@@ -244,6 +259,7 @@ function useEmbers() {
     refreshOrigin()
     const n = cheap ? Math.min(count, 8) : count
     for (let i = 0; i < n; i++) spawnFall()
+    loopIfNeeded()
   }
 
   function burstRadial(count = burstCount) {
@@ -265,11 +281,35 @@ function useEmbers() {
         'burst',
       )
     }
+    loopIfNeeded()
+  }
+
+  // Bucket live embers by palette index for batched fills (avoid per-ember fillStyle).
+  const drawBuckets: Ember[][] = Array.from({ length: PALETTE.length }, () => [])
+  let idleWake = 0
+
+  function clearIdleWake() {
+    window.clearTimeout(idleWake)
+    idleWake = 0
+  }
+
+  function scheduleIdleRise() {
+    clearIdleWake()
+    if (!visible || document.visibilityState === 'hidden' || risePerSec <= 0) return
+    const remaining = Math.max(0, 1 - riseAcc)
+    const ms = Math.max(16, (remaining / risePerSec) * 1000)
+    idleWake = window.setTimeout(() => {
+      idleWake = 0
+      loopIfNeeded()
+    }, ms)
   }
 
   function tick(ts: number) {
     const canvas = emberCanvasRef.value
-    if (!ctx || !canvas) return
+    if (!ctx || !canvas) {
+      raf = 0
+      return
+    }
 
     const rawDt = lastTs ? (ts - lastTs) / 1000 : 1 / 60
     const dt = Math.min(rawDt, 0.05)
@@ -277,12 +317,14 @@ function useEmbers() {
 
     ctx.clearRect(0, 0, cssW, cssH)
 
+    let spawned = false
     if (hovering.value) {
       riseAcc = 0
       fallAcc += fallPerSec * dt
       while (fallAcc >= 1) {
         spawnFall()
         fallAcc -= 1
+        spawned = true
       }
     } else {
       fallAcc = 0
@@ -290,8 +332,11 @@ function useEmbers() {
       while (riseAcc >= 1) {
         spawnRise()
         riseAcc -= 1
+        spawned = true
       }
     }
+
+    for (const bucket of drawBuckets) bucket.length = 0
 
     for (let i = embers.length - 1; i >= 0; i--) {
       const e = embers[i]!
@@ -315,17 +360,32 @@ function useEmbers() {
         continue
       }
 
-      ctx.globalAlpha = e.alpha
-      ctx.fillStyle = e.color
-      ctx.fillRect(e.x, e.y, e.size, e.size)
+      drawBuckets[e.colorIndex]!.push(e)
+    }
+
+    for (let ci = 0; ci < drawBuckets.length; ci++) {
+      const bucket = drawBuckets[ci]!
+      if (!bucket.length) continue
+      ctx.fillStyle = PALETTE_RGB[ci]!
+      for (const e of bucket) {
+        ctx.globalAlpha = e.alpha
+        ctx.fillRect(e.x, e.y, e.size, e.size)
+      }
     }
     ctx.globalAlpha = 1
 
-    raf = requestAnimationFrame(tick)
+    // Keep rAF while particles are live or we just spawned; otherwise sleep until idle rise.
+    if (embers.length > 0 || spawned || hovering.value) {
+      raf = requestAnimationFrame(tick)
+    } else {
+      raf = 0
+      scheduleIdleRise()
+    }
   }
 
   function loopIfNeeded() {
     if (!visible || document.visibilityState === 'hidden' || raf) return
+    clearIdleWake()
     lastTs = 0
     raf = requestAnimationFrame(tick)
   }
@@ -333,6 +393,7 @@ function useEmbers() {
   function pauseLoop() {
     cancelAnimationFrame(raf)
     raf = 0
+    clearIdleWake()
   }
 
   function onVisibility() {

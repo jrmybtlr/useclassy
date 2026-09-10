@@ -11,7 +11,7 @@
         <div
           v-for="(value, key) in examples"
           :key="key"
-          class="cursor-pointer text-white transition-[opacity,color,text-shadow] duration-200"
+          class="cursor-pointer text-white transition-opacity duration-200"
           :class="sectionHighlight(key)"
           @pointerenter="hoveredSection = key"
         >
@@ -41,7 +41,7 @@
           <template v-for="(value, key) in examples" :key="key">
             <span
               :ref="(el) => setOutputSectionRef(key, el)"
-              class="mx-1 transition-[opacity,color,text-shadow] duration-200"
+              class="mx-1 transition-opacity duration-200"
               class:first="ml-0"
               class:last="mr-0"
               :class="sectionHighlight(key)"
@@ -75,6 +75,7 @@ import {
 export type DemoFormat = 'vue' | 'react' | 'svelte' | 'blade'
 
 const CYCLE_MS = 1800
+const SCROLL_MS = 320
 
 const props = defineProps<{
   examples: Record<string, string>
@@ -131,6 +132,36 @@ function setOutputSectionRef(key: string, el: Element | ComponentPublicInstance 
   else outputSectionEls.delete(key)
 }
 
+let scrollRaf = 0
+
+function cancelScrollTween() {
+  cancelAnimationFrame(scrollRaf)
+  scrollRaf = 0
+}
+
+function easeOutCubic(t: number) {
+  return 1 - (1 - t) ** 3
+}
+
+function animateScrollLeft(pane: HTMLElement, targetLeft: number) {
+  cancelScrollTween()
+  const startLeft = pane.scrollLeft
+  const delta = targetLeft - startLeft
+  if (Math.abs(delta) < 0.5) {
+    pane.scrollLeft = targetLeft
+    return
+  }
+
+  const startTs = performance.now()
+  const step = (ts: number) => {
+    const t = Math.min(1, (ts - startTs) / SCROLL_MS)
+    pane.scrollLeft = startLeft + delta * easeOutCubic(t)
+    if (t < 1) scrollRaf = requestAnimationFrame(step)
+    else scrollRaf = 0
+  }
+  scrollRaf = requestAnimationFrame(step)
+}
+
 function scrollOutputSectionIntoView(key: string) {
   const el = outputSectionEls.get(key)
   if (!el) return
@@ -140,18 +171,17 @@ function scrollOutputSectionIntoView(key: string) {
   const paneRect = pane.getBoundingClientRect()
   const elRect = el.getBoundingClientRect()
   const delta = elRect.left + elRect.width / 2 - (paneRect.left + pane.clientWidth / 2)
+  const maxLeft = Math.max(0, pane.scrollWidth - pane.clientWidth)
+  const targetLeft = Math.min(maxLeft, Math.max(0, pane.scrollLeft + delta))
 
-  pane.scrollTo({
-    left: Math.max(0, pane.scrollLeft + delta),
-    behavior: 'smooth',
-  })
+  animateScrollLeft(pane, targetLeft)
 }
 
 function resetOutputScroll() {
   const el = outputSectionEls.values().next().value
   const pane = el?.closest('.overflow-x-auto')
   if (!(pane instanceof HTMLElement)) return
-  pane.scrollTo({ left: 0, behavior: 'smooth' })
+  animateScrollLeft(pane, 0)
 }
 
 watch([activeSection, outputWrap], async ([key, wrap]) => {
@@ -224,6 +254,7 @@ onUnmounted(() => {
   motionQuery?.removeEventListener('change', onMotionChange)
   document.removeEventListener('visibilitychange', onVisibilityChange)
   inViewObserver?.disconnect()
+  cancelScrollTween()
   stopCycle()
 })
 
